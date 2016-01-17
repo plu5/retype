@@ -49,9 +49,6 @@ class BookView(QWidget):
         backBtn = QPushButton('back to main', self)
         backBtn.clicked.connect(self.parent().switchMainView)
 
-        self.setGeometry(300, 300, 300, 300)
-        self.setWindowTitle('retype | bookView')
-
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
