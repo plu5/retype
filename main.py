@@ -1,8 +1,21 @@
 import sys
 from PyQt5.QtWidgets import (QPushButton, QMainWindow, QApplication, QWidget,
                              QDialog, QStackedWidget, QLineEdit, QHBoxLayout,
-                             QVBoxLayout, QLabel, qApp, QAction)
-from PyQt5.QtCore import Qt
+                             QVBoxLayout, QLabel, qApp, QAction, QTextBrowser,
+                             QTextEdit)
+from PyQt5.QtCore import Qt, QUrl#, QString
+from PyQt5.QtGui import QTextCursor, QTextCharFormat, QColor
+from ebooklib import epub
+import ebooklib
+
+book = epub.read_epub('test.epub')
+chapters = []
+title = book.title
+for document in book.get_items_of_type(ebooklib.ITEM_DOCUMENT):
+    #print(document.content)
+    chapters.append(document)
+#print(book.get_items_of_type(ebooklib.ITEM_DOCUMENT))
+#print(chapters[0].content)
 
 
 class Main(QMainWindow):
@@ -11,31 +24,34 @@ class Main(QMainWindow):
         global console
 
         console = QLineEdit(self)
-        console.setStyleSheet("background-color: #BEBEBE; color: #333")
+        console.setStyleSheet("background-color: #BEBEBE; color: #333; border: 1px outset; border-color: #4A4A4A white white; selection-background-color: white; selection-color: #333")
         console.textChanged.connect(handleEntry)
         console.returnPressed.connect(handleEntryReturn)
 
         self.stacked = QStackedWidget()
-        self.mainLayout = QVBoxLayout()
-        self.mainLayout.setContentsMargins(0, 0, 0, 0)
-        self.mainLayout.addWidget(self.stacked)
-        self.mainLayout.addWidget(console)
+        self.consistentLayout = QVBoxLayout()
+        self.consistentLayout.setContentsMargins(0, 0, 0, 0)
+        self.consistentLayout.addWidget(self.stacked)
+        self.consistentLayout.addWidget(console)
         mainWidget = QWidget()
-        mainWidget.setLayout(self.mainLayout)
+        mainWidget.setLayout(self.consistentLayout)
         self.switchBookView() #
 
         menubar = self.menuBar()
-        fileMenu = menubar.addMenu('&File')
-        exitAction = QAction('&Exit', self)
+        fileMenu = menubar.addMenu('&file')
+        exitAction = QAction('&exit', self)
         exitAction.triggered.connect(qApp.quit)
         fileMenu.addAction(exitAction)
-        switchMenu = menubar.addMenu('&Switch')
+        switchMenu = menubar.addMenu('&switch')
         switchMainAction = QAction('&Main Menu', self)
         switchMainAction.triggered.connect(self.switchMainView)
         switchMenu.addAction(switchMainAction)
         switchBookAction = QAction('&Book1', self)
         switchBookAction.triggered.connect(self.switchBookView)
         switchMenu.addAction(switchBookAction)
+        helpMenu = menubar.addMenu('&help')
+        # menubar.setStyleSheet("background: #DFD8CA")
+        # fileMenu.setStyleSheet("background: black;")
         # these menus are temporary
 
         self.setCentralWidget(mainWidget)
@@ -67,21 +83,55 @@ class BookView(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
 
+        global tobetyped
+        tobetyped = "text to be typed"
+        self.testtextedit = QTextEdit(self)
+        begin = 2
+        end = 5
+        fmt = QTextCharFormat()
+        fmt.setBackground(QColor('yellow'))
+        cursor = QTextCursor()
+        cursor.setPosition(begin, cursor.MoveAnchor)
+        cursor.setCharFormat(fmt)
+        
+        self.displayText = QTextBrowser(self)
+        #self.displayText.setHtml(str(chapters[1].content))
+        #self.displayText.setSource(QUrl('file:test/OEBPS/fm01.html'))
+        #self.displayText.setSource(QUrl('file:test/OEBPS/bm02.html'))
+        #self.displayText.setSource(QUrl('file:test.epub/OEBPS/bm02.html'))
+        #teststr = QString(chapters[1].content)
+        #self.displayText.setHtml(teststr)
+        self.displayText.setHtml("<b>text</b> to be typed ‘’ “” –—…")
+        self.displayText.setStyleSheet("background-color: #F6F1DE")
+
+        self.modeLine = QLabel("this will be the modeline", self)
+        self.modeLine.setStyleSheet("background-color: #DFD8CA; font-family: Courier New, Consolas; border: 1px outset #847250;")
+
         self.layout = QVBoxLayout()
-        self.label = QLabel('Book View', self)
-        self.layout.addWidget(self.label)
+        self.layout.setContentsMargins(0, 0, 0, 0)
+        self.layout.setSpacing(0)
+        self.layout.addWidget(self.displayText)
+        self.layout.addWidget(self.modeLine)
         self.setLayout(self.layout)
-
-
+        
 def handleEntry():
-    print(console.text())
+    #print(console.text())
+    # entry = console.text()
+    # for index, c in enumerate(entry):
+    #     if entry[index] == tobetyped[index]
+    return
+# i guess this really needs to be in bookview to work. does it?
 
 
 def handleEntryReturn():
     entry = console.text()
 
-    if entry == 'book1':
-        retype.switchBookView()
+    if entry[0] == ">":
+        if entry == '>switch.main': # make it case-insensitive
+            retype.switchMainView()
+        if entry == '>switch.book1':
+            retype.switchBookView()
+        console.setText('')
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
