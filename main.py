@@ -50,8 +50,9 @@ class Main(QMainWindow):
         switchBookAction.triggered.connect(self.switchBookView)
         switchMenu.addAction(switchBookAction)
         helpMenu = menubar.addMenu('&help')
-        # menubar.setStyleSheet("background: #DFD8CA")
+        # menubar.setStyleSheet("border-bottom: 1px outset white")
         # fileMenu.setStyleSheet("background: black;")
+        # i need to set these in a stylesheet for it to work. QMenuBar::item
         # these menus are temporary
 
         self.setCentralWidget(mainWidget)
@@ -95,14 +96,14 @@ class BookView(QWidget):
         cursor.setCharFormat(fmt)
         
         self.displayText = QTextBrowser(self)
+        self.displayText.setStyleSheet("background-color: #F6F1DE; border: 1px outset white; font-family: Iowan Old Style, Courier New; selection-background-color: grey; font-size: 13px")
         #self.displayText.setHtml(str(chapters[1].content))
         #self.displayText.setSource(QUrl('file:test/OEBPS/fm01.html'))
         #self.displayText.setSource(QUrl('file:test/OEBPS/bm02.html'))
-        #self.displayText.setSource(QUrl('file:test.epub/OEBPS/bm02.html'))
-        #teststr = QString(chapters[1].content)
-        #self.displayText.setHtml(teststr)
-        self.displayText.setHtml("<b>text</b> to be typed ‘’ “” –—…")
-        self.displayText.setStyleSheet("background-color: #F6F1DE")
+        #self.displayText.setHtml("<b>text</b> to be typed ‘’ “” –—…—\r\ntest <p>\r\ntest2</p>")
+        # chapters[1].content gives ‘unexpected type 'bytes'’
+        self.displayText.setHtml(str(chapters[1].content, 'utf-8')) # AH!
+        #print(chapters[1].content)
 
         self.modeLine = QLabel("this will be the modeline", self)
         self.modeLine.setStyleSheet("background-color: #DFD8CA; font-family: Courier New, Consolas; border: 1px outset #847250;")
