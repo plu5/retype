@@ -21,10 +21,10 @@ for document in book.get_items_of_type(ebooklib.ITEM_DOCUMENT):
 class Main(QMainWindow):
     def __init__(self, parent=None):
         super().__init__(parent)
-        global console
+        global console # unnecessary? only at the beginning of functions?
 
         console = QLineEdit(self)
-        console.setStyleSheet("background-color: #BEBEBE; color: #333; border: 1px outset; border-color: #4A4A4A white white; selection-background-color: white; selection-color: #333")
+        console.setAccessibleName("console")
         console.textChanged.connect(handleEntry)
         console.returnPressed.connect(handleEntryReturn)
 
@@ -50,24 +50,27 @@ class Main(QMainWindow):
         switchBookAction.triggered.connect(self.switchBookView)
         switchMenu.addAction(switchBookAction)
         helpMenu = menubar.addMenu('&help')
-        # menubar.setStyleSheet("border-bottom: 1px outset white")
-        # fileMenu.setStyleSheet("background: black;")
         # i need to set these in a stylesheet for it to work. QMenuBar::item
         # these menus are temporary
 
         self.setCentralWidget(mainWidget)
         self.setGeometry(100, 300, 800, 600)
+        self.setStyleSheet(qss_file)
         self.setWindowTitle('retype')
 
     def switchMainView(self):
+        global isbookview
         mainView = MainView(self)
         self.stacked.addWidget(mainView)
         self.stacked.setCurrentWidget(mainView)
+        isbookview = 0
 
     def switchBookView(self):
+        global isbookview
         bookView = BookView(self)
         self.stacked.addWidget(bookView)
         self.stacked.setCurrentWidget(bookView)
+        isbookview = 1
 
 
 class MainView(QWidget):
@@ -81,47 +84,79 @@ class MainView(QWidget):
 
 
 class BookView(QWidget):
+    end = 0
+    cursor = 0
+    highlight = 0
+    tobetyped = 0
+    cursorPos = 0
     def __init__(self, parent=None):
         super().__init__(parent)
 
-        global tobetyped
-        tobetyped = "text to be typed"
-        self.testtextedit = QTextEdit(self)
-        begin = 2
-        end = 5
-        fmt = QTextCharFormat()
-        fmt.setBackground(QColor('yellow'))
-        cursor = QTextCursor()
-        cursor.setPosition(begin, cursor.MoveAnchor)
-        cursor.setCharFormat(fmt)
+        #global tobetyped
+        BookView.tobetyped = "text to be typed"
         
         self.displayText = QTextBrowser(self)
-        self.displayText.setStyleSheet("background-color: #F6F1DE; border: 1px outset white; font-family: Iowan Old Style, Courier New; selection-background-color: grey; font-size: 13px")
         #self.displayText.setHtml(str(chapters[1].content))
         #self.displayText.setSource(QUrl('file:test/OEBPS/fm01.html'))
         #self.displayText.setSource(QUrl('file:test/OEBPS/bm02.html'))
         #self.displayText.setHtml("<b>text</b> to be typed ‘’ “” –—…—\r\ntest <p>\r\ntest2</p>")
         # chapters[1].content gives ‘unexpected type 'bytes'’
-        self.displayText.setHtml(str(chapters[1].content, 'utf-8')) # AH!
+        #self.displayText.setHtml(str(chapters[1].content, 'utf-8')) # AH!
         #print(chapters[1].content)
+        self.displayText.setHtml(BookView.tobetyped)
 
-        self.modeLine = QLabel("this will be the modeline", self)
-        self.modeLine.setStyleSheet("background-color: #DFD8CA; font-family: Courier New, Consolas; border: 1px outset #847250;")
+        #BookView.end = 6
+        BookView.highlight = QTextCharFormat()
+        BookView.highlight.setBackground(QColor('yellow'))
+        #global cursor #
+        BookView.cursor = QTextCursor(self.displayText.document())
+        #BookView.cursor.setPosition(0, BookView.cursor.MoveAnchor)
+        BookView.cursor.setPosition(BookView.cursorPos, BookView.cursor.KeepAnchor)
+        #BookView.cursor.setPosition(BookView.end, BookView.cursor.KeepAnchor)
+        #BookView.cursor.setCharFormat(BookView.highlight)
+        
+        self.modeline = QLabel("this will be the modeline", self)
+        self.modeline.setAccessibleName("modeline")
 
         self.layout = QVBoxLayout()
         self.layout.setContentsMargins(0, 0, 0, 0)
         self.layout.setSpacing(0)
         self.layout.addWidget(self.displayText)
-        self.layout.addWidget(self.modeLine)
+        self.layout.addWidget(self.modeline)
         self.setLayout(self.layout)
+
+        def handleEntryMyself():
+            print("hi") #?????????????????
         
-def handleEntry():
+def handleEntry(): # get where it’s been called from
+    global isbookview
+    #global console
+    #global bookView
     #print(console.text())
     # entry = console.text()
     # for index, c in enumerate(entry):
     #     if entry[index] == tobetyped[index]
+
+    #bookView.cursor.setPosition(10, cursor.KeepAnchor)
+    #bookView.cursor.setCharFormat(highlight)
+    #print(bookView.end) # name 'bookView' is not defined
+    if isbookview:
+            #self.cursor.setPosition(10, cursor.KeepAnchor)
+            #self.cursor.setCharFormat(highlight)
+        #print(BookView.end)
+        #for index, c in enumerate(BookView.tobetyped):
+            # if BookView.tobetyped[index] == console.text()[index]:
+            #     print("hi")
+        for index, c in enumerate(console.text()):
+            if console.text()[index] == BookView.tobetyped[index]:
+                if index == BookView.cursorPos:
+                    BookView.cursorPos += 1
+                BookView.cursor.setPosition(BookView.cursorPos,
+                                            BookView.cursor.KeepAnchor)
+                BookView.cursor.setCharFormat(BookView.highlight)
     return
-# i guess this really needs to be in bookview to work. does it?
+## i feel like i’m not doing this the right way.
+## and surely there’ll be an error when things are typed from the main view
 
 
 def handleEntryReturn():
@@ -136,6 +171,8 @@ def handleEntryReturn():
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
+    qss_file = open('style/default.qss').read()
     retype = Main()
     retype.show()
+    #print(BookView.end)
     sys.exit(app.exec_())
