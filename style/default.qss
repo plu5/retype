@@ -1,0 +1,23 @@
+QLineEdit[accessibleName="console"] {
+	background-color: #BEBEBE;
+	color: #333;
+	border: 1px outset;
+	border-color: #4A4A4A white white;
+	selection-background-color: white;
+	selection-color: #333;
+        font-family: Courier New, Consolas;
+}
+
+QTextBrowser {
+	background-color: #F6F1DE;
+	border: 1px outset white;
+	font-family: Iowan Old Style, Courier New;
+	selection-background-color: grey;
+	font-size: 13px;
+}
+
+QLabel[accessibleName="modeline"] {
+	background-color: #DFD8CA;
+	font-family: Courier New, Consolas;
+	border: 1px outset #847250;
+}
