@@ -42,6 +42,9 @@ class Main(QMainWindow):
         exitAction = QAction('&exit', self)
         exitAction.triggered.connect(qApp.quit)
         fileMenu.addAction(exitAction)
+        optionsMenu = menubar.addMenu('&options')
+        optionsCustomiseAction = QAction('&customise retype', self)
+        optionsMenu.addAction(optionsCustomiseAction)
         switchMenu = menubar.addMenu('&switch')
         switchMainAction = QAction('&Main Menu', self)
         switchMainAction.triggered.connect(self.switchMainView)
@@ -54,7 +57,7 @@ class Main(QMainWindow):
         # these menus are temporary
 
         self.setCentralWidget(mainWidget)
-        self.setGeometry(100, 300, 800, 600)
+        self.setGeometry(-900, 300, 800, 600)
         self.setStyleSheet(qss_file)
         self.setWindowTitle('retype')
 
@@ -87,13 +90,15 @@ class BookView(QWidget):
     end = 0
     cursor = 0
     highlight = 0
+    unhighlight = 0
+    debug = 0
     tobetyped = 0
     cursorPos = 0
     def __init__(self, parent=None):
         super().__init__(parent)
 
         #global tobetyped
-        BookView.tobetyped = "text to be typed"
+        BookView.tobetyped = "text to be typed" # <i>text</i>
         
         self.displayText = QTextBrowser(self)
         #self.displayText.setHtml(str(chapters[1].content))
@@ -101,18 +106,24 @@ class BookView(QWidget):
         #self.displayText.setSource(QUrl('file:test/OEBPS/bm02.html'))
         #self.displayText.setHtml("<b>text</b> to be typed ‘’ “” –—…—\r\ntest <p>\r\ntest2</p>")
         # chapters[1].content gives ‘unexpected type 'bytes'’
-        #self.displayText.setHtml(str(chapters[1].content, 'utf-8')) # AH!
+        self.displayText.setHtml(str(chapters[1].content, 'utf-8')) # AH!
         #print(chapters[1].content)
-        self.displayText.setHtml(BookView.tobetyped)
+        #self.displayText.setHtml(BookView.tobetyped)
 
-        #BookView.end = 6
         BookView.highlight = QTextCharFormat()
         BookView.highlight.setBackground(QColor('yellow'))
+        BookView.unhighlight = QTextCharFormat()
+        BookView.unhighlight.setBackground(QColor(246, 241, 222)) #
+        #BookView.unhighlight.clearBackground()
+        BookView.debug = QTextCharFormat()
+        BookView.debug.setBackground(QColor('red'))
         #global cursor #
         BookView.cursor = QTextCursor(self.displayText.document())
         #BookView.cursor.setPosition(0, BookView.cursor.MoveAnchor)
-        BookView.cursor.setPosition(BookView.cursorPos, BookView.cursor.KeepAnchor)
-        #BookView.cursor.setPosition(BookView.end, BookView.cursor.KeepAnchor)
+        BookView.cursor.movePosition(0)
+        BookView.cursor.movePosition(4, BookView.cursor.KeepAnchor)
+        BookView.cursor.setCharFormat(BookView.debug)
+        #BookView.cursor.setPosition(10, BookView.cursor.KeepAnchor)
         #BookView.cursor.setCharFormat(BookView.highlight)
         
         self.modeline = QLabel("this will be the modeline", self)
@@ -125,8 +136,6 @@ class BookView(QWidget):
         self.layout.addWidget(self.modeline)
         self.setLayout(self.layout)
 
-        def handleEntryMyself():
-            print("hi") #?????????????????
         
 def handleEntry(): # get where it’s been called from
     global isbookview
@@ -148,12 +157,21 @@ def handleEntry(): # get where it’s been called from
             # if BookView.tobetyped[index] == console.text()[index]:
             #     print("hi")
         for index, c in enumerate(console.text()):
-            if console.text()[index] == BookView.tobetyped[index]:
-                if index == BookView.cursorPos:
-                    BookView.cursorPos += 1
-                BookView.cursor.setPosition(BookView.cursorPos,
-                                            BookView.cursor.KeepAnchor)
-                BookView.cursor.setCharFormat(BookView.highlight)
+            if index == BookView.cursorPos:
+                try:
+                    if console.text()[index] == BookView.tobetyped[index]:
+                        BookView.cursorPos += 1
+                        BookView.cursor.setPosition(BookView.cursorPos,
+                                                    BookView.cursor.KeepAnchor)
+                        BookView.cursor.mergeCharFormat(BookView.highlight)
+                except IndexError:
+                    pass
+        if len(console.text()) < BookView.cursorPos:
+            BookView.cursor.mergeCharFormat(BookView.unhighlight) # pls
+            BookView.cursorPos -= BookView.cursorPos - len(console.text())
+            BookView.cursor.setPosition(BookView.cursorPos,
+                                        BookView.cursor.KeepAnchor)
+            BookView.cursor.mergeCharFormat(BookView.highlight)
     return
 ## i feel like i’m not doing this the right way.
 ## and surely there’ll be an error when things are typed from the main view
@@ -165,9 +183,16 @@ def handleEntryReturn():
     if entry[0] == ">":
         if entry == '>switch.main': # make it case-insensitive
             retype.switchMainView()
+            console.setText('')
         if entry == '>switch.book1':
             retype.switchBookView()
-        console.setText('')
+            console.setText('')
+        if entry == '>print':
+            print('console')
+            console.setText('')
+        # if entry == '>cursor':
+        #     BookView.cursor.setPosition(1, BookView.cursor.KeepAnchor)
+        #console.setText('') # probably not good
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
