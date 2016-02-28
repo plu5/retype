@@ -92,13 +92,20 @@ class BookView(QWidget):
     highlight = 0
     unhighlight = 0
     debug = 0
+    tobetypedraw = 0 # probably doesn’t need to be class var (it can just be private)
+    tobetypedlist = 0
     tobetyped = 0
+    currentSentence = 0
     cursorPos = 0
+    linePos = 0
+    persistentPos = 0
     def __init__(self, parent=None):
         super().__init__(parent)
 
         #global tobetyped
-        BookView.tobetyped = "text to be typed" # <i>text</i>
+        #BookView.tobetyped = "text to be typed" # <i>text</i>
+        #BookView.tobetyped = strip_tags(str(chapters[1].content, 'utf-8'))
+        #print(BookView.tobetyped)
         
         self.displayText = QTextBrowser(self)
         #self.displayText.setHtml(str(chapters[1].content))
@@ -107,8 +114,21 @@ class BookView(QWidget):
         #self.displayText.setHtml("<b>text</b> to be typed ‘’ “” –—…—\r\ntest <p>\r\ntest2</p>")
         # chapters[1].content gives ‘unexpected type 'bytes'’
         self.displayText.setHtml(str(chapters[1].content, 'utf-8')) # AH!
-        #print(chapters[1].content)
+        #print(str(chapters[1].content, 'utf-8'))
         #self.displayText.setHtml(BookView.tobetyped)
+        # get display text display text
+        BookView.tobetypedraw = self.displayText.toPlainText()
+        BookView.tobetypedraw = BookView.tobetypedraw.replace('\ufffc', ' ') # with a space so we can account for it
+        BookView.tobetypedlist = BookView.tobetypedraw.splitlines()
+        #BookView.tobetypedlist = map(str.rstrip, BookView.tobetypedlist)
+        #BookView.tobetypedlist = [s.rstrip() for s in BookView.tobetypedlist] #
+        # print(BookView.tobetypedlist[0])
+        # print(BookView.tobetypedlist[0].rstrip())
+        BookView.currentSentence = BookView.tobetypedlist[BookView.linePos]
+        # split it into sentences at /n or something
+        # should do like type where it highlights the line once
+        # have a counter for current sentence and it will be the index? it’ll be tobetyped
+        # if you’re at the last character move on to the next line
 
         BookView.highlight = QTextCharFormat()
         BookView.highlight.setBackground(QColor('yellow'))
@@ -125,6 +145,7 @@ class BookView(QWidget):
         BookView.cursor.setCharFormat(BookView.debug)
         #BookView.cursor.setPosition(10, BookView.cursor.KeepAnchor)
         #BookView.cursor.setCharFormat(BookView.highlight)
+        print("debug: len(BookView.tobetypedlist) is " + str(len(BookView.tobetypedlist)))
         
         self.modeline = QLabel("this will be the modeline", self)
         self.modeline.setAccessibleName("modeline")
@@ -136,63 +157,99 @@ class BookView(QWidget):
         self.layout.addWidget(self.modeline)
         self.setLayout(self.layout)
 
+    def advanceLine():
+        BookView.linePos += 1
+        if BookView.cursorPos - BookView.persistentPos == len(BookView.currentSentence):
+            BookView.cursorPos += 1
+            print("debug: advanceLine equals currentSentence")
+        else:
+            BookView.cursorPos += len(BookView.currentSentence) + 1 # not good
+        # BookView.cursorPos = len(BookView.currentSentence) - BookView.cursorPos + BookView.persistentPos + 1
+        BookView.persistentPos += BookView.cursorPos
+        BookView.currentSentence = BookView.tobetypedlist[BookView.linePos]
+        BookView.cursor.setPosition(BookView.cursorPos, BookView.cursor.KeepAnchor)
+        BookView.cursor.mergeCharFormat(BookView.highlight)
+
+    def advanceCursor():
+        BookView.cursorPos += 1
+        BookView.cursor.setPosition(BookView.cursorPos, BookView.cursor.KeepAnchor)
+        BookView.cursor.mergeCharFormat(BookView.highlight)
+        print(BookView.cursorPos)
+
         
 def handleEntry(): # get where it’s been called from
     global isbookview
-    #global console
-    #global bookView
-    #print(console.text())
-    # entry = console.text()
-    # for index, c in enumerate(entry):
-    #     if entry[index] == tobetyped[index]
 
-    #bookView.cursor.setPosition(10, cursor.KeepAnchor)
-    #bookView.cursor.setCharFormat(highlight)
-    #print(bookView.end) # name 'bookView' is not defined
     if isbookview:
-            #self.cursor.setPosition(10, cursor.KeepAnchor)
-            #self.cursor.setCharFormat(highlight)
-        #print(BookView.end)
-        #for index, c in enumerate(BookView.tobetyped):
-            # if BookView.tobetyped[index] == console.text()[index]:
-            #     print("hi")
         for index, c in enumerate(console.text()):
-            if index == BookView.cursorPos:
+            if index + BookView.persistentPos == BookView.cursorPos: #doesnt work with multiple lines
                 try:
-                    if console.text()[index] == BookView.tobetyped[index]:
+                    if console.text()[index] == BookView.currentSentence[index]:
                         BookView.cursorPos += 1
                         BookView.cursor.setPosition(BookView.cursorPos,
                                                     BookView.cursor.KeepAnchor)
                         BookView.cursor.mergeCharFormat(BookView.highlight)
+                        #print("debug: by-char")
                 except IndexError:
+                    print("debug: indexError")
                     pass
-        if len(console.text()) < BookView.cursorPos:
+        # remove highlighting
+        #try:
+        #    if console.text()[0] != '>':
+        if len(console.text()) + BookView.persistentPos < BookView.cursorPos: #
+            try:
+                if console.text()[0] == '>':
+                    return #unfortunately once you delete > it erases all temp highlighting
+            except IndexError:
+                pass
             BookView.cursor.mergeCharFormat(BookView.unhighlight) # pls
             BookView.cursorPos -= BookView.cursorPos - len(console.text())
             BookView.cursor.setPosition(BookView.cursorPos,
                                         BookView.cursor.KeepAnchor)
             BookView.cursor.mergeCharFormat(BookView.highlight)
-    return
-## i feel like i’m not doing this the right way.
-## and surely there’ll be an error when things are typed from the main view
+        #except IndexError:
+        #    pass
+        # next line
+        if console.text() == BookView.currentSentence:
+            BookView.advanceLine()
+            print("debug: normal next line; " + BookView.currentSentence)
+            console.setText('') 
+            # while BookView.currentSentence == '':
+            #     print("debug: empty next line; " + BookView.currentSentence)
+            #     BookView.advanceLine()
+            #     console.setText('')
+            # check if all characters in sentence are white space
+            # while BookView.currentSentence.isspace():
+            #     print("debug: isspace next line")
+            #     BookView.advanceLine()
+            #     console.setText('')
+        return
 
 
 def handleEntryReturn():
     entry = console.text()
 
-    if entry[0] == ">":
-        if entry == '>switch.main': # make it case-insensitive
-            retype.switchMainView()
-            console.setText('')
-        if entry == '>switch.book1':
-            retype.switchBookView()
-            console.setText('')
-        if entry == '>print':
-            print('console')
-            console.setText('')
+    try:
+        if entry[0] == ">":
+            if entry == '>switch.main': # make it case-insensitive
+                retype.switchMainView()
+                console.setText('')
+            if entry == '>switch.book1':
+                retype.switchBookView()
+                console.setText('')
+            if entry == '>print':
+                print('console')
+                console.setText('')
+            if entry == '>advanceLine':
+                BookView.advanceLine()
+            if entry == '>advanceCursor':
+                BookView.advanceCursor()
         # if entry == '>cursor':
         #     BookView.cursor.setPosition(1, BookView.cursor.KeepAnchor)
         #console.setText('') # probably not good
+    except IndexError:
+        print("debug: handleEntryReturn.indexError")
+        pass
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
