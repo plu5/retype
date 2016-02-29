@@ -111,10 +111,9 @@ class BookView(QWidget):
         #self.displayText.setHtml(str(chapters[1].content))
         #self.displayText.setSource(QUrl('file:test/OEBPS/fm01.html'))
         #self.displayText.setSource(QUrl('file:test/OEBPS/bm02.html'))
-        #self.displayText.setHtml("<b>text</b> to be typed ‘’ “” –—…—\r\ntest <p>\r\ntest2</p>")
-        # chapters[1].content gives ‘unexpected type 'bytes'’
-        self.displayText.setHtml(str(chapters[1].content, 'utf-8')) # AH!
-        #print(str(chapters[1].content, 'utf-8'))
+        #self.displayText.setHtml("<b>text</b> to be typed ‘’ “” –—…—\r\ntest <p>\r\ntest2</p> hello anotherline<p>why</p>")
+        #self.displayText.setHtml(str(chapters[1].content, 'utf-8')) # AH!
+        self.displayText.setHtml("first line<br />second line<br />third line<br />fourth line<br />fifth line")
         #self.displayText.setHtml(BookView.tobetyped)
         # get display text display text
         BookView.tobetypedraw = self.displayText.toPlainText()
@@ -146,7 +145,7 @@ class BookView(QWidget):
         #BookView.cursor.setPosition(10, BookView.cursor.KeepAnchor)
         #BookView.cursor.setCharFormat(BookView.highlight)
         print("debug: len(BookView.tobetypedlist) is " + str(len(BookView.tobetypedlist)))
-        
+
         self.modeline = QLabel("this will be the modeline", self)
         self.modeline.setAccessibleName("modeline")
 
@@ -160,12 +159,12 @@ class BookView(QWidget):
     def advanceLine():
         BookView.linePos += 1
         if BookView.cursorPos - BookView.persistentPos == len(BookView.currentSentence):
-            BookView.cursorPos += 1
+            #BookView.cursorPos += 1
             print("debug: advanceLine equals currentSentence")
         else:
             BookView.cursorPos += len(BookView.currentSentence) + 1 # not good
         # BookView.cursorPos = len(BookView.currentSentence) - BookView.cursorPos + BookView.persistentPos + 1
-        BookView.persistentPos += BookView.cursorPos
+        BookView.persistentPos = BookView.cursorPos
         BookView.currentSentence = BookView.tobetypedlist[BookView.linePos]
         BookView.cursor.setPosition(BookView.cursorPos, BookView.cursor.KeepAnchor)
         BookView.cursor.mergeCharFormat(BookView.highlight)
@@ -173,23 +172,35 @@ class BookView(QWidget):
     def advanceCursor():
         BookView.cursorPos += 1
         BookView.cursor.setPosition(BookView.cursorPos, BookView.cursor.KeepAnchor)
+        #BookView.cursor.mergeCharFormat(BookView.highlight)
+        print(BookView.cursorPos)
+
+    def recedeCursor():
+        BookView.cursorPos -= 1
+        BookView.cursor.setPosition(BookView.cursorPos, BookView.cursor.KeepAnchor)
+        #BookView.cursor.mergeCharFormat(BookView.highlight)
+        print(BookView.cursorPos)
+
+    def updateHighlighting():
+        global isbookview
+        BookView.cursor.mergeCharFormat(BookView.unhighlight)
         BookView.cursor.mergeCharFormat(BookView.highlight)
         print(BookView.cursorPos)
 
-        
+
 def handleEntry(): # get where it’s been called from
     global isbookview
 
-    if isbookview:
+    if isbookview: # all of these are being ignored after the 2nd line
         for index, c in enumerate(console.text()):
             if index + BookView.persistentPos == BookView.cursorPos: #doesnt work with multiple lines
                 try:
-                    if console.text()[index] == BookView.currentSentence[index]:
+                    if console.text()[index] == BookView.currentSentence[index]:  # change console.text()[index] to just c?
                         BookView.cursorPos += 1
                         BookView.cursor.setPosition(BookView.cursorPos,
                                                     BookView.cursor.KeepAnchor)
                         BookView.cursor.mergeCharFormat(BookView.highlight)
-                        #print("debug: by-char")
+                        print("debug: by-char")
                 except IndexError:
                     print("debug: indexError")
                     pass
@@ -197,13 +208,13 @@ def handleEntry(): # get where it’s been called from
         #try:
         #    if console.text()[0] != '>':
         if len(console.text()) + BookView.persistentPos < BookView.cursorPos: #
-            try:
-                if console.text()[0] == '>':
-                    return #unfortunately once you delete > it erases all temp highlighting
-            except IndexError:
-                pass
+            # try:
+            #     if console.text()[0] == '>':
+            #         return #unfortunately once you delete > it erases all temp highlighting which actually doesn’t matter probably, as the cursor movement functions should be debug-only
+            # except IndexError:
+            #     pass
             BookView.cursor.mergeCharFormat(BookView.unhighlight) # pls
-            BookView.cursorPos -= BookView.cursorPos - len(console.text())
+            BookView.cursorPos = BookView.cursorPos - len(console.text()) -1 #
             BookView.cursor.setPosition(BookView.cursorPos,
                                         BookView.cursor.KeepAnchor)
             BookView.cursor.mergeCharFormat(BookView.highlight)
@@ -213,7 +224,7 @@ def handleEntry(): # get where it’s been called from
         if console.text() == BookView.currentSentence:
             BookView.advanceLine()
             print("debug: normal next line; " + BookView.currentSentence)
-            console.setText('') 
+            console.setText('')
             # while BookView.currentSentence == '':
             #     print("debug: empty next line; " + BookView.currentSentence)
             #     BookView.advanceLine()
@@ -240,10 +251,21 @@ def handleEntryReturn():
             if entry == '>print':
                 print('console')
                 console.setText('')
-            if entry == '>advanceLine':
+            if entry == '>l':
                 BookView.advanceLine()
-            if entry == '>advanceCursor':
+            if entry == '>c.f':
                 BookView.advanceCursor()
+            if entry == '>c.b':
+                BookView.recedeCursor()
+            if entry == '>h':
+                BookView.updateHighlighting()
+            if entry == '>p.f':
+                BookView.persistentPos += 1
+                print(BookView.persistentPos)
+            if entry == '>p.b':
+                BookView.persistentPos -= 1
+                print(BookView.persistentPos)
+                
         # if entry == '>cursor':
         #     BookView.cursor.setPosition(1, BookView.cursor.KeepAnchor)
         #console.setText('') # probably not good
