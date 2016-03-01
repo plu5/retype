@@ -112,8 +112,7 @@ class BookView(QWidget):
         #self.displayText.setSource(QUrl('file:test/OEBPS/fm01.html'))
         #self.displayText.setSource(QUrl('file:test/OEBPS/bm02.html'))
         #self.displayText.setHtml("<b>text</b> to be typed ‘’ “” –—…—\r\ntest <p>\r\ntest2</p> hello anotherline<p>why</p>")
-        #self.displayText.setHtml(str(chapters[1].content, 'utf-8')) # AH!
-        self.displayText.setHtml("first line<br />second line<br />third line<br />fourth line<br />fifth line")
+        self.displayText.setHtml(str(chapters[1].content, 'utf-8')) # AH!
         #self.displayText.setHtml(BookView.tobetyped)
         # get display text display text
         BookView.tobetypedraw = self.displayText.toPlainText()
@@ -159,7 +158,7 @@ class BookView(QWidget):
     def advanceLine():
         BookView.linePos += 1
         if BookView.cursorPos - BookView.persistentPos == len(BookView.currentSentence):
-            #BookView.cursorPos += 1
+            BookView.cursorPos += 1
             print("debug: advanceLine equals currentSentence")
         else:
             BookView.cursorPos += len(BookView.currentSentence) + 1 # not good
@@ -200,7 +199,7 @@ def handleEntry(): # get where it’s been called from
                         BookView.cursor.setPosition(BookView.cursorPos,
                                                     BookView.cursor.KeepAnchor)
                         BookView.cursor.mergeCharFormat(BookView.highlight)
-                        print("debug: by-char")
+                        # print("debug: by-char")
                 except IndexError:
                     print("debug: indexError")
                     pass
