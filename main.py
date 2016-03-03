@@ -53,7 +53,6 @@ class Main(QMainWindow):
         switchBookAction.triggered.connect(self.switchBookView)
         switchMenu.addAction(switchBookAction)
         helpMenu = menubar.addMenu('&help')
-        # i need to set these in a stylesheet for it to work. QMenuBar::item
         # these menus are temporary
 
         self.setCentralWidget(mainWidget)
@@ -145,6 +144,8 @@ class BookView(QWidget):
         #BookView.cursor.setCharFormat(BookView.highlight)
         print("debug: len(BookView.tobetypedlist) is " + str(len(BookView.tobetypedlist)))
 
+        #self.automaticScrolling() #
+
         self.modeline = QLabel("this will be the modeline", self)
         self.modeline.setAccessibleName("modeline")
 
@@ -186,13 +187,18 @@ class BookView(QWidget):
         BookView.cursor.mergeCharFormat(BookView.highlight)
         print(BookView.cursorPos)
 
+    def automaticScrolling(self):
+        self.displayText.ensureCursorVisible()
+        #self.displayText.setCenterOnScroll(true) # QTextBrowser object has no attribute 'SetCenterOnScroll
+        # think about how to do this
 
-def handleEntry(): # get where it’s been called from
+
+def handleEntry():
     global isbookview
 
-    if isbookview: # all of these are being ignored after the 2nd line
+    if isbookview:
         for index, c in enumerate(console.text()):
-            if index + BookView.persistentPos == BookView.cursorPos: #doesnt work with multiple lines
+            if index + BookView.persistentPos == BookView.cursorPos:
                 try:
                     if console.text()[index] == BookView.currentSentence[index]:  # change console.text()[index] to just c?
                         BookView.cursorPos += 1
@@ -203,36 +209,30 @@ def handleEntry(): # get where it’s been called from
                 except IndexError:
                     print("debug: indexError")
                     pass
+
         # remove highlighting
-        #try:
-        #    if console.text()[0] != '>':
         if len(console.text()) + BookView.persistentPos < BookView.cursorPos: #
-            # try:
-            #     if console.text()[0] == '>':
-            #         return #unfortunately once you delete > it erases all temp highlighting which actually doesn’t matter probably, as the cursor movement functions should be debug-only
-            # except IndexError:
-            #     pass
             BookView.cursor.mergeCharFormat(BookView.unhighlight) # pls
-            BookView.cursorPos = BookView.cursorPos - len(console.text()) -1 #
+            BookView.cursorPos = BookView.persistentPos + len(console.text()) #
             BookView.cursor.setPosition(BookView.cursorPos,
                                         BookView.cursor.KeepAnchor)
             BookView.cursor.mergeCharFormat(BookView.highlight)
-        #except IndexError:
-        #    pass
-        # next line
+            print("debug: remove highlighting " + str(BookView.cursorPos))
+
         if console.text() == BookView.currentSentence:
             BookView.advanceLine()
             print("debug: normal next line; " + BookView.currentSentence)
             console.setText('')
-            # while BookView.currentSentence == '':
-            #     print("debug: empty next line; " + BookView.currentSentence)
-            #     BookView.advanceLine()
-            #     console.setText('')
+            while BookView.currentSentence == '':
+                print("debug: empty next line; " + BookView.currentSentence)
+                BookView.advanceLine()
+                console.setText('')
             # check if all characters in sentence are white space
-            # while BookView.currentSentence.isspace():
-            #     print("debug: isspace next line")
-            #     BookView.advanceLine()
-            #     console.setText('')
+            while BookView.currentSentence.isspace():
+                print("debug: isspace next line")
+                BookView.advanceLine()
+                console.setText('')
+        #BookView.automaticScrolling()
         return
 
 
@@ -277,5 +277,5 @@ if __name__ == '__main__':
     qss_file = open('style/default.qss').read()
     retype = Main()
     retype.show()
-    #print(BookView.end)
+
     sys.exit(app.exec_())
