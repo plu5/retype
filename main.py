@@ -2,8 +2,8 @@ import sys
 from PyQt5.QtWidgets import (QPushButton, QMainWindow, QApplication, QWidget,
                              QDialog, QStackedWidget, QLineEdit, QHBoxLayout,
                              QVBoxLayout, QLabel, qApp, QAction, QTextBrowser,
-                             QTextEdit)
-from PyQt5.QtCore import Qt, QUrl#, QString
+                             QTextEdit, QMessageBox)
+from PyQt5.QtCore import Qt, QUrl, QObject, QEvent#, QString
 from PyQt5.QtGui import QTextCursor, QTextCharFormat, QColor
 from ebooklib import epub
 import ebooklib
@@ -23,10 +23,11 @@ class Main(QMainWindow):
         super().__init__(parent)
         global console # unnecessary? only at the beginning of functions?
 
-        console = QLineEdit(self)
-        console.setAccessibleName("console")
-        console.textChanged.connect(handleEntry)
-        console.returnPressed.connect(handleEntryReturn)
+        # console = QLineEdit(self)
+        # console.setAccessibleName("console")
+        # console.textChanged.connect(handleEntry)
+        # console.returnPressed.connect(handleEntryReturn)
+        console = Console(self)
 
         self.stacked = QStackedWidget()
         self.consistentLayout = QVBoxLayout()
@@ -53,12 +54,20 @@ class Main(QMainWindow):
         switchBookAction.triggered.connect(self.switchBookView)
         switchMenu.addAction(switchBookAction)
         helpMenu = menubar.addMenu('&help')
-        # these menus are temporary
 
         self.setCentralWidget(mainWidget)
         self.setGeometry(-900, 300, 800, 600)
         self.setStyleSheet(qss_file)
         self.setWindowTitle('retype')
+
+    def keyPressEvent(self, event):
+        if event.key() == Qt.Key_V and event.modifiers() == Qt.ControlModifier:
+            BookView.displayText.verticalScrollBar().setValue(
+                BookView.displayText.verticalScrollBar().value() + 500)
+        if event.key() == Qt.Key_V and event.modifiers() == Qt.AltModifier:
+            BookView.displayText.verticalScrollBar().setValue(
+                BookView.displayText.verticalScrollBar().value() - 500)
+        QMainWindow.keyPressEvent(self, event) # “pass the event up the chain”
 
     def switchMainView(self):
         global isbookview
@@ -75,6 +84,15 @@ class Main(QMainWindow):
         isbookview = 1
 
 
+class Console(QLineEdit):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setAccessibleName("console")
+        self.textChanged.connect(handleEntry)
+        self.returnPressed.connect(handleEntryReturn)
+        # TODO: key press event
+
+
 class MainView(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -86,12 +104,12 @@ class MainView(QWidget):
 
 
 class BookView(QWidget):
-    end = 0
+    displayText = 0
     cursor = 0
+    endcursor = 0
     highlight = 0
     unhighlight = 0
     debug = 0
-    tobetypedraw = 0 # probably doesn’t need to be class var (it can just be private)
     tobetypedlist = 0
     tobetyped = 0
     currentSentence = 0
@@ -100,32 +118,18 @@ class BookView(QWidget):
     persistentPos = 0
     def __init__(self, parent=None):
         super().__init__(parent)
-
-        #global tobetyped
-        #BookView.tobetyped = "text to be typed" # <i>text</i>
-        #BookView.tobetyped = strip_tags(str(chapters[1].content, 'utf-8'))
-        #print(BookView.tobetyped)
         
-        self.displayText = QTextBrowser(self)
-        #self.displayText.setHtml(str(chapters[1].content))
-        #self.displayText.setSource(QUrl('file:test/OEBPS/fm01.html'))
-        #self.displayText.setSource(QUrl('file:test/OEBPS/bm02.html'))
-        #self.displayText.setHtml("<b>text</b> to be typed ‘’ “” –—…—\r\ntest <p>\r\ntest2</p> hello anotherline<p>why</p>")
-        self.displayText.setHtml(str(chapters[1].content, 'utf-8')) # AH!
-        #self.displayText.setHtml(BookView.tobetyped)
-        # get display text display text
-        BookView.tobetypedraw = self.displayText.toPlainText()
-        BookView.tobetypedraw = BookView.tobetypedraw.replace('\ufffc', ' ') # with a space so we can account for it
-        BookView.tobetypedlist = BookView.tobetypedraw.splitlines()
+        BookView.displayText = QTextBrowser(self)
+        BookView.displayText.setHtml(str(chapters[1].content, 'utf-8'))
+
+        tobetypedraw = BookView.displayText.toPlainText()
+        tobetypedraw = tobetypedraw.replace('\ufffc', ' ') # with a space so we can account for it
+        BookView.tobetypedlist = tobetypedraw.splitlines()
         #BookView.tobetypedlist = map(str.rstrip, BookView.tobetypedlist)
         #BookView.tobetypedlist = [s.rstrip() for s in BookView.tobetypedlist] #
         # print(BookView.tobetypedlist[0])
         # print(BookView.tobetypedlist[0].rstrip())
         BookView.currentSentence = BookView.tobetypedlist[BookView.linePos]
-        # split it into sentences at /n or something
-        # should do like type where it highlights the line once
-        # have a counter for current sentence and it will be the index? it’ll be tobetyped
-        # if you’re at the last character move on to the next line
 
         BookView.highlight = QTextCharFormat()
         BookView.highlight.setBackground(QColor('yellow'))
@@ -135,7 +139,7 @@ class BookView(QWidget):
         BookView.debug = QTextCharFormat()
         BookView.debug.setBackground(QColor('red'))
         #global cursor #
-        BookView.cursor = QTextCursor(self.displayText.document())
+        BookView.cursor = QTextCursor(BookView.displayText.document())
         #BookView.cursor.setPosition(0, BookView.cursor.MoveAnchor)
         BookView.cursor.movePosition(0)
         BookView.cursor.movePosition(4, BookView.cursor.KeepAnchor)
@@ -144,7 +148,7 @@ class BookView(QWidget):
         #BookView.cursor.setCharFormat(BookView.highlight)
         print("debug: len(BookView.tobetypedlist) is " + str(len(BookView.tobetypedlist)))
 
-        #self.automaticScrolling() #
+        BookView.endcursor = QTextCursor(BookView.displayText.document())
 
         self.modeline = QLabel("this will be the modeline", self)
         self.modeline.setAccessibleName("modeline")
@@ -152,7 +156,7 @@ class BookView(QWidget):
         self.layout = QVBoxLayout()
         self.layout.setContentsMargins(0, 0, 0, 0)
         self.layout.setSpacing(0)
-        self.layout.addWidget(self.displayText)
+        self.layout.addWidget(BookView.displayText)
         self.layout.addWidget(self.modeline)
         self.setLayout(self.layout)
 
@@ -187,16 +191,22 @@ class BookView(QWidget):
         BookView.cursor.mergeCharFormat(BookView.highlight)
         print(BookView.cursorPos)
 
-    def automaticScrolling(self):
-        self.displayText.ensureCursorVisible()
+    def automaticScrolling(): # wip
         #self.displayText.setCenterOnScroll(true) # QTextBrowser object has no attribute 'SetCenterOnScroll
         # think about how to do this
+        #BookView.displayText.textCursor().movePosition(BookView.cursorPos)
+        #BookView.endcursor.setPosition(10000)#BookView.cursorPos + 50) #????????????
+        BookView.endcursor.setPosition(BookView.cursorPos - 300)
+        print(BookView.endcursor.position())
+        BookView.displayText.setTextCursor(BookView.endcursor) #
+        BookView.displayText.ensureCursorVisible() # seemingly does nothing
 
 
 def handleEntry():
     global isbookview
 
     if isbookview:
+        # by-char
         for index, c in enumerate(console.text()):
             if index + BookView.persistentPos == BookView.cursorPos:
                 try:
@@ -217,19 +227,16 @@ def handleEntry():
             BookView.cursor.setPosition(BookView.cursorPos,
                                         BookView.cursor.KeepAnchor)
             BookView.cursor.mergeCharFormat(BookView.highlight)
-            print("debug: remove highlighting " + str(BookView.cursorPos))
+            # print("debug: remove highlighting " + str(BookView.cursorPos))
 
+        # next line
         if console.text() == BookView.currentSentence:
             BookView.advanceLine()
             print("debug: normal next line; " + BookView.currentSentence)
             console.setText('')
-            while BookView.currentSentence == '':
-                print("debug: empty next line; " + BookView.currentSentence)
-                BookView.advanceLine()
-                console.setText('')
-            # check if all characters in sentence are white space
-            while BookView.currentSentence.isspace():
-                print("debug: isspace next line")
+            # skip lines composed entirely of whitespace and empty lines
+            while BookView.currentSentence.isspace() or BookView.currentSentence == '':
+                print("debug: isspace or empty next line")
                 BookView.advanceLine()
                 console.setText('')
         #BookView.automaticScrolling()
@@ -264,6 +271,8 @@ def handleEntryReturn():
             if entry == '>p.b':
                 BookView.persistentPos -= 1
                 print(BookView.persistentPos)
+            if entry == '>s':
+                BookView.automaticScrolling()
                 
         # if entry == '>cursor':
         #     BookView.cursor.setPosition(1, BookView.cursor.KeepAnchor)
@@ -274,6 +283,7 @@ def handleEntryReturn():
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
+
     qss_file = open('style/default.qss').read()
     retype = Main()
     retype.show()
