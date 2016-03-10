@@ -21,12 +21,8 @@ for document in book.get_items_of_type(ebooklib.ITEM_DOCUMENT):
 class Main(QMainWindow):
     def __init__(self, parent=None):
         super().__init__(parent)
-        global console # unnecessary? only at the beginning of functions?
 
-        # console = QLineEdit(self)
-        # console.setAccessibleName("console")
-        # console.textChanged.connect(handleEntry)
-        # console.returnPressed.connect(handleEntryReturn)
+        global console
         console = Console(self)
 
         self.stacked = QStackedWidget()
@@ -60,15 +56,6 @@ class Main(QMainWindow):
         self.setStyleSheet(qss_file)
         self.setWindowTitle('retype')
 
-    def keyPressEvent(self, event):
-        if event.key() == Qt.Key_V and event.modifiers() == Qt.ControlModifier:
-            BookView.displayText.verticalScrollBar().setValue(
-                BookView.displayText.verticalScrollBar().value() + 500)
-        if event.key() == Qt.Key_V and event.modifiers() == Qt.AltModifier:
-            BookView.displayText.verticalScrollBar().setValue(
-                BookView.displayText.verticalScrollBar().value() - 500)
-        QMainWindow.keyPressEvent(self, event) # “pass the event up the chain”
-
     def switchMainView(self):
         global isbookview
         mainView = MainView(self)
@@ -84,13 +71,31 @@ class Main(QMainWindow):
         isbookview = 1
 
 
+class EventFilter(QObject):
+    def eventFilter(self, source, event):
+        if(event.type() == QEvent.KeyPress):
+            if event.key() == Qt.Key_V and event.modifiers() == Qt.ControlModifier:
+                BookView.displayText.verticalScrollBar().setValue(
+                    BookView.displayText.verticalScrollBar().value() + 500)
+                return True
+            if event.key() == Qt.Key_V and event.modifiers() == Qt.AltModifier:
+                BookView.displayText.verticalScrollBar().setValue(
+                    BookView.displayText.verticalScrollBar().value() - 500)
+                return True
+            else:
+                return super().eventFilter(source, event)
+        else:
+            return super().eventFilter(source, event)
+
+
 class Console(QLineEdit):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setAccessibleName("console")
         self.textChanged.connect(handleEntry)
         self.returnPressed.connect(handleEntryReturn)
-        # TODO: key press event
+        self.consoleFilter = EventFilter()
+        self.installEventFilter(self.consoleFilter)        
 
 
 class MainView(QWidget):
@@ -153,6 +158,8 @@ class BookView(QWidget):
         self.modeline = QLabel("this will be the modeline", self)
         self.modeline.setAccessibleName("modeline")
 
+        self.bookviewFilter = EventFilter()
+        self.installEventFilter(self.bookviewFilter)
         self.layout = QVBoxLayout()
         self.layout.setContentsMargins(0, 0, 0, 0)
         self.layout.setSpacing(0)
