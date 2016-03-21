@@ -10,9 +10,9 @@ class Modeline(QWidget):
         self.setMinimumSize(1, 17) # 16, changed to fit border
         self.cursorPos = 0
         self.title = ""
-        self.linePos = 12
-        self.chapPos = 1
-        self.chapTotal = 5
+        self.linePos = 0
+        self.chapPos = 0
+        self.chapTotal = 0
         self.percentage = 0
 
     def setCursorPos(self, value):
@@ -60,7 +60,7 @@ class Modeline(QWidget):
         positionCursorPos = positionLinePos + elementWidth['linePos'] + padding
         positionPosSeparator = positionLinePos + elementWidth['linePos']
         positionTitle = positionCursorPos + elementWidth['cursorPos'] + 3*padding #
-        positionChapPretext = positionTitle + elementWidth['title'] + padding
+        positionChapPretext = positionTitle + elementWidth['title'] + 3*padding
         positionChapPos = positionChapPretext + elementWidth['chapPretext']
         positionChapTotal = positionChapPos + elementWidth['chapPos'] + padding
         positionChapSeparator = (positionChapPos + positionChapTotal) / 2
@@ -87,7 +87,7 @@ class Modeline(QWidget):
         qp.drawRect(0, 1, separatorStart1, 17) #rect fill
         
         # secondsep
-        separatorStart2 = positionChapTotal + elementWidth['chapTotal'] + padding #
+        separatorStart2 = positionTitle + elementWidth['title'] + padding#positionChapTotal + elementWidth['chapTotal'] + padding #
         qp.drawRect(separatorStart2, 1, width, 17)
         qp.setPen(modelineColour1)
         qp.setBrush(modelineColour1)

@@ -10,14 +10,10 @@ import ebooklib
 import os
 from modeline import Modeline
 
-book = epub.read_epub('test.epub')
+book = 0
 chapters = []
-title = book.title
-for document in book.get_items_of_type(ebooklib.ITEM_DOCUMENT):
-    #print(document.content)
-    chapters.append(document)
-#print(book.get_items_of_type(ebooklib.ITEM_DOCUMENT))
-#print(chapters[0].content)
+title = "No book loaded"
+
 pathlist = []
 for root, dirs, files in os.walk("library"):
                     for f in files:
@@ -81,11 +77,20 @@ class Main(QMainWindow):
 
     def loadBook(self, path):#path):
         global book, chapters, title
-        book = epub.read_epub(path)
-        chapters = []
+        # book = epub.read_epub(path)
+        # chapters = []
+        # title = book.title
+        # for document in book.get_items_of_type(ebooklib.ITEM_DOCUMENT):
+        #     chapters.append(document)
+        # Main.switchBookView(self)
+        book = epub.read_epub('test.epub')
         title = book.title
         for document in book.get_items_of_type(ebooklib.ITEM_DOCUMENT):
             chapters.append(document)
+        try:
+            BookView.displayText.setHtml(str(chapters[1].content, 'utf-8'))
+        except IndexError:
+            BookView.displayText.setHtml("No book loaded")
         Main.switchBookView(self)
 
 
@@ -132,7 +137,7 @@ class BookView(QWidget):
     #     persistentPos = 0 # should these be object vars instead of class?
     displayText, cursor, endcursor, highlight, unhighlight, debug, \
         tobetypedlist, tobetyped, currentSentence, cursorPos, linePos, \
-        persistentPos = [0] * 12
+        persistentPos, modeline = [0] * 13
     # cursor = 0
     # endcursor = 0
     # highlight = 0
@@ -148,7 +153,10 @@ class BookView(QWidget):
         super().__init__(parent)
         
         BookView.displayText = QTextBrowser(self)
-        BookView.displayText.setHtml(str(chapters[1].content, 'utf-8'))
+        try:
+            BookView.displayText.setHtml(str(chapters[1].content, 'utf-8'))
+        except IndexError:
+            BookView.displayText.setHtml("No book loaded")
 
         tobetypedraw = BookView.displayText.toPlainText()
         tobetypedraw = tobetypedraw.replace('\ufffc', ' ') # with a space so we can account for it
@@ -174,12 +182,15 @@ class BookView(QWidget):
         BookView.cursor.setCharFormat(BookView.debug)
         #BookView.cursor.setPosition(10, BookView.cursor.KeepAnchor)
         #BookView.cursor.setCharFormat(BookView.highlight)
-        print("debug: len(BookView.tobetypedlist) is " + str(len(BookView.tobetypedlist)))
+        ##print("debug: len(BookView.tobetypedlist) is " + str(len(BookView.tobetypedlist)))
 
         BookView.endcursor = QTextCursor(BookView.displayText.document())
 
         #self.modeline = QLabel("<i>"+title+"</i>" + " - " + str(BookView.cursorPos), self)
         #self.modeline.setAccessibleName("modeline")
+        BookView.modeline = Modeline(self) #
+        BookView.modeline.setTitle(title)
+        BookView.modeline.setCursorPos(BookView.cursorPos)
 
         self.bookviewFilter = EventFilter()
         self.installEventFilter(self.bookviewFilter)
@@ -187,11 +198,13 @@ class BookView(QWidget):
         self.layout.setContentsMargins(0, 0, 0, 0)
         self.layout.setSpacing(0) # pls
         self.layout.addWidget(BookView.displayText)
-        self.modeline = Modeline(self) #
-        self.modeline.setTitle("This is a Title But Even Longer")
-        self.modeline.setCursorPos(59)
-        self.layout.addWidget(self.modeline)
+        self.layout.addWidget(BookView.modeline)
         self.setLayout(self.layout)
+
+    def updateModeline():
+        BookView.modeline.setCursorPos(BookView.cursorPos)
+        BookView.modeline.setLinePos(BookView.linePos)        
+        BookView.modeline.repaint()
 
     def advanceLine():
         BookView.linePos += 1
@@ -205,6 +218,7 @@ class BookView(QWidget):
         BookView.currentSentence = BookView.tobetypedlist[BookView.linePos]
         BookView.cursor.setPosition(BookView.cursorPos, BookView.cursor.KeepAnchor)
         BookView.cursor.mergeCharFormat(BookView.highlight)
+        BookView.updateModeline()
 
     def advanceCursor():
         BookView.cursorPos += 1
@@ -248,6 +262,7 @@ def handleEntry():
                         BookView.cursor.setPosition(BookView.cursorPos,
                                                     BookView.cursor.KeepAnchor)
                         BookView.cursor.mergeCharFormat(BookView.highlight)
+                        BookView.updateModeline()
                         # print("debug: by-char")
                 except IndexError:
                     print("debug: indexError")
@@ -260,6 +275,7 @@ def handleEntry():
             BookView.cursor.setPosition(BookView.cursorPos,
                                         BookView.cursor.KeepAnchor)
             BookView.cursor.mergeCharFormat(BookView.highlight)
+            BookView.updateModeline()
             # print("debug: remove highlighting " + str(BookView.cursorPos))
 
         # next line
@@ -267,6 +283,7 @@ def handleEntry():
             BookView.advanceLine()
             print("debug: normal next line; " + BookView.currentSentence)
             console.setText('')
+            BookView.updateModeline()
             # skip lines composed entirely of whitespace and empty lines
             while BookView.currentSentence.isspace() or BookView.currentSentence == '':
                 print("debug: isspace or empty next line")
@@ -278,49 +295,38 @@ def handleEntry():
 
 def handleEntryReturn():
     entry = console.text()
-
-    try:
-        if entry[0] == ">":
-            if entry == '>switch.main': # make it case-insensitive
-                retype.switchMainView()
-                console.setText('')
-            if entry == '>switch.book1':
-                retype.switchBookView()
-                console.setText('')
-            if entry == '>print':
-                print('console')
-                console.setText('')
-            if entry == '>l':
-                BookView.advanceLine()
-            if entry == '>c.f':
-                BookView.advanceCursor()
-            if entry == '>c.b':
-                BookView.recedeCursor()
-            if entry == '>h':
-                BookView.updateHighlighting()
-            if entry == '>p.f':
-                BookView.persistentPos += 1
-                print(BookView.persistentPos)
-            if entry == '>p.b':
-                BookView.persistentPos -= 1
-                print(BookView.persistentPos)
-            if entry == '>s':
-                BookView.automaticScrolling()
-            if entry == '>file':
+    if entry.startswith(">"):
+        e = entry.lower()
+        if e[1:] == 'switch-main':
+            retype.switchMainView()
+        elif e[1:] == 'switch-book': # debug
+            retype.switchBookView()
+        elif e[1:] == 'l': # debug?
+            BookView.advanceLine()
+        elif e[1:] == 'cf': # debug
+            BookView.advanceCursor()
+        elif e[1:] == 'cb': # debug
+            BookView.recedeCursor()
+        elif e[1:] == 'h': # debug
+            BookView.updateHighlighting()
+        elif e[1:] == 'pf': # debug
+            BookView.persistentPos += 1
+            print(BookView.persistentPos)
+        elif e[1:] == 'pb': # debug
+            BookView.persistentPos -= 1
+            print(BookView.persistentPos)
+        elif e[1:] == 's': # debug
+            BookView.automaticScrolling()
+        elif e[1:] == 'file': # debug
                 # for root, dirs, files in os.walk("library"):
                 #     for f in files:
                 #         if f.lower().endswith(".epub"):
                 #             print(os.path.join(root, f))
-                print(pathlist)
-            if entry == '>load':
-                Main.loadBook(retype, pathlist[1])
-                
-        # if entry == '>cursor':
-        #     BookView.cursor.setPosition(1, BookView.cursor.KeepAnchor)
-        #console.setText('') # probably not good
-    except IndexError:
-        print("debug: handleEntryReturn.indexError")
-        pass
+            print(pathlist)
+        elif e[1:] == 'load': # debug
+            Main.loadBook(retype, pathlist[1])
+        console.setText('')
+
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
