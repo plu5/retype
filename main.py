@@ -7,6 +7,8 @@ from PyQt5.QtCore import Qt, QUrl, QObject, QEvent#, QString
 from PyQt5.QtGui import QTextCursor, QTextCharFormat, QColor
 from ebooklib import epub
 import ebooklib
+import os
+from modeline import Modeline
 
 book = epub.read_epub('test.epub')
 chapters = []
@@ -16,6 +18,11 @@ for document in book.get_items_of_type(ebooklib.ITEM_DOCUMENT):
     chapters.append(document)
 #print(book.get_items_of_type(ebooklib.ITEM_DOCUMENT))
 #print(chapters[0].content)
+pathlist = []
+for root, dirs, files in os.walk("library"):
+                    for f in files:
+                        if f.lower().endswith(".epub"):
+                            pathlist.append(os.path.join(root, f))
 
 
 class Main(QMainWindow):
@@ -28,10 +35,12 @@ class Main(QMainWindow):
         self.stacked = QStackedWidget()
         self.consistentLayout = QVBoxLayout()
         self.consistentLayout.setContentsMargins(0, 0, 0, 0)
+        self.consistentLayout.setSpacing(0) #
         self.consistentLayout.addWidget(self.stacked)
         self.consistentLayout.addWidget(console)
         mainWidget = QWidget()
         mainWidget.setLayout(self.consistentLayout)
+        self.switchMainView()
         self.switchBookView() #
 
         menubar = self.menuBar()
@@ -69,6 +78,15 @@ class Main(QMainWindow):
         self.stacked.addWidget(bookView)
         self.stacked.setCurrentWidget(bookView)
         isbookview = 1
+
+    def loadBook(self, path):#path):
+        global book, chapters, title
+        book = epub.read_epub(path)
+        chapters = []
+        title = book.title
+        for document in book.get_items_of_type(ebooklib.ITEM_DOCUMENT):
+            chapters.append(document)
+        Main.switchBookView(self)
 
 
 class EventFilter(QObject):
@@ -109,18 +127,23 @@ class MainView(QWidget):
 
 
 class BookView(QWidget):
-    displayText = 0
-    cursor = 0
-    endcursor = 0
-    highlight = 0
-    unhighlight = 0
-    debug = 0
-    tobetypedlist = 0
-    tobetyped = 0
-    currentSentence = 0
-    cursorPos = 0
-    linePos = 0
-    persistentPos = 0
+    # displayText, cursor, endcursor, highlight, unhighlight, debug, \
+    #     tobetypedlist, tobetyped, currentSentence, cursorPos, linePos, \
+    #     persistentPos = 0 # should these be object vars instead of class?
+    displayText, cursor, endcursor, highlight, unhighlight, debug, \
+        tobetypedlist, tobetyped, currentSentence, cursorPos, linePos, \
+        persistentPos = [0] * 12
+    # cursor = 0
+    # endcursor = 0
+    # highlight = 0
+    # unhighlight = 0
+    # debug = 0
+    # tobetypedlist = 0
+    # tobetyped = 0
+    # currentSentence = 0
+    # cursorPos = 0
+    # linePos = 0
+    # persistentPos = 0
     def __init__(self, parent=None):
         super().__init__(parent)
         
@@ -155,15 +178,18 @@ class BookView(QWidget):
 
         BookView.endcursor = QTextCursor(BookView.displayText.document())
 
-        self.modeline = QLabel("this will be the modeline", self)
-        self.modeline.setAccessibleName("modeline")
+        #self.modeline = QLabel("<i>"+title+"</i>" + " - " + str(BookView.cursorPos), self)
+        #self.modeline.setAccessibleName("modeline")
 
         self.bookviewFilter = EventFilter()
         self.installEventFilter(self.bookviewFilter)
         self.layout = QVBoxLayout()
         self.layout.setContentsMargins(0, 0, 0, 0)
-        self.layout.setSpacing(0)
+        self.layout.setSpacing(0) # pls
         self.layout.addWidget(BookView.displayText)
+        self.modeline = Modeline(self) #
+        self.modeline.setTitle("This is a Title But Even Longer")
+        self.modeline.setCursorPos(59)
         self.layout.addWidget(self.modeline)
         self.setLayout(self.layout)
 
@@ -280,6 +306,14 @@ def handleEntryReturn():
                 print(BookView.persistentPos)
             if entry == '>s':
                 BookView.automaticScrolling()
+            if entry == '>file':
+                # for root, dirs, files in os.walk("library"):
+                #     for f in files:
+                #         if f.lower().endswith(".epub"):
+                #             print(os.path.join(root, f))
+                print(pathlist)
+            if entry == '>load':
+                Main.loadBook(retype, pathlist[1])
                 
         # if entry == '>cursor':
         #     BookView.cursor.setPosition(1, BookView.cursor.KeepAnchor)
