@@ -1,8 +1,9 @@
-import sys
-from PyQt5.QtWidgets import (QApplication, QWidget, QSlider, QVBoxLayout,
-                             QTextBrowser)
+# not sure views is a good place for it
+# clean this up
+from PyQt5.QtWidgets import QWidget
 from PyQt5.QtGui import QPainter, QFont, QColor, QPen
-from PyQt5.QtCore import Qt, QObject, pyqtSignal
+from PyQt5.QtCore import Qt, pyqtSignal
+
 
 class Modeline(QWidget):
     def __init__(self, parent=None):
@@ -35,7 +36,7 @@ class Modeline(QWidget):
         qp.begin(self)
         width = self.size().width()
         height = self.size().height()
-        font = QFont('Courier New', 9) # change to a font that’s available on all systems?
+        font = QFont('Monospace', 9) # change to a font that’s available on all systems? # courier new
         qp.setFont(font)
         fontHeight = qp.fontMetrics().ascent() - qp.fontMetrics().descent() - 1
         fontVerticalMiddle = (height + fontHeight) / 2
@@ -117,47 +118,3 @@ class Modeline(QWidget):
         qp.drawText(positionTitle, fontVerticalMiddle, str(self.title))
 
         qp.end()
-
-
-# class Communicate(QObject):
-#     update = pyqtSignal(int)
-
-
-# class Example(QWidget):
-#     title = "book title"
-#     # maybe in actual retype the title and book should be class variables
-#     cursorPos = 5
-#     def __init__(self):
-#         super().__init__()
-#         slider = QSlider(Qt.Horizontal, self)
-#         slider.setFocusPolicy(Qt.NoFocus)
-#         slider.setRange(1, 750)
-# #        slider.setGeometry(30, 50, 200, 15)
-#         slider.valueChanged[int].connect(self.changeValue)
-#         self.displayText = QTextBrowser(self)
-#         self.displayText.setText("2016-03-16 20:42")
-#         self.modeline = Modeline(self)
-#         self.c = Communicate()
-#         self.c.update[int].connect(self.modeline.setValue)
-
-#         self.qvlayout = QVBoxLayout()
-#         self.qvlayout.setContentsMargins(0, 0, 0, 0)
-#         self.qvlayout.setSpacing(0) # works
-#         self.qvlayout.addWidget(self.displayText)
-#         self.qvlayout.addWidget(self.modeline)
-#         self.qvlayout.addWidget(slider)
-        
-#         self.setGeometry(300, 300, 390, 210)
-#         self.setLayout(self.qvlayout)
-#         self.setWindowTitle('testing custom widget')
-#         self.show()
-
-#     def changeValue(self, value):
-#         self.c.update.emit(value)
-#         self.modeline.repaint()
-
-
-# if __name__ == '__main__':
-#     app = QApplication(sys.argv)
-#     ex = Example()
-#     sys.exit(app.exec_())
