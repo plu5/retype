@@ -4,8 +4,8 @@ from ebooklib import epub, ITEM_DOCUMENT
 
 
 class LibraryController(object):  # bookcontroller?
-    def __init__(self, view):
-        self._view = view  # ?
+    def __init__(self):#, view):
+        #self._view = view  # ?
         self._library_path = getLibraryPath()
         self._book_list = self.indexLibrary(self._library_path)
 
@@ -21,9 +21,10 @@ class LibraryController(object):  # bookcontroller?
             book_list[i] = book_path_list[i]
         return book_list
 
-    def loadBook(self, book):
+    def loadBook(self, internal_name):
         # should instantiate a bookwrapper
-        pass
+        book = BookWrapper(self._book_list[internal_name])
+        return book
 
 
 class BookWrapper(object):

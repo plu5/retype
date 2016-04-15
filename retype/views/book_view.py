@@ -4,21 +4,22 @@ from PyQt5.QtCore import (pyqtSignal) #
 import os #
 from resource_handler import getLibraryPath
 from views.modeline import Modeline
-from controllers.library import BookWrapper
+#from controllers.library import BookWrapper, LibraryController
 
 
 class BookView(QWidget):
     switchViewSignal = pyqtSignal(int)
 
-    def __init__(self, main_win, parent=None):
+    def __init__(self, main_win, library, parent=None):
         super().__init__(parent)
+        self._main_win = main_win
+        self._library = library
         self._initUI()
 
     def _initUI(self):
         self.display_text = QTextBrowser(self)
-        self.bookwrapper = BookWrapper('/cygdrive/b/google~1/dev/'
-                                       'retype/library/test.epub')
-        self.display_text.setHtml(str(self.bookwrapper.chapters[1].content, 'utf-8')) #  should probably be a function to do this more easily, wrapped with try except
+
+        self.loadBook(1)
 
         self._initModeline()
 
@@ -38,3 +39,13 @@ class BookView(QWidget):
 
     def _updateModeline(self):  # not _?
         pass
+
+    def _setContents(self, content):
+        try:
+            self.display_text.setHtml(str(content, 'utf-8'))
+        except IndexError:
+            self.display_text.setHtml("No book loaded")
+
+    def loadBook(self, book_name):
+        self.book = self._library.loadBook(book_name)
+        self._setContents(self.book.chapters[1].content)

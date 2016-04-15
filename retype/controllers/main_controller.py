@@ -3,6 +3,7 @@ from PyQt5.QtWidgets import (qApp)
 from PyQt5.QtCore import (QObject)
 from views import ShelfView, BookView
 from controllers.menu_controller import MenuController
+from controllers.library import LibraryController
 
 
 class View(Enum):
@@ -20,14 +21,15 @@ class MainController(QObject):
         self._window.switchViewSignal.connect(self.switchView)
         #self._view = view
         # this will have settings, qss etc
+        self._initLibrary()
+        self._initMenuBar()
         self._instantiateViews()
         self._initView()
-        self._initMenuBar()
 
     def _instantiateViews(self):
         self.views[View.shelfview] = ShelfView(self._window)
         self.views[View.shelfview].switchViewSignal.connect(self.switchView)
-        self.views[View.bookview] = BookView(self._window)
+        self.views[View.bookview] = BookView(self._window, self._library)
         self.views[View.bookview].switchViewSignal.connect(self.switchView)
 
     def _initView(self, view=View.shelfview):
@@ -52,3 +54,6 @@ class MainController(QObject):
 
     def exit(self):
         qApp.quit
+
+    def _initLibrary(self):
+        self._library = LibraryController()
