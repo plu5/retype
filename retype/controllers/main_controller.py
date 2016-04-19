@@ -12,24 +12,24 @@ class View(Enum):
 
 
 class MainController(QObject):
-    #view = View()
     views = {}
 
     def __init__(self, window):
         super().__init__()
         self._window = window
         self._window.switchViewSignal.connect(self.switchView)
-        #self._view = view
+
         # this will have settings, qss etc
         self._initLibrary()
         self._initMenuBar()
         self._instantiateViews()
         self._initView()
+        self._connectConsole()
 
     def _instantiateViews(self):
         self.views[View.shelfview] = ShelfView(self._window)
         self.views[View.shelfview].switchViewSignal.connect(self.switchView)
-        self.views[View.bookview] = BookView(self._window, self._library)
+        self.views[View.bookview] = BookView(self._window, self)
         self.views[View.bookview].switchViewSignal.connect(self.switchView)
 
     def _initView(self, view=View.shelfview):
@@ -40,8 +40,8 @@ class MainController(QObject):
     def getView(self):
         return self._view
 
-    def switchView(self, intview):###
-        #self._initView(view)
+    def switchView(self, intview):
+        """gets the view instance and calls _initView with it"""
         self._initView(View(intview))
 
     def show(self):
@@ -56,4 +56,12 @@ class MainController(QObject):
         qApp.quit
 
     def _initLibrary(self):
-        self._library = LibraryController()
+        self._library = LibraryController(self)
+
+    def loadBook(self, book_name=0):
+        bookview = self.views[View.bookview]
+        self._library.setBook(book_name, bookview)
+
+    def _connectConsole(self):
+        console = self._window.console
+        console.loadBookSignal.connect(self.loadBook)

@@ -10,16 +10,19 @@ from views.modeline import Modeline
 class BookView(QWidget):
     switchViewSignal = pyqtSignal(int)
 
-    def __init__(self, main_win, library, parent=None):
+    def __init__(self, main_win, main_controller, parent=None):
         super().__init__(parent)
         self._main_win = main_win
-        self._library = library
+        self._controller = main_controller
+        self._library = self._controller._library
+        #self._library = library
         self._initUI()
 
     def _initUI(self):
         self.display_text = QTextBrowser(self)
 
-        self.loadBook(1)
+        #self.loadBook(1)
+        #self._library.loadBook
 
         self._initModeline()
 
@@ -40,12 +43,12 @@ class BookView(QWidget):
     def _updateModeline(self):  # not _?
         pass
 
-    def _setContents(self, content):
+    def setContents(self, content):
         try:
             self.display_text.setHtml(str(content, 'utf-8'))
         except IndexError:
             self.display_text.setHtml("No book loaded")
 
-    def loadBook(self, book_name):
-        self.book = self._library.loadBook(book_name)
-        self._setContents(self.book.chapters[1].content)
+    # def loadBook(self, book_name):
+    #     self.book = self._library.loadBook(book_name)
+    #     self._setContents(self.book.chapters[1].content)
