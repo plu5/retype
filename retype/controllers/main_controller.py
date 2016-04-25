@@ -1,7 +1,7 @@
 from enum import Enum
 from PyQt5.QtWidgets import (qApp)
 from PyQt5.QtCore import (QObject)
-from views import ShelfView, BookView
+from ui import ShelfView, BookView
 from controllers.menu_controller import MenuController
 from controllers.library import LibraryController
 

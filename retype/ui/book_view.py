@@ -1,7 +1,7 @@
 from PyQt5.QtWidgets import (QWidget, QLabel, QVBoxLayout, QPushButton,
                              QTextBrowser)
 from PyQt5.QtGui import (QTextCursor, QTextCharFormat, QColor)
-from views.modeline import Modeline
+from ui.modeline import Modeline
 
 
 class BookView(QWidget):

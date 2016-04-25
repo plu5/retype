@@ -1,6 +1,6 @@
 import sys
 from PyQt5.QtWidgets import QApplication
-from views import MainWin
+from ui import MainWin
 from controllers.main_controller import MainController
 from resource_handler import getIcon
 

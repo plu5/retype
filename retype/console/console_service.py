@@ -1,5 +1,5 @@
 # put highlighting in a separate file
-from views.book_view import BookView
+from ui.book_view import BookView
 
 class ConsoleService(object):
     def __init__(self, console, window):
@@ -75,3 +75,6 @@ class ConsoleService(object):
         v.cursor.setPosition(v.cursor_pos, v.cursor.KeepAnchor)
         v.cursor.mergeCharFormat(v.highlight_format)
         self._console.clear()
+
+    def parameterTesting(self):
+        pass
