@@ -34,3 +34,6 @@ class MainWin(QMainWindow):
     def _initQss(self):
         qss_file = open(path.join(getStylePath(), 'default.qss')).read()
         self.setStyleSheet(qss_file)
+
+    def currentView(self):
+        return self.stacker.currentWidget()
