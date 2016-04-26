@@ -11,7 +11,6 @@ class BookView(QWidget):
         self._controller = main_controller
         self._library = self._controller._library
         self._initUI()
-        self._initHighlighting()
 
     def _initUI(self):
         self.display_text = QTextBrowser(self)
@@ -36,8 +35,7 @@ class BookView(QWidget):
         self.cursor_pos = 0
         self.line_pos = 0
         self.persistent_pos = 0
-        self.current_sentence = ''  #
-        # self._cleanText()
+        self._cleanText()
         self.highlight_format = QTextCharFormat()
         self.highlight_format.setBackground(QColor('yellow'))
         self.unhighlight_format = QTextCharFormat()  # temp
@@ -48,8 +46,7 @@ class BookView(QWidget):
     def setContents(self, content):
         try:
             self.display_text.setHtml(str(content, 'utf-8'))
-            self._initHighlighting()  # cursor has to be reinstantiated
-            self._cleanText()
+            self._initHighlighting()
         except IndexError:
             self.display_text.setHtml("No book loaded")
 
