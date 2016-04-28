@@ -6,7 +6,7 @@ from console.highlighting_service import HighlightingService
 
 class Console(QLineEdit):
     onReturnSignal = pyqtSignal(str)
-    loadBookSignal = pyqtSignal()
+    loadBookSignal = pyqtSignal(int)  #
 
     def __init__(self, parent):
         super().__init__(parent)

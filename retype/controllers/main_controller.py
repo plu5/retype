@@ -57,9 +57,9 @@ class MainController(QObject):
     def _initLibrary(self):
         self._library = LibraryController(self)
 
-    def loadBook(self, book_name=0):
+    def loadBook(self, book_id=0):
         bookview = self.views[View.bookview]
-        self._library.setBook(book_name, bookview)
+        self._library.setBook(book_id, bookview)
 
     def _connectConsole(self):
         console = self._window.console

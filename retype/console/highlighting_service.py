@@ -18,9 +18,7 @@ class HighlightingService(object):
                     try:
                         if text[index] == v.current_sentence[index]:
                             v.cursor_pos += 1
-                            v.cursor.setPosition(v.cursor_pos,
-                                                 v.cursor.KeepAnchor)
-                            v.cursor.mergeCharFormat(v.highlight_format)
+                            self.updateHighlighting()
                     except IndexError:
                         print("debug: indexError")
 
@@ -28,8 +26,7 @@ class HighlightingService(object):
             if len(text) + v.persistent_pos < v.cursor_pos:
                 v.cursor.mergeCharFormat(v.unhighlight_format)
                 v.cursor_pos = v.persistent_pos + len(text)
-                v.cursor.setPosition(v.cursor_pos, v.cursor.KeepAnchor)
-                v.cursor.mergeCharFormat(v.highlight_format)
+                self.updateHighlighting()
 
             # next line
             if text == v.current_sentence:
@@ -47,6 +44,10 @@ class HighlightingService(object):
             v.cursor_pos += len(v.current_sentence) + 1
         v.persistent_pos = v.cursor_pos
         v.setSentence(v.line_pos)
+        self.updateHighlighting()
+        self._console.clear()
+
+    def updateHighlighting(self):
+        v = self._window.currentView()
         v.cursor.setPosition(v.cursor_pos, v.cursor.KeepAnchor)
         v.cursor.mergeCharFormat(v.highlight_format)
-        self._console.clear()

@@ -22,13 +22,16 @@ class LibraryController(object):  # bookcontroller?
             book_list[i] = book_path_list[i]
         return book_list
 
-    def _instantiateBook(self, internal_name):  # initBook?
+    def _instantiateBook(self, book_id):  # initBook?
         # should instantiate a bookwrapper
-        book = BookWrapper(self._book_list[internal_name])
+        print(self._book_list)
+        print(book_id)
+        print(self._book_list[book_id])  # should log this info
+        book = BookWrapper(self._book_list[book_id])
         return book
 
-    def setBook(self, internal_name, bookview):  # maybe
-        self.book = self._instantiateBook(internal_name)
+    def setBook(self, book_id, bookview):  # maybe
+        self.book = self._instantiateBook(book_id)
         # bookview set contents? instantiate a new one?
         bookview.setContents(self.book.chapters[1].content)
         self._main_controller.switchView(2)

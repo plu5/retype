@@ -14,8 +14,16 @@ class CommandService(object):
         
     def _handleCommands(self, text):
         e = text[len(self.prompt):].lower()
-        if text.startswith(self.prompt) and e in self.commands:
-            self.commands[e]()  # args
+        el = e.split(' ')  #
+        if text.startswith(self.prompt) and el[0] in self.commands:
+            if len(el) == 1:
+                self.commands[el[0]]()
+            else:
+                try:
+                    print(el[1:])  # should log this info
+                    self.commands[el[0]](*el[1:])
+                except TypeError:
+                    print("debug: invalid arguments")  # log this in future
             self._console.clear()
 
     def switchMain(self):
@@ -24,5 +32,5 @@ class CommandService(object):
     def switchBook(self):
         self._window.switchViewSignal.emit(2)
 
-    def loadBook(self):
-        self._console.loadBookSignal.emit()
+    def loadBook(self, book_id=0):
+        self._console.loadBookSignal.emit(int(book_id))
