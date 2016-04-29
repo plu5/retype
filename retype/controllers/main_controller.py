@@ -1,9 +1,12 @@
+import logging
 from enum import Enum
 from PyQt5.QtWidgets import (qApp)
 from PyQt5.QtCore import (QObject)
 from ui import ShelfView, BookView
 from controllers.menu_controller import MenuController
 from controllers.library import LibraryController
+
+logger = logging.getLogger(__name__)
 
 
 class View(Enum):
@@ -59,7 +62,13 @@ class MainController(QObject):
 
     def loadBook(self, book_id=0):
         bookview = self.views[View.bookview]
-        self._library.setBook(book_id, bookview)
+        if book_id in self._library._book_list:
+            logger.info("Loading book {}".format(book_id))
+            self._library.setBook(book_id, bookview)
+        else:
+            logging.error("book_id {} cannot be found".format(book_id))
+            logging.debug("_book_list: {}".format(self._library._book_list))
+            return
 
     def _connectConsole(self):
         console = self._window.console

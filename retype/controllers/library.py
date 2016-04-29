@@ -1,7 +1,8 @@
-import os
+import os, logging
 from resource_handler import getLibraryPath
 from ebooklib import epub, ITEM_DOCUMENT
 
+logger = logging.getLogger(__name__)
 
 class LibraryController(object):  # bookcontroller?
     def __init__(self, main_controller):#, view):
@@ -22,12 +23,14 @@ class LibraryController(object):  # bookcontroller?
             book_list[i] = book_path_list[i]
         return book_list
 
-    def _instantiateBook(self, book_id):  # initBook?
-        # should instantiate a bookwrapper
-        print(self._book_list)
-        print(book_id)
-        print(self._book_list[book_id])  # should log this info
-        book = BookWrapper(self._book_list[book_id])
+    def _instantiateBook(self, book_id):
+        if book_id in self._book_list:
+            logger.info("Instantiating book {}-{}".format(
+                book_id, self._book_list[book_id]))
+            book = BookWrapper(self._book_list[book_id])
+        else:
+            logger.error("book_id {} cannot be found").format(book_id)
+            return
         return book
 
     def setBook(self, book_id, bookview):  # maybe
