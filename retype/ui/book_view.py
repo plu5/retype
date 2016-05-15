@@ -11,6 +11,7 @@ class BookView(QWidget):
         self._controller = main_controller
         self._library = self._controller._library
         self._initUI()
+        self.chapter_pos = 0
 
     def _initUI(self):
         self.display_text = QTextBrowser(self)
@@ -31,7 +32,7 @@ class BookView(QWidget):
     def _updateModeline(self):  # not _?
         pass
 
-    def _initHighlighting(self):  # bad name
+    def _initHighlighting(self):  # bad name. initChapter?
         self.cursor_pos = 0
         self.line_pos = 0
         self.persistent_pos = 0
@@ -46,9 +47,12 @@ class BookView(QWidget):
     def setContents(self, content):
         try:
             self.display_text.setHtml(str(content, 'utf-8'))
-            self._initHighlighting()
+            self._initHighlighting()  # is this really best here
         except IndexError:
             self.display_text.setHtml("No book loaded")
+
+    def setBook(self, book):
+        self.book = book
 
     def _cleanText(self):  # bad name
         to_be_typed_raw = self.display_text.toPlainText()
@@ -59,3 +63,14 @@ class BookView(QWidget):
 
     def setSentence(self, pos):
         self.current_sentence = self.to_be_typed_list[pos]
+
+    def setChapter(self, pos):
+        self.chapter_pos = pos  #
+        self.setContents(self.book.chapters[pos].content)
+        self._initHighlighting()
+
+    def nextChapter(self):
+        self.setChapter(self.chapter_pos + 1)
+
+    def previousChapter(self):
+        self.setChapter(self.chapter_pos - 1)

@@ -1,8 +1,9 @@
 import os, logging
 from resource_handler import getLibraryPath
-from ebooklib import epub, ITEM_DOCUMENT
+from ebooklib import epub, ITEM_DOCUMENT, ITEM_IMAGE
 
 logger = logging.getLogger(__name__)
+
 
 class LibraryController(object):  # bookcontroller?
     def __init__(self, main_controller):#, view):
@@ -36,7 +37,8 @@ class LibraryController(object):  # bookcontroller?
     def setBook(self, book_id, bookview):  # maybe
         self.book = self._instantiateBook(book_id)
         # bookview set contents? instantiate a new one?
-        bookview.setContents(self.book.chapters[1].content)
+        bookview.setContents(self.book.chapters[0].content)
+        bookview.setBook(self.book)
         self._main_controller.switchView(2)
 
 
@@ -46,9 +48,15 @@ class BookWrapper(object):
         self._book = epub.read_epub(path)
         self.title = self._book.title
         self.chapters = self._initChapters(self._book)
+        self._initImages(self._book)  #
+        print(self._book.metadata)
 
     def _initChapters(self, book):
         chapters = []
         for document in book.get_items_of_type(ITEM_DOCUMENT):
             chapters.append(document)
         return chapters
+
+    def _initImages(self, book):
+        for image in book.get_items_of_type(ITEM_IMAGE):
+            print(image)

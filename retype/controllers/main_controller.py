@@ -31,7 +31,6 @@ class MainController(QObject):
 
     def _instantiateViews(self):
         self.views[View.shelfview] = ShelfView(self._window)
-        self.views[View.shelfview].switchViewSignal.connect(self.switchView)
         self.views[View.bookview] = BookView(self._window, self)
 
     def _initView(self, view=View.shelfview):
