@@ -12,7 +12,7 @@ class MainWin(QMainWindow):
     def __init__(self, parent=None): # qss_file
         super().__init__(parent)
         self._initUI()
-        #self._initQss()
+        self._initQss()
         #self.bookcontroller = BookController(self)  #
         #print(self.bookcontroller._book_list)  #
 

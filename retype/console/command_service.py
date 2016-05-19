@@ -10,20 +10,21 @@ class CommandService(object):
         self._window = window
         self._console.onReturnSignal.connect(self._handleCommands)
         self.prompt = '>'
-        self.command_history = []
         self._initCommands()
+        self._initCommandHistory()
 
     def _initCommands(self):
         self.commands = {}
         self.commands['switchmain'] = self.switchMain
         self.commands['switchbook'] = self.switchBook
         self.commands['loadbook'] = self.loadBook
-        self.commands['hist'] = self.commandHistory
+        #self.commands['hist'] = self.commandHistory
         self.commands['booklist'] = self.bookList
         self.commands['nextchapter'] = self.nextChapter
         self.commands['previouschapter'] = self.previousChapter
         # next chapter, previous chapter. set chapter?
         self.commands['advanceline'] = self.advanceLine
+        self.commands['l'] = self.advanceLine
 
     def _handleCommands(self, text):
         e = text[len(self.prompt):].lower()
@@ -37,8 +38,34 @@ class CommandService(object):
                     self.commands[el[0]](*el[1:])
                 except TypeError:
                     logger.error('Invalid arguments')
-            self.command_history.append(e)
+            self.command_history.append(text)
             self._console.clear()
+
+    def _initCommandHistory(self):
+        self.command_history = []
+        self.command_history_pos = -1
+        self._is_current_input = True
+
+    def commandHistoryUp(self):
+        if self._is_current_input:
+            self._current_input = self._console.text()
+            self._is_current_input = False
+        if len(self.command_history) < abs(self.command_history_pos):
+            return
+        self._console.setText(self.command_history[self.command_history_pos])
+        self.command_history_pos -= 1
+        logger.info(self.command_history)
+
+    def commandHistoryDown(self):
+        if self._is_current_input:
+            return
+        self.command_history_pos += 1
+        if self.command_history_pos == -1:
+            self._console.setText(self._current_input)
+            self._is_current_input = True
+            return
+        self._console.setText(self.command_history[self.command_history_pos])
+        logger.info(self.command_history)
 
     def switchMain(self):
         self._window.switchViewSignal.emit(1)
@@ -51,9 +78,6 @@ class CommandService(object):
             self._console.loadBookSignal.emit(int(book_id))
         except ValueError:
             logger.error('{} is not a valid book_id'.format(book_id))
-
-    def commandHistory(self):
-        print(self.command_history)
 
     def bookList(self):
         print()

@@ -37,8 +37,7 @@ class HighlightingService(object):
             if text == v.current_sentence:
                 self.advanceLine()
                 # skip empty lines
-                while v.current_sentence.isspace() or \
-                      v.current_sentence == '':
+                while v.current_sentence.isspace() or v.current_sentence == '':
                     try:
                         self.advanceLine()
                     except:
