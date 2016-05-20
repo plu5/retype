@@ -38,7 +38,9 @@ class CommandService(object):
                     self.commands[el[0]](*el[1:])
                 except TypeError:
                     logger.error('Invalid arguments')
-            self.command_history.append(text)
+            if text not in self.command_history:
+                self.command_history.append(text)
+            self.command_history_pos = None
             self._console.clear()
 
     def _initCommandHistory(self):
