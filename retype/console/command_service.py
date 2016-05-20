@@ -43,29 +43,32 @@ class CommandService(object):
 
     def _initCommandHistory(self):
         self.command_history = []
-        self.command_history_pos = -1
-        self._is_current_input = True
+        self.command_history_pos = None
 
     def commandHistoryUp(self):
-        if self._is_current_input:
+        if not self.command_history_pos:
             self._current_input = self._console.text()
-            self._is_current_input = False
-        if len(self.command_history) < abs(self.command_history_pos):
-            return
+            self.command_history_pos = -1
+        else:
+            if len(self.command_history) <= abs(self.command_history_pos):
+                return
+            self.command_history_pos -= 1
         self._console.setText(self.command_history[self.command_history_pos])
-        self.command_history_pos -= 1
-        logger.info(self.command_history)
+        logger.info("{} {}".format(self.command_history_pos,
+                                   self.command_history))
 
     def commandHistoryDown(self):
-        if self._is_current_input:
+        if not self.command_history_pos:
             return
-        self.command_history_pos += 1
         if self.command_history_pos == -1:
             self._console.setText(self._current_input)
-            self._is_current_input = True
+            self.command_history_pos = None
             return
+        else:
+            self.command_history_pos += 1
         self._console.setText(self.command_history[self.command_history_pos])
-        logger.info(self.command_history)
+        logger.info("{} {}".format(self.command_history_pos,
+                                   self.command_history))
 
     def switchMain(self):
         self._window.switchViewSignal.emit(1)
