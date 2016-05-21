@@ -71,3 +71,4 @@ class HighlightingService(object):
         v = self._window.currentView()
         v.cursor.setPosition(v.cursor_pos, v.cursor.KeepAnchor)
         v.cursor.mergeCharFormat(v.highlight_format)
+        v.updateModeline()

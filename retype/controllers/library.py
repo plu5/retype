@@ -37,8 +37,8 @@ class LibraryController(object):  # bookcontroller?
     def setBook(self, book_id, bookview):  # maybe
         self.book = self._instantiateBook(book_id)
         # bookview set contents? instantiate a new one?
-        bookview.setContents(self.book.chapters[0].content)
         bookview.setBook(self.book)
+        bookview.setContents(self.book.chapters[0].content)
         self._main_controller.switchView(2)
 
 

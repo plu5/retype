@@ -27,10 +27,14 @@ class BookView(QWidget):
 
     def _initModeline(self):
         self.modeline = Modeline(self)
-        self.modeline.setTitle('Testing')
+        self.modeline.setTitle('No book loaded')
 
-    def _updateModeline(self):  # not _?
-        pass
+    def updateModeline(self):
+        self.modeline.setTitle(self.book.title)
+        self.modeline.setCursorPos(self.cursor_pos)
+        self.modeline.setLinePos(self.line_pos)
+        self.modeline.setChapPos(self.chapter_pos)
+        self.modeline.repaint()
 
     def _initHighlighting(self):  # bad name. initChapter?
         self.cursor_pos = 0
@@ -48,6 +52,7 @@ class BookView(QWidget):
         try:
             self.display_text.setHtml(str(content, 'utf-8'))
             self._initHighlighting()  # is this really best here
+            self.updateModeline()  #
         except IndexError:
             self.display_text.setHtml("No book loaded")
 
