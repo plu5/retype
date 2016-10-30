@@ -1,8 +1,9 @@
-# i think there will be problems with this implementation when it’s packaged
+# i think there may be problems with this implementation when it’s packaged
 
 import os
 import sys
 from PyQt5.QtGui import QIcon
+
 
 def __getRoot():
     root = ''

@@ -48,6 +48,8 @@ class CommandService(object):
         self.command_history_pos = None
 
     def commandHistoryUp(self):
+        if not self.command_history:
+            return
         if not self.command_history_pos:
             self._current_input = self._console.text()
             self.command_history_pos = -1

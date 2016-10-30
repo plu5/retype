@@ -30,7 +30,7 @@ class MainController(QObject):
         self._connectConsole()
 
     def _instantiateViews(self):
-        self.views[View.shelfview] = ShelfView(self._window)
+        self.views[View.shelfview] = ShelfView(self._window, self)
         self.views[View.bookview] = BookView(self._window, self)
 
     def _initView(self, view=View.shelfview):

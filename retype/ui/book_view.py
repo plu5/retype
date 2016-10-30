@@ -1,7 +1,9 @@
 from PyQt5.QtWidgets import (QWidget, QLabel, QVBoxLayout, QPushButton,
                              QTextBrowser)
-from PyQt5.QtGui import (QTextCursor, QTextCharFormat, QColor)
+from PyQt5.QtGui import (QTextCursor, QTextCharFormat, QColor, QPixmap, QImage)
 from ui.modeline import Modeline
+from resource_handler import getLibraryPath
+import os  #
 
 
 class BookView(QWidget):
@@ -53,6 +55,7 @@ class BookView(QWidget):
             self.display_text.setHtml(str(content, 'utf-8'))
             self._initHighlighting()  # is this really best here
             self.updateModeline()  #
+            #self.testImage4()  # temp
         except IndexError:
             self.display_text.setHtml("No book loaded")
 
