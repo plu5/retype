@@ -1,1 +1,1 @@
-from layouts.shelvesflowlayout import CentredFlowWidget
+from layouts.shelveslayout import ShelvesWidget

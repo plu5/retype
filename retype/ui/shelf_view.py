@@ -5,7 +5,7 @@ from PyQt5.QtCore import (pyqtSignal, Qt, QRectF, QSize)
 from PyQt5.QtGui import (QPixmap, QPainter, QFont, QColor, QPen)
 #from controllers import library
 
-from layouts import CentredFlowWidget
+from layouts import ShelvesWidget
 
 logger = logging.getLogger(__name__)
 
@@ -25,7 +25,7 @@ class ShelfView(QWidget):
         self.layout.setContentsMargins(0,0,0,0)#10, 10, 10, 10)
         self.layout.setSpacing(0)
         self.setLayout(self.layout)
-        self.grid = CentredFlowWidget(self)
+        self.grid = ShelvesWidget(self, 120, 210)
         self.grid.setLayoutSpacing(8)
         #self.grid.setLayoutMargins(5,5,5,5)
         self.layout.addWidget(self.grid)

@@ -15,8 +15,8 @@ from math import floor, ceil
 
 
 class ShelvesLayout(QLayout):
-    def __init__(self, cell_width=140, cell_height=140,
-                 parent=None, spacing=-1):
+    def __init__(self, parent=None, cell_width=140, cell_height=140,
+                 spacing=-1):
         super().__init__(parent)
         self.cell_width = cell_width
         self.cell_height = cell_height
@@ -158,19 +158,19 @@ class FlowResizeScrollArea(QScrollArea):
         super().resizeEvent(event)
 
 
-class CentredFlowWidget(QWidget):
+class ShelvesWidget(QWidget):
     """
-    A resizable and scrollable widget that uses a flow layout.
+    A resizable and scrollable widget that uses ShelvesLayout.
     Use its addWidget() method to add children,
     setLayoutSpacing() to set the flow layout’s spacing,
     setContentsMargins() to set the flow layout’s margins.
     """
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, cell_width=140, cell_height=140):
         super().__init__(parent)
         scroll = FlowResizeScrollArea()
         self._wrapper = QWidget(scroll)
-        self.flow_layout = ShelvesLayout(self._wrapper)
-        self._wrapper.setLayout(self.flow_layout)
+        self.layout = ShelvesLayout(self._wrapper, cell_width, cell_height)
+        self._wrapper.setLayout(self.layout)
 
         grid = QGridLayout(self)  # why?
         scroll.setWidget(self._wrapper)
@@ -181,11 +181,11 @@ class CentredFlowWidget(QWidget):
         grid.setContentsMargins(0, 0, 0, 0)
 
     def addWidget(self, widget):
-        self.flow_layout.addWidget(widget)
+        self.layout.addWidget(widget)
         widget.setParent(self._wrapper)
 
     def setLayoutSpacing(self, spacing):
-        self.flow_layout.setSpacing(spacing)
+        self.layout.setSpacing(spacing)
 
     def setContentsMargins(self, left, top, right, bottom):
-        self.flow_layout.setContentsMargins(left, top, right, bottom)
+        self.layout.setContentsMargins(left, top, right, bottom)
