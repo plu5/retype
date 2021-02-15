@@ -5,7 +5,7 @@ from PyQt5.QtCore import (pyqtSignal, Qt, QRectF, QSize)
 from PyQt5.QtGui import (QPixmap, QPainter, QFont, QColor, QPen)
 #from controllers import library
 
-from lib import ScrollingFlowWidget
+from layouts import CentredFlowWidget
 
 logger = logging.getLogger(__name__)
 
@@ -22,8 +22,12 @@ class ShelfView(QWidget):
 
     def _initUI(self):
         self.layout = QVBoxLayout(self)
+        self.layout.setContentsMargins(0,0,0,0)#10, 10, 10, 10)
+        self.layout.setSpacing(0)
         self.setLayout(self.layout)
-        self.grid = ScrollingFlowWidget(self)
+        self.grid = CentredFlowWidget(self)
+        self.grid.setLayoutSpacing(8)
+        #self.grid.setLayoutMargins(5,5,5,5)
         self.layout.addWidget(self.grid)
 
     #def _instantiateItems(self):
@@ -31,6 +35,11 @@ class ShelfView(QWidget):
 
     def _initGrid(self):
         for item in self.items:
+            self.grid.addWidget(item)
+        # debug thing below
+        for i in range(10):
+            book_wrapper = self._library._instantiateBook(0)
+            item = ShelfItem(book_wrapper)
             self.grid.addWidget(item)
 
     def _generateItems(self):
@@ -51,6 +60,9 @@ class ShelfItem(QWidget):
         self.highlight_colour = QColor(80, 80, 80, 128)
 
     def _initCover(self):
+        # todo: a more clever way to get an image that is likely to be the cover
+        # only use it as cover if it is large enough to avoid using ornaments
+        # otherwise use our pregenerated cover
         self.cover = QPixmap(120, 200)
         # try to load cover image
         try:
@@ -81,7 +93,8 @@ class ShelfItem(QWidget):
             font = QFont('Times', 9, 99)
             qp.setFont(font)
             title_rect = QRectF(0, 0, self.width, self.height)
-            qp.drawText(title_rect, Qt.AlignCenter | Qt.TextWordWrap, self.title)
+            qp.drawText(title_rect, Qt.AlignCenter | Qt.TextWordWrap,
+                        self.title)
         qp.end()
 
     def enterEvent(self, e):
