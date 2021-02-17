@@ -140,18 +140,18 @@ class ShelvesWidget(QWidget):
     """
     def __init__(self, parent=None, cell_width=140, cell_height=140):
         super().__init__(parent)
-        self.scrollArea = QScrollArea(self)
-        self.scrollArea.setWidgetResizable(True)
-        # Wrapper to contain shelves layout
-        self.wrapper = QWidget(self.scrollArea)
-        self.layout = ShelvesLayout(self.wrapper, cell_width, cell_height)
-        self.wrapper.setLayout(self.layout)
-        # Layout for us to put the scroll area in
-        self.outer_layout = QGridLayout(self)
-        self.scrollArea.setWidget(self.wrapper)
-        self.outer_layout.addWidget(self.scrollArea)
-        self.outer_layout.setSpacing(0)
-        self.outer_layout.setContentsMargins(0, 0, 0, 0)
+        scrollArea = QScrollArea(self)
+        scrollArea.setWidgetResizable(True)
+        # Wrapper widget to contain shelves layout
+        w = QWidget(scrollArea)
+        self.layout = ShelvesLayout(w, cell_width, cell_height)
+        w.setLayout(self.layout)
+        scrollArea.setWidget(w)
+        # Layout for us (this very widget) to put the scroll area in
+        outer_layout = QGridLayout(self)
+        outer_layout.addWidget(scrollArea)
+        outer_layout.setSpacing(0)
+        outer_layout.setContentsMargins(0, 0, 0, 0)
 
     def addWidget(self, widget):
         self.layout.addWidget(widget)
