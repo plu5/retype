@@ -18,29 +18,28 @@ class ShelfView(QWidget):
         self._initUI()
         self.items = []
         self._generateItems()
-        self._initGrid()
+        self._populate()
 
     def _initUI(self):
         self.layout = QVBoxLayout(self)
-        self.layout.setContentsMargins(0,0,0,0)#10, 10, 10, 10)
+        self.layout.setContentsMargins(0, 0, 0, 0)
         self.layout.setSpacing(0)
         self.setLayout(self.layout)
-        self.grid = ShelvesWidget(self, 120, 210)
-        self.grid.setLayoutSpacing(8)
-        #self.grid.setLayoutMargins(5,5,5,5)
-        self.layout.addWidget(self.grid)
+        self.shelves = ShelvesWidget(self, 130, 225)
+        self.shelves.setContentsMargins(0, 5, 5, 0);
+        self.layout.addWidget(self.shelves)
 
     #def _instantiateItems(self):
         # for book in _controller._book_list...
 
-    def _initGrid(self):
+    def _populate(self):
         for item in self.items:
-            self.grid.addWidget(item)
+            self.shelves.addWidget(item)
         # debug thing below
         for i in range(10):
             book_wrapper = self._library._instantiateBook(0)
             item = ShelfItem(book_wrapper)
-            self.grid.addWidget(item)
+            self.shelves.addWidget(item)
 
     def _generateItems(self):
         for book in self._library._book_list:

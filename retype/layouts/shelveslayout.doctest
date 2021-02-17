@@ -1,13 +1,13 @@
 """
 py -3 -m doctest shelveslayout.doctest
 """
-CentredFlowLayout
+ShelvesLayout
 =================
 
-Import CentredFlowWidget:
+Import ShelvesWidget:
 
 >>> import sys, os, random
->>> from shelveslayout import CentredFlowWidget
+>>> from shelveslayout import ShelvesWidget
 
 Import things needed to create a simple test window
 
@@ -18,7 +18,7 @@ Import things needed to create a simple test window
 >>> class ExampleWindow(QWidget):
 ...     def __init__(self):
 ...         super().__init__()
-...         self.scroller = CentredFlowWidget(self)
+...         self.scroller = ShelvesWidget(self)
 ...         #self.scroller.setStyleSheet()
 ...         self.setLayout(QVBoxLayout(self))
 ...         self.layout().addWidget(self.scroller)
@@ -33,7 +33,6 @@ Import things needed to create a simple test window
 ...           #                  for n in range(random.randint(1,5)) ]).title()
 ...             words = "ugh"
 ...             widget = QPushButton(words)
-...          #   widget.setMinimumSize(140, 140)
 ...             self.scroller.addWidget(widget)
 ...
 
@@ -44,8 +43,9 @@ For now just show the window
 >>> #mainWin.scroller.setContentsMargins(10, 20, 30, 40)
 >>> mainWin.scroller.setContentsMargins(0, 0, 0, 0)
 >>> mainWin.setGeometry(-900, 300, 800, 600)
->>> # app.setStyleSheet("QPushButton {border-style:dashed; border-color: red; border-width: 2px;}")
+>>> app.setStyleSheet("QPushButton {border-style:dashed; border-color: red; border-width: 2px;}")
 >>> mainWin.show()
->>> sys.exit(app.exec_())
+>>> app.exec_()
+0
 
 todo: check contentsRect to make sure the margins are what they should be
