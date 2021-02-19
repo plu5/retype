@@ -8,16 +8,15 @@ class Console(QLineEdit):
     onReturnSignal = pyqtSignal(str)
     loadBookSignal = pyqtSignal(int)  #
 
-    def __init__(self, parent):
+    def __init__(self, parent=None):
         super().__init__(parent)
         self._window = parent
         self.setAccessibleName("console")
         self.returnPressed.connect(self._returnPressedEvent)
-        self._initServices()
 
-    def _initServices(self):
-        self._command_service = CommandService(self, self._window)
-        self._highlighting_service = HighlightingService(self, self._window)
+    def initServices(self, bookView, switchViewSignal):
+        self._command_service = CommandService(self, bookView, switchViewSignal)
+        self._highlighting_service = HighlightingService(self, bookView)
 
     def _returnPressedEvent(self):
         self.onReturnSignal.emit(self.text())

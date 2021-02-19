@@ -1,7 +1,6 @@
 from PyQt5.QtWidgets import (QMainWindow, QStackedWidget, QVBoxLayout, QWidget,
                              QPushButton)
 from PyQt5.QtCore import (pyqtSignal)
-from console import Console
 from resource_handler import getStylePath
 from os import path
 from controllers.library import LibraryController, BookWrapper  #
@@ -9,15 +8,16 @@ from controllers.library import LibraryController, BookWrapper  #
 
 class MainWin(QMainWindow):
     switchViewSignal = pyqtSignal(int)
-    def __init__(self, parent=None): # qss_file
+
+    def __init__(self, console, parent=None): # qss_file
         super().__init__(parent)
+        self.console = console
         self._initUI()
         self._initQss()
         #self.bookcontroller = BookController(self)  #
         #print(self.bookcontroller._book_list)  #
 
     def _initUI(self):
-        self.console = Console(self)
         self.stacker = QStackedWidget()
         self.consistent_layout = QVBoxLayout()
         self.consistent_layout.setContentsMargins(0, 0, 0, 0)

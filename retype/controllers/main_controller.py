@@ -5,6 +5,8 @@ from PyQt5.QtCore import (QObject)
 from ui import ShelfView, BookView
 from controllers.menu_controller import MenuController
 from controllers.library import LibraryController
+from ui import MainWin
+from console import Console
 
 logger = logging.getLogger(__name__)
 
@@ -17,9 +19,10 @@ class View(Enum):
 class MainController(QObject):
     views = {}
 
-    def __init__(self, window):
+    def __init__(self):
         super().__init__()
-        self._window = window
+        self.console = Console()
+        self._window = MainWin(self.console)
         self._window.switchViewSignal.connect(self.switchView)
 
         # this will have settings, qss etc
@@ -71,4 +74,6 @@ class MainController(QObject):
 
     def _connectConsole(self):
         console = self._window.console
+        console.initServices(self.views[View.bookview],
+                             self._window.switchViewSignal)
         console.loadBookSignal.connect(self.loadBook)

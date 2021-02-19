@@ -5,9 +5,11 @@ logger = logging.getLogger(__name__)
 
 
 class CommandService(object):
-    def __init__(self, console, window):
+    def __init__(self, console, bookView, switchViewSignal):
         self._console = console
-        self._window = window
+        # self._window = window
+        self.bookView = bookView
+        self.switchViewSignal = switchViewSignal
         self._console.onReturnSignal.connect(self._handleCommands)
         self.prompt = '>'
         self._initCommands()
@@ -75,10 +77,10 @@ class CommandService(object):
                                    self.command_history))
 
     def switchMain(self):
-        self._window.switchViewSignal.emit(1)
+        self.switchViewSignal.emit(1)
 
     def switchBook(self):
-        self._window.switchViewSignal.emit(2)
+        self.switchViewSignal.emit(2)
 
     def loadBook(self, book_id=0):
         try:
@@ -95,16 +97,14 @@ class CommandService(object):
         # the program was running
 
     def nextChapter(self):  # not the best
-        v = self._window.currentView()
-        if type(v) is BookView:
-            v.nextChapter()
+        if self.bookView.isVisible():
+            self.bookView.nextChapter()
         else:
             logger.error('not in BookView')
 
     def previousChapter(self):
-        v = self._window.currentView()
-        if type(v) is BookView:
-            v.previousChapter()
+        if self.bookView.isVisible():
+            self.bookView.previousChapter()
         else:
             logger.error('not in BookView')
 

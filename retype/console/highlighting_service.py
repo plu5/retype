@@ -5,15 +5,16 @@ logger = logging.getLogger(__name__)
 
 
 class HighlightingService(object):
-    def __init__(self, console, window):
+    def __init__(self, console, bookView):
         self._console = console
-        self._window = window
+        # self._window = window
         self._console.textChanged.connect(self._handleHighlighting)
+        self.bookView = bookView
 
     def _handleHighlighting(self, text):
-        v = self._window.currentView()
+        v = self.bookView
 
-        if type(v) is BookView:
+        if v.isVisible():
             try:  # exit if highlighting variables have not been initialised
                 v.cursor_pos += 0
             except AttributeError:
@@ -45,7 +46,7 @@ class HighlightingService(object):
                         return  #
 
     def advanceLine(self):  # this is a bad way of doing this
-        v = self._window.currentView()
+        v = self.bookView
         v.line_pos += 1
 
         # compensate
@@ -68,7 +69,7 @@ class HighlightingService(object):
         self._console.clear()
 
     def updateHighlighting(self):
-        v = self._window.currentView()
+        v = self.bookView
         v.cursor.setPosition(v.cursor_pos, v.cursor.KeepAnchor)
         v.cursor.mergeCharFormat(v.highlight_format)
         v.updateModeline()
