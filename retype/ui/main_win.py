@@ -1,7 +1,8 @@
-from PyQt5.QtWidgets import QMainWindow, QStackedWidget, QVBoxLayout, QWidget
-from PyQt5.QtCore import pyqtSignal
-from resource_handler import getStylePath
 from os import path
+from PyQt5.QtCore import pyqtSignal
+from PyQt5.QtWidgets import QMainWindow, QStackedWidget, QVBoxLayout, QWidget
+
+from resource_handler import getStylePath
 
 
 class MainWin(QMainWindow):

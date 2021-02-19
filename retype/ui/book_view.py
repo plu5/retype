@@ -1,9 +1,6 @@
-from PyQt5.QtWidgets import (QWidget, QLabel, QVBoxLayout, QPushButton,
-                             QTextBrowser)
-from PyQt5.QtGui import (QTextCursor, QTextCharFormat, QColor, QPixmap, QImage)
+from PyQt5.QtWidgets import QWidget, QVBoxLayout, QTextBrowser
+from PyQt5.QtGui import QTextCursor, QTextCharFormat, QColor
 from ui.modeline import Modeline
-from resource_handler import getLibraryPath
-import os  #
 
 
 class BookView(QWidget):

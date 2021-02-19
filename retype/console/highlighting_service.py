@@ -1,5 +1,4 @@
 import logging
-from ui.book_view import BookView
 
 logger = logging.getLogger(__name__)
 
@@ -7,9 +6,8 @@ logger = logging.getLogger(__name__)
 class HighlightingService(object):
     def __init__(self, console, bookView):
         self._console = console
-        # self._window = window
-        self._console.textChanged.connect(self._handleHighlighting)
         self.bookView = bookView
+        self._console.textChanged.connect(self._handleHighlighting)
 
     def _handleHighlighting(self, text):
         v = self.bookView

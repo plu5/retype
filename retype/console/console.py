@@ -1,5 +1,5 @@
-from PyQt5.QtWidgets import (QLineEdit)
-from PyQt5.QtCore import (pyqtSignal, Qt)
+from PyQt5.QtWidgets import QLineEdit
+from PyQt5.QtCore import pyqtSignal, Qt
 from console.command_service import CommandService
 from console.highlighting_service import HighlightingService
 
@@ -10,7 +10,6 @@ class Console(QLineEdit):
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self._window = parent
         self.setAccessibleName("console")
         self.returnPressed.connect(self._returnPressedEvent)
 

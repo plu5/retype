@@ -1,11 +1,11 @@
 import logging
 from enum import Enum
-from PyQt5.QtWidgets import (qApp)
-from PyQt5.QtCore import (QObject)
-from ui import ShelfView, BookView
+from PyQt5.QtCore import QObject
+from PyQt5.QtWidgets import qApp
+
+from ui import MainWin, ShelfView, BookView
 from controllers.menu_controller import MenuController
 from controllers.library import LibraryController
-from ui import MainWin
 from console import Console
 
 logger = logging.getLogger(__name__)
