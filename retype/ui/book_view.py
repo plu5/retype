@@ -1,6 +1,23 @@
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QTextBrowser
 from PyQt5.QtGui import QTextCursor, QTextCharFormat, QColor
+from PyQt5.QtGui import QTextCursor, QTextCharFormat, QColor, QPainter
 from ui.modeline import Modeline
+
+
+class BookDisplay(QTextBrowser):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.cursor = QTextCursor(self.document())
+
+    def setCursor(self, cursor):
+        self.cursor = cursor
+
+    def paintEvent(self, e):
+        QTextBrowser.paintEvent(self, e)
+        qp = QPainter(self.viewport())
+        qp.setPen(QColor('red'))
+        qp.drawRect(self.cursorRect(self.cursor))
+        qp.end()
 
 
 class BookView(QWidget):
@@ -13,7 +30,7 @@ class BookView(QWidget):
         self.chapter_pos = 0
 
     def _initUI(self):
-        self.display_text = QTextBrowser(self)
+        self.display_text = BookDisplay(self)
 
         self._initModeline()
 
@@ -46,6 +63,7 @@ class BookView(QWidget):
         self.unhighlight_format.setBackground(QColor('white'))  #
         self.cursor = QTextCursor(self.display_text.document())
         self.cursor.setPosition(self.cursor_pos, self.cursor.KeepAnchor)
+        self.display_text.setCursor(self.cursor)
 
     def setContents(self, content):
         try:
