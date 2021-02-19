@@ -1,21 +1,17 @@
-from PyQt5.QtWidgets import (QMainWindow, QStackedWidget, QVBoxLayout, QWidget,
-                             QPushButton)
-from PyQt5.QtCore import (pyqtSignal)
+from PyQt5.QtWidgets import QMainWindow, QStackedWidget, QVBoxLayout, QWidget
+from PyQt5.QtCore import pyqtSignal
 from resource_handler import getStylePath
 from os import path
-from controllers.library import LibraryController, BookWrapper  #
 
 
 class MainWin(QMainWindow):
-    switchViewSignal = pyqtSignal(int)
+    switchView = pyqtSignal(int)
 
     def __init__(self, console, parent=None): # qss_file
         super().__init__(parent)
         self.console = console
         self._initUI()
         self._initQss()
-        #self.bookcontroller = BookController(self)  #
-        #print(self.bookcontroller._book_list)  #
 
     def _initUI(self):
         self.stacker = QStackedWidget()

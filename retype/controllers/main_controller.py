@@ -23,7 +23,7 @@ class MainController(QObject):
         super().__init__()
         self.console = Console()
         self._window = MainWin(self.console)
-        self._window.switchViewSignal.connect(self.switchView)
+        self._window.switchView.connect(self.switchView)
 
         # this will have settings, qss etc
         self._initLibrary()
@@ -49,7 +49,6 @@ class MainController(QObject):
         self._initView(View(intview))
 
     def show(self):
-        #self._initView()
         self._window.show()
 
     def _initMenuBar(self):
@@ -75,5 +74,5 @@ class MainController(QObject):
     def _connectConsole(self):
         console = self._window.console
         console.initServices(self.views[View.bookview],
-                             self._window.switchViewSignal)
-        console.loadBookSignal.connect(self.loadBook)
+                             self._window.switchView)
+        console.loadBook.connect(self.loadBook)

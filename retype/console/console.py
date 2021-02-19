@@ -5,8 +5,8 @@ from console.highlighting_service import HighlightingService
 
 
 class Console(QLineEdit):
-    onReturnSignal = pyqtSignal(str)
-    loadBookSignal = pyqtSignal(int)  #
+    submitted = pyqtSignal(str)
+    loadBook = pyqtSignal(int)
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -14,12 +14,12 @@ class Console(QLineEdit):
         self.setAccessibleName("console")
         self.returnPressed.connect(self._returnPressedEvent)
 
-    def initServices(self, bookView, switchViewSignal):
-        self._command_service = CommandService(self, bookView, switchViewSignal)
+    def initServices(self, bookView, switchView):
+        self._command_service = CommandService(self, bookView, switchView)
         self._highlighting_service = HighlightingService(self, bookView)
 
     def _returnPressedEvent(self):
-        self.onReturnSignal.emit(self.text())
+        self.submitted.emit(self.text())
 
     def clear(self):
         self.setText('')

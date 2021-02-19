@@ -1,16 +1,14 @@
 import logging
-from ui.book_view import BookView
 
 logger = logging.getLogger(__name__)
 
 
 class CommandService(object):
-    def __init__(self, console, bookView, switchViewSignal):
+    def __init__(self, console, bookView, switchView):
         self._console = console
-        # self._window = window
         self.bookView = bookView
-        self.switchViewSignal = switchViewSignal
-        self._console.onReturnSignal.connect(self._handleCommands)
+        self.switchView = switchView
+        self._console.submitted.connect(self._handleCommands)
         self.prompt = '>'
         self._initCommands()
         self._initCommandHistory()
@@ -20,7 +18,6 @@ class CommandService(object):
         self.commands['switchmain'] = self.switchMain
         self.commands['switchbook'] = self.switchBook
         self.commands['loadbook'] = self.loadBook
-        #self.commands['hist'] = self.commandHistory
         self.commands['booklist'] = self.bookList
         self.commands['nextchapter'] = self.nextChapter
         self.commands['previouschapter'] = self.previousChapter
@@ -77,14 +74,14 @@ class CommandService(object):
                                    self.command_history))
 
     def switchMain(self):
-        self.switchViewSignal.emit(1)
+        self.switchView.emit(1)
 
     def switchBook(self):
-        self.switchViewSignal.emit(2)
+        self.switchView.emit(2)
 
     def loadBook(self, book_id=0):
         try:
-            self._console.loadBookSignal.emit(int(book_id))
+            self._console.loadBook.emit(int(book_id))
         except ValueError:
             logger.error('{} is not a valid book_id'.format(book_id))
 
