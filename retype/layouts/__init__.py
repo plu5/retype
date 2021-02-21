@@ -1,1 +1,2 @@
-from layouts.shelveslayout import ShelvesWidget
+from .shelveslayout import ShelvesWidget
+__all__ = ('ShelvesWidget',)

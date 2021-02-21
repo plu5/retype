@@ -1,7 +1,9 @@
-import sys, logging
+import sys
+import logging
 from PyQt5.QtWidgets import QApplication
-from controllers.main_controller import MainController
-from resource_handler import getIcon
+
+from retype.controllers.main_controller import MainController
+from retype.resource_handler import getIcon
 
 
 def run():

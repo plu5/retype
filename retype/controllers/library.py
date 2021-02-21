@@ -1,6 +1,7 @@
 import os, logging
-from resource_handler import getLibraryPath
 from ebooklib import epub, ITEM_DOCUMENT, ITEM_IMAGE
+
+from retype.resource_handler import getLibraryPath
 
 logger = logging.getLogger(__name__)
 

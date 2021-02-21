@@ -5,7 +5,7 @@ from PyQt5.QtCore import (pyqtSignal, Qt, QRectF, QSize)
 from PyQt5.QtGui import (QPixmap, QPainter, QFont, QColor, QPen)
 #from controllers import library
 
-from layouts import ShelvesWidget
+from retype.layouts import ShelvesWidget
 
 logger = logging.getLogger(__name__)
 

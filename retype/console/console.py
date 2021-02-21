@@ -1,7 +1,8 @@
 from PyQt5.QtWidgets import QLineEdit
 from PyQt5.QtCore import pyqtSignal, Qt
-from console.command_service import CommandService
-from console.highlighting_service import HighlightingService
+
+from retype.console.command_service import CommandService
+from retype.console.highlighting_service import HighlightingService
 
 
 class Console(QLineEdit):

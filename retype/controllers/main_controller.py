@@ -3,10 +3,10 @@ from enum import Enum
 from PyQt5.QtCore import QObject
 from PyQt5.QtWidgets import qApp
 
-from ui import MainWin, ShelfView, BookView
-from controllers.menu_controller import MenuController
-from controllers.library import LibraryController
-from console import Console
+from retype.ui import MainWin, ShelfView, BookView
+from retype.controllers.menu_controller import MenuController
+from retype.controllers.library import LibraryController
+from retype.console import Console
 
 logger = logging.getLogger(__name__)
 
