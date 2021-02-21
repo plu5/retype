@@ -30,14 +30,14 @@ class BookView(QWidget):
         self.chapter_pos = 0
 
     def _initUI(self):
-        self.display_text = BookDisplay(self)
+        self.display = BookDisplay(self)
 
         self._initModeline()
 
         self.layout = QVBoxLayout()
         self.layout.setContentsMargins(0, 0, 0, 0)
         self.layout.setSpacing(0)
-        self.layout.addWidget(self.display_text)
+        self.layout.addWidget(self.display)
         self.layout.addWidget(self.modeline)
         self.setLayout(self.layout)
 
@@ -61,24 +61,24 @@ class BookView(QWidget):
         self.highlight_format.setBackground(QColor('yellow'))
         self.unhighlight_format = QTextCharFormat()  # temp
         self.unhighlight_format.setBackground(QColor('white'))  #
-        self.cursor = QTextCursor(self.display_text.document())
+        self.cursor = QTextCursor(self.display.document())
         self.cursor.setPosition(self.cursor_pos, self.cursor.KeepAnchor)
-        self.display_text.setCursor(self.cursor)
+        self.display.setCursor(self.cursor)
 
     def setContents(self, content):
         try:
-            self.display_text.setHtml(str(content, 'utf-8'))
+            self.display.setHtml(str(content, 'utf-8'))
             self._initHighlighting()  # is this really best here
             self.updateModeline()  #
             #self.testImage4()  # temp
         except IndexError:
-            self.display_text.setHtml("No book loaded")
+            self.display.setHtml("No book loaded")
 
     def setBook(self, book):
         self.book = book
 
     def _cleanText(self):  # bad name
-        to_be_typed_raw = self.display_text.toPlainText()
+        to_be_typed_raw = self.display.toPlainText()
         # replacements (do this better)
         to_be_typed_raw = to_be_typed_raw.replace('\ufffc', ' ')
         self.to_be_typed_list = to_be_typed_raw.splitlines()
