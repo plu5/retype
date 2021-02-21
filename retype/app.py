@@ -2,7 +2,7 @@ import sys
 import logging
 from PyQt5.QtWidgets import QApplication
 
-from retype.controllers.main_controller import MainController
+from retype.controllers import MainController
 from retype.resource_handler import getIcon
 
 
