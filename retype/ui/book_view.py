@@ -1,5 +1,4 @@
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QTextBrowser
-from PyQt5.QtGui import QTextCursor, QTextCharFormat, QColor
 from PyQt5.QtGui import QTextCursor, QTextCharFormat, QColor, QPainter
 from retype.ui.modeline import Modeline
 
