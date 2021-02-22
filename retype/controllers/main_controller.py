@@ -11,8 +11,8 @@ logger = logging.getLogger(__name__)
 
 
 class View(Enum):
-    shelfview = 1
-    bookview = 2
+    shelf_view = 1
+    book_view = 2
 
 
 class MainController(QObject):
@@ -32,10 +32,10 @@ class MainController(QObject):
         self._connectConsole()
 
     def _instantiateViews(self):
-        self.views[View.shelfview] = ShelfView(self._window, self)
-        self.views[View.bookview] = BookView(self._window, self)
+        self.views[View.shelf_view] = ShelfView(self._window, self)
+        self.views[View.book_view] = BookView(self._window, self)
 
-    def _initView(self, view=View.shelfview):
+    def _initView(self, view=View.shelf_view):
         self._view = self.views[view]
         self._window.stacker.addWidget(self._view)
         self._window.stacker.setCurrentWidget(self._view)
@@ -61,10 +61,10 @@ class MainController(QObject):
         self._library = LibraryController(self)
 
     def loadBook(self, book_id=0):
-        bookview = self.views[View.bookview]
+        book_view = self.views[View.book_view]
         if book_id in self._library._book_list:
             logger.info("Loading book {}".format(book_id))
-            self._library.setBook(book_id, bookview)
+            self._library.setBook(book_id, book_view)
         else:
             logging.error("book_id {} cannot be found".format(book_id))
             logging.debug("_book_list: {}".format(self._library._book_list))
@@ -72,6 +72,6 @@ class MainController(QObject):
 
     def _connectConsole(self):
         console = self._window.console
-        console.initServices(self.views[View.bookview],
+        console.initServices(self.views[View.book_view],
                              self._window.switchView)
         console.loadBook.connect(self.loadBook)

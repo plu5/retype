@@ -14,9 +14,9 @@ class Console(QLineEdit):
         self.setAccessibleName("console")
         self.returnPressed.connect(self._returnPressedEvent)
 
-    def initServices(self, bookView, switchView):
-        self._command_service = CommandService(self, bookView, switchView)
-        self._highlighting_service = HighlightingService(self, bookView)
+    def initServices(self, book_view, switchView):
+        self._command_service = CommandService(self, book_view, switchView)
+        self._highlighting_service = HighlightingService(self, book_view)
 
     def _returnPressedEvent(self):
         self.submitted.emit(self.text())

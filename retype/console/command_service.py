@@ -4,9 +4,9 @@ logger = logging.getLogger(__name__)
 
 
 class CommandService(object):
-    def __init__(self, console, bookView, switchView):
+    def __init__(self, console, book_view, switchView):
         self._console = console
-        self.bookView = bookView
+        self.book_view = book_view
         self.switchView = switchView
         self._console.submitted.connect(self._handleCommands)
         self.prompt = '>'
@@ -94,14 +94,14 @@ class CommandService(object):
         # the program was running
 
     def nextChapter(self):  # not the best
-        if self.bookView.isVisible():
-            self.bookView.nextChapter()
+        if self.book_view.isVisible():
+            self.book_view.nextChapter()
         else:
             logger.error('not in BookView')
 
     def previousChapter(self):
-        if self.bookView.isVisible():
-            self.bookView.previousChapter()
+        if self.book_view.isVisible():
+            self.book_view.previousChapter()
         else:
             logger.error('not in BookView')
 
