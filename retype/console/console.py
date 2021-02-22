@@ -11,13 +11,13 @@ class Console(QLineEdit):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setAccessibleName("console")
-        self.returnPressed.connect(self._returnPressedEvent)
+        self.returnPressed.connect(self._handleReturnPressed)
 
     def initServices(self, book_view, switchView):
         self._command_service = CommandService(self, book_view, switchView)
         self._highlighting_service = HighlightingService(self, book_view)
 
-    def _returnPressedEvent(self):
+    def _handleReturnPressed(self):
         self.submitted.emit(self.text())
 
     def clear(self):
