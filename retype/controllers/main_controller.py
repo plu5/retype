@@ -54,8 +54,8 @@ class MainController(QObject):
         menu = self._window.menuBar()
         self._menu_controller = MenuController(self, menu)
 
-    def exit(self):
-        qApp.quit
+    def quit(self):
+        qApp.quit()
 
     def _initLibrary(self):
         self._library = LibraryController(self)

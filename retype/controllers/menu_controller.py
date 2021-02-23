@@ -1,6 +1,7 @@
 from PyQt5.QtWidgets import (QAction)
 from PyQt5.QtCore import (QObject)
 
+
 class MenuController(QObject):
     def __init__(self, main_controller, menu):
         super().__init__()
@@ -29,9 +30,9 @@ class MenuController(QObject):
         helpMenu = self._menu.addMenu('&help')
 
     def _exitAction(self):
-        action = QAction('e&xit', self)
+        action = QAction('&quit', self)
         action.setShortcuts(["Alt+F4"])
-        action.triggered.connect(self._main_controller.exit)
+        action.triggered.connect(self._main_controller.quit)
         return action
 
     def _customiseAction(self):
