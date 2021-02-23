@@ -26,7 +26,6 @@ class BookView(QWidget):
         self._controller = main_controller
         self._library = self._controller._library
         self._initUI()
-        self.chapter_pos = 0
 
     def _initUI(self):
         self.display = BookDisplay(self)
@@ -51,15 +50,29 @@ class BookView(QWidget):
         self.modeline.setChapPos(self.chapter_pos)
         self.modeline.repaint()
 
-    def _initHighlighting(self):  # bad name. initChapter?
+    def _initChapter(self):
+        # Each chapter is its own document
+        self.chapter_pos = 0
+        # Character position in chapter
         self.cursor_pos = 0
+        # We split the text of the chapter on new lines, and for each line the
+        #  user types correctly, the `cursor_pos' is added to `persistent_pos'
+        #  and the console is cleared. We use the `line_pos' to set what line
+        #  needs to be typed at the moment; this corresponds to the index of
+        #  the line in `to_be_typed_list'
         self.line_pos = 0
         self.persistent_pos = 0
-        self._cleanText()
+
+        to_be_typed_raw = self.display.toPlainText()
+        # replacements (do this better)
+        to_be_typed_raw = to_be_typed_raw.replace('\ufffc', ' ')
+        self.to_be_typed_list = to_be_typed_raw.splitlines()
+        self.setLine(self.line_pos)
+
         self.highlight_format = QTextCharFormat()
         self.highlight_format.setBackground(QColor('yellow'))
-        self.unhighlight_format = QTextCharFormat()  # temp
-        self.unhighlight_format.setBackground(QColor('white'))  #
+        self.unhighlight_format = QTextCharFormat()
+        self.unhighlight_format.setBackground(QColor('white'))
         self.cursor = QTextCursor(self.display.document())
         self.cursor.setPosition(self.cursor_pos, self.cursor.KeepAnchor)
         self.display.setCursor(self.cursor)
@@ -67,8 +80,8 @@ class BookView(QWidget):
     def setContents(self, content):
         try:
             self.display.setHtml(str(content, 'utf-8'))
-            self._initHighlighting()  # is this really best here
-            self.updateModeline()  #
+            self._initChapter()
+            self.updateModeline()
             #self.testImage4()  # temp
         except IndexError:
             self.display.setHtml("No book loaded")
@@ -76,23 +89,16 @@ class BookView(QWidget):
     def setBook(self, book):
         self.book = book
 
-    def _cleanText(self):  # bad name
-        to_be_typed_raw = self.display.toPlainText()
-        # replacements (do this better)
-        to_be_typed_raw = to_be_typed_raw.replace('\ufffc', ' ')
-        self.to_be_typed_list = to_be_typed_raw.splitlines()
-        self.setSentence(self.line_pos)
-
-    def setSentence(self, pos):
-        self.current_sentence = self.to_be_typed_list[pos]
-
     def setChapter(self, pos):
-        self.chapter_pos = pos  #
+        self.chapter_pos = pos
         self.setContents(self.book.chapters[pos].content)
-        self._initHighlighting()
+        self._initChapter()
 
     def nextChapter(self):
         self.setChapter(self.chapter_pos + 1)
 
     def previousChapter(self):
         self.setChapter(self.chapter_pos - 1)
+
+    def setLine(self, pos):
+        self.current_line = self.to_be_typed_list[pos]

@@ -32,14 +32,14 @@ class HighlightingService(object):
 
             # Cursor position in the line
             v.cursor_pos = v.persistent_pos + \
-                compareStrings(text, v.current_sentence)
+                compareStrings(text, v.current_line)
             self.updateHighlighting()
 
             # Next line / chapter
-            if text == v.current_sentence:
+            if text == v.current_line:
                 self.advanceLine()
                 # Skip empty lines
-                while v.current_sentence.isspace() or v.current_sentence == '':
+                while v.current_line.isspace() or v.current_line == '':
                     try:
                         self.advanceLine()
                     except e as e:
@@ -51,16 +51,16 @@ class HighlightingService(object):
         v.line_pos += 1
 
         # compensate
-        if v.cursor_pos - v.persistent_pos == len(v.current_sentence):
+        if v.cursor_pos - v.persistent_pos == len(v.current_line):
             v.cursor_pos += 1
         else:
-            v.cursor_pos += len(v.current_sentence) + 1
+            v.cursor_pos += len(v.current_line) + 1
         v.persistent_pos = v.cursor_pos
 
         if len(v.to_be_typed_list) == v.line_pos:
             v.nextChapter()
         try:
-            v.setSentence(v.line_pos)
+            v.setLine(v.line_pos)
         except e as e:
             logger.error('can’t advance line \
             {}/{}'.format(v.line_pos, len(v.to_be_typed_list)),
