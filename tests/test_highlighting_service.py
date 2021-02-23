@@ -6,7 +6,9 @@ from PyQt5.QtWidgets import QApplication, QTextBrowser
 from retype.console import HighlightingService
 
 
-SAMPLE_CONTENT = "<html><body>some test text</body></html>"
+SAMPLE_CONTENT = '''<html><body>some test text<br/>
+next line
+</body></html>'''
 
 
 class FakeConsole(QObject):
@@ -85,6 +87,17 @@ class TestHighlightingService:
         # Typing one non-matching character
         console.setText("a")
         assert cursor.position() == 0
-        # Fails atm, because it only checks length and not matches. So here it
-        #  sees one character in the text so cursor pos gets set to 1, even
-        #  though our one character isn’t matching.
+
+        # Next line
+        console.setText("some test text")
+        # Should be 1 higher than text len due to new line
+        assert cursor.position() == 15
+
+        console.setText("")
+        assert cursor.position() == 15
+
+        console.setText("ne")
+        assert cursor.position() == 17
+
+        console.setText("")
+        assert cursor.position() == 15

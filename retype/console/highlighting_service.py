@@ -3,6 +3,19 @@ import logging
 logger = logging.getLogger(__name__)
 
 
+def compareStrings(str1, str2):
+    """Compare strings `str1' and `str2', returning index at which they stop
+ matching"""
+    length_of_shorter_str = len(min([str1, str2]))
+    for i, a, b in zip(range(length_of_shorter_str), str1, str2):
+        if a != b:
+            # Found character that doesn’t match; return index at which the
+            #  strings stopped matching
+            return i
+    # Full match up to end of shorter string
+    return length_of_shorter_str
+
+
 class HighlightingService(object):
     def __init__(self, console, book_view):
         self._console = console
@@ -13,35 +26,25 @@ class HighlightingService(object):
         v = self.book_view
 
         if v.isVisible():
-            try:  # exit if highlighting variables have not been initialised
-                v.cursor_pos += 0
-            except AttributeError:
-                return
-            for index, c in enumerate(text):
-                if index + v.persistent_pos == v.cursor_pos:
-                    try:
-                        if text[index] == v.current_sentence[index]:
-                            v.cursor_pos += 1
-                            self.updateHighlighting()
-                    except IndexError:
-                        print("debug: indexError")
-
-            # remove highlighting
+            # Remove highlighting if things were deleted
             if len(text) + v.persistent_pos < v.cursor_pos:
                 v.cursor.mergeCharFormat(v.unhighlight_format)
-                v.cursor_pos = v.persistent_pos + len(text)
-                self.updateHighlighting()
 
-            # next line / chapter
+            # Cursor position in the line
+            v.cursor_pos = v.persistent_pos + \
+                compareStrings(text, v.current_sentence)
+            self.updateHighlighting()
+
+            # Next line / chapter
             if text == v.current_sentence:
                 self.advanceLine()
-                # skip empty lines
+                # Skip empty lines
                 while v.current_sentence.isspace() or v.current_sentence == '':
                     try:
                         self.advanceLine()
-                    except:
-                        logger.error('empty lines loop exit')
-                        return  #
+                    except e as e:
+                        logger.error('empty lines loop exit', e)
+                        return
 
     def advanceLine(self):  # this is a bad way of doing this
         v = self.book_view
@@ -55,10 +58,10 @@ class HighlightingService(object):
         v.persistent_pos = v.cursor_pos
 
         if len(v.to_be_typed_list) == v.line_pos:
-                    v.nextChapter()
+            v.nextChapter()
         try:
             v.setSentence(v.line_pos)
-        except:
+        except e as e:
             logger.error('can’t advance line \
             {}/{}'.format(v.line_pos, len(v.to_be_typed_list)),
                          exc_info=True)
@@ -69,5 +72,6 @@ class HighlightingService(object):
     def updateHighlighting(self):
         v = self.book_view
         v.cursor.setPosition(v.cursor_pos, v.cursor.KeepAnchor)
+        v.cursor.mergeCharFormat(v.unhighlight_format)
         v.cursor.mergeCharFormat(v.highlight_format)
         v.updateModeline()
