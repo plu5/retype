@@ -28,7 +28,7 @@ class LibraryController(object):
         if book_id in self._book_list:
             logger.info("Instantiating book {}-{}".format(
                 book_id, self._book_list[book_id]))
-            book = BookWrapper(self._book_list[book_id])
+            book = BookWrapper(self._book_list[book_id], book_id)
         else:
             logger.error("book_id {} cannot be found").format(book_id)
             return
@@ -42,9 +42,10 @@ class LibraryController(object):
 
 
 class BookWrapper(object):
-    def __init__(self, path):
+    def __init__(self, path, idn):
         self._path = path
         self._book = epub.read_epub(path)
+        self.idn = idn
         self.title = self._book.title
         self.chapters = self._initChapters(self._book)
         self._initImages(self._book)  #
