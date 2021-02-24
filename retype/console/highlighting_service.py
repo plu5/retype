@@ -25,26 +25,28 @@ class HighlightingService(object):
     def _handleHighlighting(self, text):
         v = self.book_view
 
-        if v.isVisible():
-            # Remove highlighting if things were deleted
-            if len(text) + v.persistent_pos < v.cursor_pos:
-                v.cursor.mergeCharFormat(v.unhighlight_format)
+        if not v.isVisible():
+            return
 
-            # Cursor position in the line
-            v.cursor_pos = v.persistent_pos + \
-                compareStrings(text, v.current_line)
-            self.updateHighlighting()
+        # Remove highlighting if things were deleted
+        if len(text) + v.persistent_pos < v.cursor_pos:
+            v.cursor.mergeCharFormat(v.unhighlight_format)
 
-            # Next line / chapter
-            if text == v.current_line:
-                self.advanceLine()
-                # Skip empty lines
-                while v.current_line.isspace() or v.current_line == '':
-                    try:
-                        self.advanceLine()
-                    except e as e:
-                        logger.error('empty lines loop exit', e)
-                        return
+        # Cursor position in the line
+        v.cursor_pos = v.persistent_pos + \
+            compareStrings(text, v.current_line)
+        self.updateHighlighting()
+
+        # Next line / chapter
+        if text == v.current_line:
+            self.advanceLine()
+            # Skip empty lines
+            while v.current_line.isspace() or v.current_line == '':
+                try:
+                    self.advanceLine()
+                except e as e:
+                    logger.error('empty lines loop exit', e)
+                    return
 
     def advanceLine(self):  # this is a bad way of doing this
         v = self.book_view
