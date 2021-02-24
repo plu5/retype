@@ -1,7 +1,6 @@
 import logging
 from enum import Enum
-from PyQt5.QtCore import QObject
-from PyQt5.QtWidgets import qApp
+from PyQt5.Qt import QObject, qApp
 
 from retype.ui import MainWin, ShelfView, BookView
 from retype.controllers import MenuController, LibraryController

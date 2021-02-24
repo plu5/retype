@@ -1,7 +1,4 @@
-# clean this up
-from PyQt5.QtWidgets import QWidget
-from PyQt5.QtGui import QPainter, QFont, QColor, QPen
-from PyQt5.QtCore import Qt, pyqtSignal
+from PyQt5.Qt import QWidget, QPainter, QFont, QColor, QPen, Qt
 
 
 class Modeline(QWidget):

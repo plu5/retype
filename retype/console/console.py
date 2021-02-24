@@ -1,5 +1,4 @@
-from PyQt5.QtWidgets import QLineEdit
-from PyQt5.QtCore import pyqtSignal, Qt
+from PyQt5.Qt import QLineEdit, pyqtSignal, Qt
 
 from retype.console import CommandService, HighlightingService
 

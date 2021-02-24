@@ -1,5 +1,4 @@
-from PyQt5.QtWidgets import (QAction)
-from PyQt5.QtCore import (QObject)
+from PyQt5.Qt import QAction, QObject
 
 
 class MenuController(QObject):

@@ -1,5 +1,5 @@
 import logging
-from PyQt5.QtWidgets import QWidget, QVBoxLayout
+from PyQt5.Qt import QWidget, QVBoxLayout
 
 from retype.layouts import ShelvesWidget
 from retype.ui import Cover
