@@ -29,6 +29,8 @@ class BookView(QWidget):
         self._library = self._controller._library
         self._initUI()
 
+        self.chapter_pos = None
+
     def _initUI(self):
         self.display = BookDisplay(self)
         self.display.anchorClicked.connect(self.anchorClicked)
@@ -54,8 +56,8 @@ class BookView(QWidget):
         self.modeline.repaint()
 
     def _initChapter(self):
-        # Each chapter is its own document
-        self.chapter_pos = 0
+        if not self.chapter_pos:
+            self.chapter_pos = 0
         # Character position in chapter
         self.cursor_pos = 0
         # We split the text of the chapter on new lines, and for each line the
@@ -76,6 +78,9 @@ class BookView(QWidget):
         self.highlight_format.setBackground(QColor('yellow'))
         self.unhighlight_format = QTextCharFormat()
         self.unhighlight_format.setBackground(QColor('white'))
+        self.setCursor()
+
+    def setCursor(self):
         self.cursor = QTextCursor(self.display.document())
         self.cursor.setPosition(self.cursor_pos, self.cursor.KeepAnchor)
         self.display.setCursor(self.cursor)
@@ -91,12 +96,13 @@ class BookView(QWidget):
                                  QUrl(image['link']), pixmap)
 
         self.display.setDocument(document)
-        self._initChapter()
-        self.updateModeline()
 
     def anchorClicked(self, link):
         pos = self.book.chapter_lookup[link.fileName()]
-        self.setChapter(pos)
+        self.setSource(self.book.chapters[pos])
+        if pos == self.chapter_pos:
+            self.setCursor()
+            self.cursor.mergeCharFormat(self.highlight_format)
 
     def setBook(self, book):
         self.book = book
@@ -105,6 +111,7 @@ class BookView(QWidget):
         self.chapter_pos = pos
         self.setSource(self.book.chapters[pos])
         self._initChapter()
+        self.updateModeline()
 
     def nextChapter(self):
         self.setChapter(self.chapter_pos + 1)
