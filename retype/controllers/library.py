@@ -1,4 +1,5 @@
-import os, logging
+import os
+import logging
 from ebooklib import epub, ITEM_DOCUMENT, ITEM_IMAGE
 
 from retype.resource_handler import getLibraryPath
@@ -47,9 +48,10 @@ class BookWrapper(object):
         self._book = epub.read_epub(path)
         self.idn = idn
         self.title = self._book.title
-        self.chapters = self._initChapters(self._book)
-        self._initImages(self._book)  #
-        #print(self._book.items[1].get_content())#metadata)
+
+    @property
+    def chapters(self):
+        return self._initChapters(self._book)
 
     def _initChapters(self, book):
         chapters = []
@@ -57,8 +59,13 @@ class BookWrapper(object):
             chapters.append(document)
         return chapters
 
+    @property
+    def images(self):
+        return self._initImages(self._book)
+
     def _initImages(self, book):
-        self.testimage = []
+        images = []
         for image in book.get_items_of_type(ITEM_IMAGE):
             print(image)
-            self.testimage.append(image)
+            images.append(image)
+        return images

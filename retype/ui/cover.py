@@ -21,7 +21,7 @@ class Cover(QWidget):
         self.image = QPixmap(120, 200)
         # try to load cover image
         try:
-            self.raw_cover = self.book.testimage[0].content
+            self.raw_cover = self.book.images[0].content
             self.image.loadFromData(self.raw_cover)
         except IndexError:
             logger.debug("No cover image found")
