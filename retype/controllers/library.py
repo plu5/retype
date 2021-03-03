@@ -1,5 +1,6 @@
 import os
 import logging
+from lxml import html
 from ebooklib import epub, ITEM_DOCUMENT, ITEM_IMAGE
 
 from retype.resource_handler import getLibraryPath
@@ -35,10 +36,10 @@ class LibraryController(object):
             return
         return book
 
-    def setBook(self, book_id, bookview):
+    def setBook(self, book_id, book_view):
         self.book = self._instantiateBook(book_id)
-        bookview.setBook(self.book)
-        bookview.setContents(self.book.chapters[0].content)  #
+        book_view.setBook(self.book)
+        book_view.setChapter(0)
         self._main_controller.switchView(2)
 
 
@@ -48,20 +49,41 @@ class BookWrapper(object):
         self._book = epub.read_epub(path)
         self.idn = idn
         self.title = self._book.title
+        self._chapters = None
+        self._images = None
 
-    @property
-    def chapters(self):
-        return self._initChapters(self._book)
-
-    def _initChapters(self, book):
+    def parseContent(self, book):
         chapters = []
-        for document in book.get_items_of_type(ITEM_DOCUMENT):
-            chapters.append(document)
+        self.chapter_lookup = {}
+        for i, document in enumerate(book.get_items_of_type(ITEM_DOCUMENT)):
+            raw = document.content
+            tree = html.fromstring(raw)
+            links = tree.xpath('//a/@href')
+            image_links = tree.xpath('//img/@src')
+            images = []
+            for image_link in image_links:
+                for image in self.images:
+                    if image_link in image.file_name:
+                        images.append({'link': image_link,
+                                       'raw': image.content})
+            chapters.append({'raw': raw,
+                             'links': links,
+                             'images': images})
+            self.chapter_lookup[document.file_name] = i
+
         return chapters
 
     @property
+    def chapters(self):
+        if not self._chapters:
+            self._chapters = self.parseContent(self._book)
+        return self._chapters
+
+    @property
     def images(self):
-        return self._initImages(self._book)
+        if not self._images:
+            self._images = self._initImages(self._book)
+        return self._images
 
     def _initImages(self, book):
         images = []

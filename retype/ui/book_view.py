@@ -1,5 +1,6 @@
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QTextBrowser
-from PyQt5.QtGui import QTextCursor, QTextCharFormat, QColor, QPainter
+from PyQt5.Qt import (QWidget, QVBoxLayout, QTextBrowser, QTextDocument, QUrl,
+                      QTextCursor, QTextCharFormat, QColor, QPainter, QPixmap)
+
 from retype.ui.modeline import Modeline
 
 
@@ -7,6 +8,7 @@ class BookDisplay(QTextBrowser):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.cursor = QTextCursor(self.document())
+        self.setOpenLinks(False)
 
     def setCursor(self, cursor):
         self.cursor = cursor
@@ -29,6 +31,7 @@ class BookView(QWidget):
 
     def _initUI(self):
         self.display = BookDisplay(self)
+        self.display.anchorClicked.connect(self.anchorClicked)
 
         self._initModeline()
 
@@ -77,21 +80,30 @@ class BookView(QWidget):
         self.cursor.setPosition(self.cursor_pos, self.cursor.KeepAnchor)
         self.display.setCursor(self.cursor)
 
-    def setContents(self, content):
-        try:
-            self.display.setHtml(str(content, 'utf-8'))
-            self._initChapter()
-            self.updateModeline()
-            #self.testImage4()  # temp
-        except IndexError:
-            self.display.setHtml("No book loaded")
+    def setSource(self, chapter):
+        document = QTextDocument()
+        document.setHtml(str(chapter['raw'], 'utf-8'))
+
+        for image in chapter['images']:
+            pixmap = QPixmap()
+            pixmap.loadFromData(image['raw'])
+            document.addResource(QTextDocument.ImageResource,
+                                 QUrl(image['link']), pixmap)
+
+        self.display.setDocument(document)
+        self._initChapter()
+        self.updateModeline()
+
+    def anchorClicked(self, link):
+        pos = self.book.chapter_lookup[link.fileName()]
+        self.setChapter(pos)
 
     def setBook(self, book):
         self.book = book
 
     def setChapter(self, pos):
         self.chapter_pos = pos
-        self.setContents(self.book.chapters[pos].content)
+        self.setSource(self.book.chapters[pos])
         self._initChapter()
 
     def nextChapter(self):
