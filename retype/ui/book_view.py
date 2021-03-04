@@ -1,6 +1,6 @@
 from PyQt5.Qt import (QWidget, QVBoxLayout, QTextBrowser, QTextDocument, QUrl,
                       QTextCursor, QTextCharFormat, QColor, QPainter, QPixmap,
-                      QToolBar)
+                      QToolBar, QFont, QKeySequence, Qt)
 
 from retype.ui.modeline import Modeline
 
@@ -10,9 +10,15 @@ class BookDisplay(QTextBrowser):
         super().__init__(parent)
         self.cursor = QTextCursor(self.document())
         self.setOpenLinks(False)
+        self.font_size = 12
+        self.updateFont()
 
     def setCursor(self, cursor):
         self.cursor = cursor
+
+    def updateFont(self):
+        self.setFont(QFont("Times New Roman", self.font_size))
+        self.document().setDefaultFont(QFont("Times New Roman", self.font_size))
 
     def paintEvent(self, e):
         QTextBrowser.paintEvent(self, e)
@@ -21,6 +27,22 @@ class BookDisplay(QTextBrowser):
         qp.drawRect(self.cursorRect(self.cursor))
         qp.end()
 
+    def zoomIn(self, range_=1):
+        self.font_size += range_
+        QTextBrowser.zoomIn(self, range_)
+        self.updateFont()
+
+    def zoomOut(self, range_=-1):
+        self.font_size += range_
+        QTextBrowser.zoomOut(self, range_)
+        self.updateFont()
+
+    def wheelEvent(self, e):
+        if e.modifiers() == Qt.ControlModifier:
+            if e.angleDelta().y() > 0:
+                self.zoomIn()
+            else:
+                self.zoomOut()
 
 class BookView(QWidget):
     def __init__(self, main_win, main_controller, parent=None):
@@ -36,18 +58,16 @@ class BookView(QWidget):
         self.toolbar = QToolBar(self)
         self.toolbar.addAction("Go to cursor position",
                                self.gotoCursorPosition)
-        self.toolbar.addAction("Previous chapter",
-                               self.previousChapter)
-        self.toolbar.addAction("Next chapter",
-                               self.nextChapter)
+        self.toolbar.addAction("Previous chapter", self.previousChapter)
+        self.toolbar.addAction("Next chapter", self.nextChapter)
 
         self.display = BookDisplay(self)
         self.display.anchorClicked.connect(self.anchorClicked)
 
-        self.toolbar.addAction("Increase font size",
-                               self.display.zoomIn)
-        self.toolbar.addAction("Decrease font size",
-                               self.display.zoomOut)
+        a = self.toolbar.addAction("Increase font size", self.display.zoomIn)
+        a.setShortcut(QKeySequence(QKeySequence.StandardKey.ZoomIn))
+        a = self.toolbar.addAction("Decrease font size", self.display.zoomOut)
+        a.setShortcut(QKeySequence(QKeySequence.StandardKey.ZoomOut))
 
         self._initModeline()
 
@@ -132,6 +152,7 @@ class BookView(QWidget):
             self.updateModeline()
         elif pos == self.chapter_pos:
             self.setCursor()
+        self.display.updateFont()
 
     def nextChapter(self, move_cursor=False):
         pos = self.chapter_pos + 1 if move_cursor \

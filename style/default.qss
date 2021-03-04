@@ -11,9 +11,7 @@ QLineEdit[accessibleName="console"] {
 QTextBrowser {
 	background-color: #F6F1DE;
 	border: 1px outset white;
-	font-family: Iowan Old Style, Courier New;
 	selection-background-color: grey;
-	font-size: 13px;
 }
 
 QLabel[accessibleName="modeline"] {
