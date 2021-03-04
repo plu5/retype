@@ -39,7 +39,7 @@ class LibraryController(object):
     def setBook(self, book_id, book_view):
         self.book = self._instantiateBook(book_id)
         book_view.setBook(self.book)
-        book_view.setChapter(0)
+        book_view.setChapter(0, True)
         self._main_controller.switchView(2)
 
 

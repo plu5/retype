@@ -1,5 +1,6 @@
 from PyQt5.Qt import (QWidget, QVBoxLayout, QTextBrowser, QTextDocument, QUrl,
-                      QTextCursor, QTextCharFormat, QColor, QPainter, QPixmap)
+                      QTextCursor, QTextCharFormat, QColor, QPainter, QPixmap,
+                      QToolBar)
 
 from retype.ui.modeline import Modeline
 
@@ -32,14 +33,28 @@ class BookView(QWidget):
         self.chapter_pos = None
 
     def _initUI(self):
+        self.toolbar = QToolBar(self)
+        self.toolbar.addAction("Go to cursor position",
+                               self.gotoCursorPosition)
+        self.toolbar.addAction("Previous chapter",
+                               self.previousChapter)
+        self.toolbar.addAction("Next chapter",
+                               self.nextChapter)
+
         self.display = BookDisplay(self)
         self.display.anchorClicked.connect(self.anchorClicked)
+
+        self.toolbar.addAction("Increase font size",
+                               self.display.zoomIn)
+        self.toolbar.addAction("Decrease font size",
+                               self.display.zoomOut)
 
         self._initModeline()
 
         self.layout = QVBoxLayout()
         self.layout.setContentsMargins(0, 0, 0, 0)
         self.layout.setSpacing(0)
+        self.layout.addWidget(self.toolbar)
         self.layout.addWidget(self.display)
         self.layout.addWidget(self.modeline)
         self.setLayout(self.layout)
@@ -58,6 +73,9 @@ class BookView(QWidget):
     def _initChapter(self):
         if not self.chapter_pos:
             self.chapter_pos = 0
+            # This is the position of the chapter on actual display, which may
+            #  not be the same as the chapter the cursor is on
+            self.viewed_chapter_pos = 0
         # Character position in chapter
         self.cursor_pos = 0
         # We split the text of the chapter on new lines, and for each line the
@@ -84,6 +102,7 @@ class BookView(QWidget):
         self.cursor = QTextCursor(self.display.document())
         self.cursor.setPosition(self.cursor_pos, self.cursor.KeepAnchor)
         self.display.setCursor(self.cursor)
+        self.cursor.mergeCharFormat(self.highlight_format)
 
     def setSource(self, chapter):
         document = QTextDocument()
@@ -99,25 +118,38 @@ class BookView(QWidget):
 
     def anchorClicked(self, link):
         pos = self.book.chapter_lookup[link.fileName()]
-        self.setSource(self.book.chapters[pos])
-        if pos == self.chapter_pos:
-            self.setCursor()
-            self.cursor.mergeCharFormat(self.highlight_format)
+        self.setChapter(pos)
 
     def setBook(self, book):
         self.book = book
 
-    def setChapter(self, pos):
-        self.chapter_pos = pos
+    def setChapter(self, pos, move_cursor=False):
         self.setSource(self.book.chapters[pos])
-        self._initChapter()
-        self.updateModeline()
+        self.viewed_chapter_pos = pos
+        if move_cursor:
+            self.chapter_pos = pos
+            self._initChapter()
+            self.updateModeline()
+        elif pos == self.chapter_pos:
+            self.setCursor()
 
-    def nextChapter(self):
-        self.setChapter(self.chapter_pos + 1)
+    def nextChapter(self, move_cursor=False):
+        pos = self.chapter_pos + 1 if move_cursor \
+            else self.viewed_chapter_pos + 1
+        if pos >= len(self.book.chapters):
+            return
+        self.setChapter(pos, move_cursor)
 
-    def previousChapter(self):
-        self.setChapter(self.chapter_pos - 1)
+    def previousChapter(self, move_cursor=False):
+        pos = self.chapter_pos - 1 if move_cursor \
+            else self.viewed_chapter_pos - 1
+        if pos < 0:
+            return
+        self.setChapter(pos, move_cursor)
 
     def setLine(self, pos):
         self.current_line = self.to_be_typed_list[pos]
+
+    def gotoCursorPosition(self):
+        self.setChapter(self.chapter_pos)
+        self.setCursor()

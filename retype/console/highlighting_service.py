@@ -60,7 +60,7 @@ class HighlightingService(object):
         v.persistent_pos = v.cursor_pos
 
         if len(v.to_be_typed_list) == v.line_pos:
-            v.nextChapter()
+            v.nextChapter(True)
         try:
             v.setLine(v.line_pos)
         except e as e:
