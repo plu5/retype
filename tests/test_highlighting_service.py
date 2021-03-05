@@ -1,7 +1,6 @@
 import sys
-from PyQt5.QtCore import QObject, pyqtSignal
-from PyQt5.QtGui import QTextDocument, QTextCursor, QTextCharFormat, QColor
-from PyQt5.QtWidgets import QApplication, QTextBrowser
+from PyQt5.Qt import (QObject, pyqtSignal, QTextCursor, QTextCharFormat,
+                      QApplication, QTextBrowser)
 
 from retype.console import HighlightingService
 
@@ -24,10 +23,18 @@ class FakeConsole(QObject):
         self.textChanged.emit(text)
 
 
+class FakeBookDisplay(QTextBrowser):
+    def __init__(self):
+        QTextBrowser.__init__(self)
+
+    def centreAroundCursor(self):
+        pass
+
+
 class FakeBookView(QObject):
     def __init__(self):
         QObject.__init__(self)
-        self.display = QTextBrowser()
+        self.display = FakeBookDisplay()
         self.display.setHtml(SAMPLE_CONTENT)
 
         self.chapter_pos = 0
