@@ -1,11 +1,13 @@
 from PyQt5.Qt import (QWidget, QVBoxLayout, QTextBrowser, QTextDocument, QUrl,
                       QTextCursor, QTextCharFormat, QColor, QPainter, QPixmap,
-                      QToolBar, QFont, QKeySequence, Qt, QApplication)
+                      QToolBar, QFont, QKeySequence, Qt, QApplication,
+                      pyqtSignal)
 
 from retype.ui.modeline import Modeline
 
 
 class BookDisplay(QTextBrowser):
+    keyPressed = pyqtSignal(object)
     def __init__(self, parent=None):
         super().__init__(parent)
         self.cursor = QTextCursor(self.document())
@@ -27,6 +29,10 @@ class BookDisplay(QTextBrowser):
         qp.setPen(QColor('red'))
         qp.drawRect(self.cursorRect(self.cursor))
         qp.end()
+
+    def keyPressEvent(self, e):
+        self.keyPressed.emit(e)
+        QTextBrowser.keyPressEvent(self, e)
 
     def zoomIn(self, range_=1):
         self.font_size += range_
@@ -75,6 +81,7 @@ class BookView(QWidget):
 
         self.display = BookDisplay(self)
         self.display.anchorClicked.connect(self.anchorClicked)
+        self.display.keyPressed.connect(self._controller.console.transferFocus)
 
         a = self.toolbar.addAction("Increase font size", self.display.zoomIn)
         a.setShortcut(QKeySequence(QKeySequence.StandardKey.ZoomIn))

@@ -22,9 +22,15 @@ class Console(QLineEdit):
     def clear(self):
         self.setText('')
 
-    def keyPressEvent(self, event):
-        if event.key() == Qt.Key_Up:
+    def keyPressEvent(self, e):
+        if e.key() == Qt.Key_Up:
             self._command_service.commandHistoryUp()
-        if event.key() == Qt.Key_Down:
+        if e.key() == Qt.Key_Down:
             self._command_service.commandHistoryDown()
-        QLineEdit.keyPressEvent(self, event)
+        QLineEdit.keyPressEvent(self, e)
+
+    def transferFocus(self, e):
+        """Like setFocus, except you can also pass a keyPress event from
+ another widget."""
+        self.setFocus()
+        self.keyPressEvent(e)
