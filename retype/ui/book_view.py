@@ -62,6 +62,7 @@ class BookDisplay(QTextBrowser):
                 self.zoomIn()
             else:
                 self.zoomOut()
+        QTextBrowser.wheelEvent(self, e)
 
 
 class BookView(QWidget):
