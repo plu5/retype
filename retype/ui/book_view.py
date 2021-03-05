@@ -8,6 +8,7 @@ from retype.ui.modeline import Modeline
 
 class BookDisplay(QTextBrowser):
     keyPressed = pyqtSignal(object)
+
     def __init__(self, parent=None):
         super().__init__(parent)
         self.cursor = QTextCursor(self.document())
@@ -33,6 +34,17 @@ class BookDisplay(QTextBrowser):
     def keyPressEvent(self, e):
         self.keyPressed.emit(e)
         QTextBrowser.keyPressEvent(self, e)
+
+    def centreAroundCursor(self):
+        viewport_height = self.viewport().rect().height()
+        cursor_height = self.cursorRect(self.cursor).height()
+        block = self.document().findBlock(self.cursor.position())
+        cursor_absolute_y = self.document().documentLayout()\
+                                           .blockBoundingRect(block).y()
+
+        calculated_value = cursor_absolute_y - (viewport_height / 2) +\
+            (cursor_height / 2)
+        self.verticalScrollBar().setValue(calculated_value)
 
     def zoomIn(self, range_=1):
         self.font_size += range_

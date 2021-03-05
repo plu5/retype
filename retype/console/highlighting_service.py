@@ -48,19 +48,23 @@ class HighlightingService(object):
                     logger.error('empty lines loop exit', e)
                     return
 
-    def advanceLine(self):  # this is a bad way of doing this
+    def advanceLine(self):
         v = self.book_view
         v.line_pos += 1
 
-        # compensate
+        # Compensate
         if v.cursor_pos - v.persistent_pos == len(v.current_line):
             v.cursor_pos += 1
         else:
             v.cursor_pos += len(v.current_line) + 1
+
         v.persistent_pos = v.cursor_pos
 
+        # Reached last line of this chapter, move to next one
         if len(v.to_be_typed_list) == v.line_pos:
             v.nextChapter(True)
+
+        # Set the line that needs to be typed next
         try:
             v.setLine(v.line_pos)
         except e as e:
@@ -68,8 +72,11 @@ class HighlightingService(object):
             {}/{}'.format(v.line_pos, len(v.to_be_typed_list)),
                          exc_info=True)
             return
+
         self.updateHighlighting()
         self._console.clear()
+        # v.display.setTextCursor(v.cursor)
+        v.display.centreAroundCursor()
 
     def updateHighlighting(self):
         v = self.book_view
