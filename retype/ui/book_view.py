@@ -1,6 +1,6 @@
 from PyQt5.Qt import (QWidget, QVBoxLayout, QTextBrowser, QTextDocument, QUrl,
                       QTextCursor, QTextCharFormat, QColor, QPainter, QPixmap,
-                      QToolBar, QFont, QKeySequence, Qt)
+                      QToolBar, QFont, QKeySequence, Qt, QApplication)
 
 from retype.ui.modeline import Modeline
 
@@ -17,8 +17,9 @@ class BookDisplay(QTextBrowser):
         self.cursor = cursor
 
     def updateFont(self):
-        self.setFont(QFont("Times New Roman", self.font_size))
-        self.document().setDefaultFont(QFont("Times New Roman", self.font_size))
+        font = QFont("Times New Roman", self.font_size)
+        self.setFont(font)
+        self.document().setDefaultFont(font)
 
     def paintEvent(self, e):
         QTextBrowser.paintEvent(self, e)
@@ -44,6 +45,7 @@ class BookDisplay(QTextBrowser):
             else:
                 self.zoomOut()
 
+
 class BookView(QWidget):
     def __init__(self, main_win, main_controller, parent=None):
         super().__init__(parent)
@@ -56,10 +58,18 @@ class BookView(QWidget):
 
     def _initUI(self):
         self.toolbar = QToolBar(self)
-        self.toolbar.addAction("Go to cursor position",
-                               self.gotoCursorPosition)
-        self.toolbar.addAction("Previous chapter", self.previousChapter)
-        self.toolbar.addAction("Next chapter", self.nextChapter)
+        a = self.toolbar.addAction("Cursor position",
+                                   self.gotoCursorPosition)
+        a.setToolTip("Go to the cursor position. Hold Ctrl to move cursor\
+ to your current position")
+        a = self.toolbar.addAction("Previous chapter",
+                                   self.previousChapterAction)
+        a.setToolTip("Go to the previous chapter. Hold Ctrl to move cursor\
+ with you as well")
+        a = self.toolbar.addAction("Next chapter",
+                                   self.nextChapterAction)
+        a.setToolTip("Go to the next chapter. Hold Ctrl to move cursor\
+ with you as well")
 
         self.display = BookDisplay(self)
         self.display.anchorClicked.connect(self.anchorClicked)
@@ -168,9 +178,24 @@ class BookView(QWidget):
             return
         self.setChapter(pos, move_cursor)
 
+    def nextChapterAction(self):
+        if (QApplication.instance().keyboardModifiers() == Qt.ControlModifier):
+            self.nextChapter(True)
+        else:
+            self.nextChapter(False)
+
+    def previousChapterAction(self):
+        if (QApplication.instance().keyboardModifiers() == Qt.ControlModifier):
+            self.previousChapter(True)
+        else:
+            self.previousChapter(False)
+
     def setLine(self, pos):
         self.current_line = self.to_be_typed_list[pos]
 
     def gotoCursorPosition(self):
-        self.setChapter(self.chapter_pos)
-        self.setCursor()
+        if (QApplication.instance().keyboardModifiers() == Qt.ControlModifier):
+            self.setChapter(self.viewed_chapter_pos, True)
+        else:
+            self.setChapter(self.chapter_pos)
+            self.setCursor()
