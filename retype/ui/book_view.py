@@ -66,10 +66,12 @@ class BookView(QWidget):
                                    self.previousChapterAction)
         a.setToolTip("Go to the previous chapter. Hold Ctrl to move cursor\
  with you as well")
+        self.pchap_action = a
         a = self.toolbar.addAction("Next chapter",
                                    self.nextChapterAction)
         a.setToolTip("Go to the next chapter. Hold Ctrl to move cursor\
  with you as well")
+        self.nchap_action = a
 
         self.display = BookDisplay(self)
         self.display.anchorClicked.connect(self.anchorClicked)
@@ -163,6 +165,7 @@ class BookView(QWidget):
         elif pos == self.chapter_pos:
             self.setCursor()
         self.display.updateFont()
+        self.updateToolbarActions()
 
     def nextChapter(self, move_cursor=False):
         pos = self.chapter_pos + 1 if move_cursor \
@@ -199,3 +202,11 @@ class BookView(QWidget):
         else:
             self.setChapter(self.chapter_pos)
             self.setCursor()
+
+    def updateToolbarActions(self):
+        self.nchap_action.setDisabled(False)
+        self.pchap_action.setDisabled(False)
+        if self.viewed_chapter_pos == len(self.book.chapters) - 1:
+            self.nchap_action.setDisabled(True)
+        elif self.viewed_chapter_pos == 0:
+            self.pchap_action.setDisabled(True)
