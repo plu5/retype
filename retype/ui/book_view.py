@@ -120,6 +120,7 @@ class BookView(QWidget):
         self.modeline.setCursorPos(self.cursor_pos)
         self.modeline.setLinePos(self.line_pos)
         self.modeline.setChapPos(self.chapter_pos)
+        self.modeline.setViewedChapPos(self.viewed_chapter_pos)
         self.modeline.setChapTotal(len(self.book.chapters) - 1)
         self.modeline.repaint()
 
@@ -182,9 +183,9 @@ class BookView(QWidget):
         if move_cursor:
             self.chapter_pos = pos
             self._initChapter()
-            self.updateModeline()
         elif pos == self.chapter_pos:
             self.setCursor()
+        self.updateModeline()
         self.display.updateFont()
         self.updateToolbarActions()
 

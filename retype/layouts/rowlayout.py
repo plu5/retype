@@ -45,10 +45,15 @@ class RowLayout(QLayout):
         rect.setX(rect.x() + margins[1])  # plus left margin
         rect.setY(rect.y() + margins[0])  # plus top margin
         rect.setWidth(rect.width() - margins[2])  # minus right margin
-        self.doLayout(rect)
+        self.doLayout(rect, False)
 
     def sizeHint(self):
-        return self.minimumSize()
+        size = self.minimumSize()
+        size.setWidth(self.doLayout(QRect(0, 0, 0, 0), True))
+        # Add left and right margins again
+        margins = self.getContentsMargins()
+        size += QSize(margins[1] + margins[2], 0)
+        return size
 
     def minimumSize(self):
         size = QSize()
@@ -59,8 +64,9 @@ class RowLayout(QLayout):
         size += QSize(margins[1] + margins[2], margins[0] + margins[3])
         return size
 
-    def doLayout(self, rect):
-        """Lay out the items in `item_list' within bounding QRect `rect'."""
+    def doLayout(self, rect, dry_run=False):
+        """Lay out the items in `item_list' within bounding QRect `rect'.
+If dry_run, only do the calculations and return the resulting width."""
         # Set the x and y to the top left corner of the bounding rect
         (x, y) = (rect.x(), rect.y())
         height = rect.height()
@@ -70,9 +76,12 @@ class RowLayout(QLayout):
         #  and then it is used to place the next one.
         added_width = 0
         for item in self.item_list:
-            y_gap_to_centre = (height / 2) - (item.sizeHint().height() / 2)
-            item.setGeometry(QRect(
-                QPoint(x + added_width,
-                       y + y_gap_to_centre),
-                item.sizeHint()))
+            if not dry_run:
+                y_gap_to_centre = (height / 2) - (item.sizeHint().height() / 2)
+                item.setGeometry(QRect(
+                    QPoint(x + added_width,
+                           y + y_gap_to_centre),
+                    item.sizeHint()))
             added_width += item.sizeHint().width() + self.spacing()
+
+        return added_width - self.spacing()
