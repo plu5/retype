@@ -120,6 +120,7 @@ class BookView(QWidget):
         self.modeline.setCursorPos(self.cursor_pos)
         self.modeline.setLinePos(self.line_pos)
         self.modeline.setChapPos(self.chapter_pos)
+        self.modeline.setChapTotal(len(self.book.chapters) - 1)
         self.modeline.repaint()
 
     def _initChapter(self):
@@ -214,7 +215,8 @@ class BookView(QWidget):
             self.previousChapter(False)
 
     def setLine(self, pos):
-        self.current_line = self.to_be_typed_list[pos]
+        if self.to_be_typed_list:
+            self.current_line = self.to_be_typed_list[pos]
 
     def gotoCursorPosition(self):
         if (QApplication.instance().keyboardModifiers() == Qt.ControlModifier):
