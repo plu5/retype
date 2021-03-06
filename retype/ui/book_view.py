@@ -103,13 +103,13 @@ class BookView(QWidget):
 
         self._initModeline()
 
-        self.layout = QVBoxLayout()
-        self.layout.setContentsMargins(0, 0, 0, 0)
-        self.layout.setSpacing(0)
-        self.layout.addWidget(self.toolbar)
-        self.layout.addWidget(self.display)
-        self.layout.addWidget(self.modeline)
-        self.setLayout(self.layout)
+        self.layout_ = QVBoxLayout()
+        self.layout_.setContentsMargins(0, 0, 0, 0)
+        self.layout_.setSpacing(0)
+        self.layout_.addWidget(self.toolbar)
+        self.layout_.addWidget(self.display)
+        self.layout_.addWidget(self.modeline)
+        self.setLayout(self.layout_)
 
     def _initModeline(self):
         self.modeline = Modeline(self)

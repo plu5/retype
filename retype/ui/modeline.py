@@ -1,116 +1,145 @@
-from PyQt5.Qt import QWidget, QPainter, QFont, QColor, QPen, Qt
+from PyQt5.Qt import (QWidget, QPainter, QColor, Qt, QPixmap, QPoint, QPolygon,
+                      QLabel, pyqtSignal)
+
+from retype.layouts import RowLayout
 
 
-class Modeline(QWidget):
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        self.setMinimumSize(1, 17) # 16, changed to fit border
-        self.cursorPos = 0
-        self.title = ""
-        self.linePos = 0
-        self.chapPos = 0
-        self.chapTotal = 0
-        self.percentage = 0
+class Separator(QWidget):
+    def __init__(self, colour, padding=0):
+        super().__init__()
+        self.colour = colour
+        self.start = padding
+        width = 8 + padding * 2
+        self._pixmap = QPixmap(width, 17)
+        self._pixmap.fill(Qt.transparent)
+        self.setMinimumSize(width, 17)
 
-    def setCursorPos(self, value):
-        self.cursorPos = value
+    def pixmap(self):
+        qp = QPainter(self._pixmap)
+        qp.setPen(self.colour)
+        qp.setBrush(self.colour)
 
-    def setTitle(self, title):
-        self.title = title
+        s = self.start
+        points = [QPoint(s, 1), QPoint(s, 2),
+                  QPoint(s + 7, 9), QPoint(s, 17)]
+        qp.drawPolygon(QPolygon(points))
 
-    def setLinePos(self, value):
-        self.linePos = value
-
-    def setChapPos(self, value):
-        self.chapPos = value
-
-    def setChapTotal(self, value):
-        self.chapTotal = value
+        return self._pixmap
 
     def paintEvent(self, e):
         qp = QPainter()
         qp.begin(self)
+        qp.drawPixmap(0, 0, self.pixmap())
+        qp.end()
+
+
+class Spacer(QWidget):
+    """Either a fixed-width spacer with width `width', or a spacer that will
+ fill the width of the parent minus `width'. For the latter pass parent with a
+ repainted signal for when it should be updated (for example, emit it on
+ paintEvent)."""
+    def __init__(self, parent=None, width=30):
+        super().__init__()
+        self.p = parent
+        self.width = width
+        if self.p and hasattr(self.p, 'repainted'):
+            self.p.repainted.connect(self.update)
+        else:
+            self.setFixedWidth(self.width)
+
+    def update(self):
+        if not self.p:
+            return
+        pwidth = self.p.size().width()
+        pheight = self.p.size().height()
+        x = self.pos().x()
+
+        width = pwidth - x - self.width
+        height = pheight
+
+        if width > 0:
+            self.setFixedWidth(width)
+        if height > 0:
+            self.setFixedHeight(height)
+
+
+class Modeline(QWidget):
+    repainted = pyqtSignal()
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setMinimumSize(1, 17)
+
+        self.cursorPos = QLabel(str(0))
+        self.title = QLabel("")
+        self.title.setStyleSheet("font-weight: bold")
+        self.linePos = QLabel(str(0))
+        self.chapPos = QLabel(str(0))
+        self.chapTotal = QLabel(str(0))
+        self.percentage = QLabel(str(0))
+        self.padding = 5
+        self.posSeparator = QLabel(":")
+        self.chapPretext = QLabel("chapter ")
+        self.chapSeparator = QLabel("/")
+        self.colour1 = QColor(255, 215, 0)
+        self.colour2 = QColor(205, 173, 0)
+        self.colour3 = QColor(139, 117, 0)
+        self.colour4 = QColor(198, 171, 120)
+
+        self.layout_ = RowLayout(self)
+        self.layout_.setContentsMargins(0, self.padding, 0, 0)
+        self.layout_.setSpacing(0)
+
+        self.separators = [Separator(self.colour1, self.padding),
+                           Separator(self.colour2, self.padding),
+                           Separator(self.colour3, self.padding),
+                           Separator(self.colour2, self.padding)]
+        self.elements = [
+            self.linePos, self.posSeparator, self.cursorPos,
+            self.separators[0],
+            self.title,
+            self.separators[1],
+            self.chapPretext, self.chapPos, self.chapSeparator, self.chapTotal,
+            Spacer(self, 45), self.separators[2], self.separators[3]
+        ]
+        for element in self.elements:
+            self.layout_.addWidget(element)
+
+    def setCursorPos(self, value):
+        self.cursorPos.setText(str(value))
+
+    def setTitle(self, title):
+        self.title.setText(title)
+
+    def setLinePos(self, value):
+        self.linePos.setText(str(value))
+
+    def setChapPos(self, value):
+        self.chapPos.setText(str(value))
+
+    def setChapTotal(self, value):
+        self.chapTotal.setText(str(value))
+
+    def paintEvent(self, e):
         width = self.size().width()
         height = self.size().height()
-        font = QFont('Monospace', 9) # change to a font that’s available on all systems? # courier new
-        qp.setFont(font)
-        fontHeight = qp.fontMetrics().ascent() - qp.fontMetrics().descent() - 1
-        fontVerticalMiddle = (height + fontHeight) / 2
 
-        posSeparator = ":"
-        chapPretext = "chapter "
-        chapSeparator = "/"
-        modelineColour1 = QColor(223, 216, 202)
-        modelineColour2 = QColor(198, 171, 120)
-        modelineColour3 = QColor(190, 190, 190)
-        mainTextPen = QPen(QColor(51, 51, 51), 1, Qt.SolidLine)
-        secondaryTextPen = QPen(Qt.black, 1, Qt.SolidLine)
+        qp = QPainter()
+        qp.begin(self)
 
-        elementWidth = {'linePos': qp.fontMetrics().width(str(self.linePos)),
-                        'cursorPos': qp.fontMetrics().width(str(self.cursorPos)),
-                        'title': qp.fontMetrics().width(str(self.title)),
-                        'chapPretext': qp.fontMetrics().width(str(chapPretext)),
-                        'chapPos': qp.fontMetrics().width(str(self.chapPos)),
-                        'chapTotal': qp.fontMetrics().width(str(self.chapTotal))}
-        padding = 10
-        positionLinePos = padding
-        positionCursorPos = positionLinePos + elementWidth['linePos'] + padding
-        positionPosSeparator = positionLinePos + elementWidth['linePos']
-        positionTitle = positionCursorPos + elementWidth['cursorPos'] + 3*padding #
-        positionChapPretext = positionTitle + elementWidth['title'] + 3*padding
-        positionChapPos = positionChapPretext + elementWidth['chapPretext']
-        positionChapTotal = positionChapPos + elementWidth['chapPos'] + padding
-        positionChapSeparator = (positionChapPos + positionChapTotal) / 2
-
-        # main rect
-        qp.setPen(modelineColour1)
-        qp.setBrush(modelineColour1)
+        # Main rect
+        qp.setPen(self.colour1)
+        qp.setBrush(self.colour1)
         qp.drawRect(0, 0, width, height)
-        # top line
-        qp.setBrush(modelineColour2)
-        qp.setPen(modelineColour2)
+        # Top line
+        qp.setBrush(self.colour2)
+        qp.setPen(self.colour2)
         qp.drawLine(0, 0, width, 0)
 
-        # seperator experimentation
-        separatorStart1 = positionTitle - padding - padding #
-        qp.setPen(modelineColour3)
-        qp.setBrush(modelineColour3)
-        qp.drawLine(separatorStart1, 1, separatorStart1, 2)
-        qp.drawLine(separatorStart1, 2, separatorStart1 + 7, 9)
-        qp.drawLine(separatorStart1 + 7, 9, separatorStart1, 17)
-        # fill
-        for r in range(7):
-           qp.drawLine(separatorStart1 + r, r + 2, separatorStart1 + r, 15 - r) #r+1
-        qp.drawRect(0, 1, separatorStart1, 17) #rect fill
-        
-        # secondsep
-        separatorStart2 = positionTitle + elementWidth['title'] + padding#positionChapTotal + elementWidth['chapTotal'] + padding #
-        qp.drawRect(separatorStart2, 1, width, 17)
-        qp.setPen(modelineColour1)
-        qp.setBrush(modelineColour1)
-        qp.drawLine(separatorStart2, 1, separatorStart2, 2)
-        qp.drawLine(separatorStart2, 2, separatorStart2 + 7, 9)
-        qp.drawLine(separatorStart2 + 7, 9, separatorStart2, 17)
-        # fill
-        for r in range(7):
-           qp.drawLine(separatorStart2 + r, r + 2, separatorStart2 + r, 15 - r) #r+1
-
-        ##qp.drawLine(separatorStart1, 0, separatorStart1, 15)
-        ##qp.drawLine(separatorStart1 + 1, 3, separatorStart1 + 1, 14)
-        ##qp.drawLine(separatorStart1 + 2, 4, separatorStart1 + 2, 13)
-
-        # elements
-        qp.setPen(mainTextPen)
-        qp.setBrush(Qt.NoBrush)
-        qp.drawText(positionPosSeparator, fontVerticalMiddle, str(posSeparator))
-        qp.drawText(positionCursorPos, fontVerticalMiddle, str(self.cursorPos))
-        qp.drawText(positionChapPretext, fontVerticalMiddle, str("        "))
-        qp.drawText(positionChapPos, fontVerticalMiddle, str(self.chapPos))
-        qp.drawText(positionChapSeparator, fontVerticalMiddle, str(chapSeparator))
-        qp.drawText(positionChapTotal, fontVerticalMiddle, str(self.chapTotal))
-        qp.setPen(secondaryTextPen)
-        qp.setBrush(Qt.NoBrush)
-        qp.drawText(positionLinePos, fontVerticalMiddle, str(self.linePos))
-        qp.drawText(positionTitle, fontVerticalMiddle, str(self.title))
+        for separator in reversed(self.separators):
+            qp.setPen(separator.colour)
+            qp.setBrush(separator.colour)
+            qp.drawRect(0, 1, separator.pos().x() + self.padding, 17)
 
         qp.end()
+        self.repainted.emit()

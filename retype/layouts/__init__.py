@@ -1,2 +1,3 @@
 from .shelveslayout import ShelvesWidget
-__all__ = ('ShelvesWidget',)
+from .rowlayout import RowLayout
+__all__ = ('ShelvesWidget','RowLayout',)
