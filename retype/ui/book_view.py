@@ -113,16 +113,18 @@ class BookView(QWidget):
 
     def _initModeline(self):
         self.modeline = Modeline(self)
-        self.modeline.setTitle('No book loaded')
+        self.modeline.update_(title="No book loaded")
 
     def updateModeline(self):
-        self.modeline.setTitle(self.book.title)
-        self.modeline.setCursorPos(self.cursor_pos)
-        self.modeline.setLinePos(self.line_pos)
-        self.modeline.setChapPos(self.chapter_pos)
-        self.modeline.setViewedChapPos(self.viewed_chapter_pos)
-        self.modeline.setChapTotal(len(self.book.chapters) - 1)
-        self.modeline.repaint()
+        self.modeline.update_(
+            title=self.book.title,
+            path=self.book.path,
+            cursor_pos=self.cursor_pos,
+            line_pos=self.line_pos,
+            chap_pos=self.chapter_pos,
+            viewed_chap_pos=self.viewed_chapter_pos,
+            chap_total=len(self.book.chapters) - 1
+        )
 
     def _initChapter(self):
         if not self.chapter_pos:

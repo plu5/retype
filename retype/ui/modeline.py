@@ -48,11 +48,11 @@ class Spacer(QWidget):
         self.p = parent
         self.width = width
         if self.p and hasattr(self.p, 'repainted'):
-            self.p.repainted.connect(self.update)
+            self.p.repainted.connect(self.update_)
         else:
             self.setFixedWidth(self.width)
 
-    def update(self):
+    def update_(self):
         if not self.p:
             return
         pwidth = self.p.size().width()
@@ -100,10 +100,10 @@ class Modeline(QWidget):
         self.setStyleSheet("*[css_~='hover']:hover{background: white}")
 
         # Dynamic
+        self.title = QLabel("")
+        self.path = QLabel("")
         self.cursor_pos = QLabel(str(0))
         self.line_pos = QLabel(str(0))
-        self.title = QLabel("")
-        self.path = ""  # TODO
         self.chap_pos = QLabel(str(0))
         self.viewed_chap_pos = QLabel(str(0))
         # For chapTotal I need two: one for the group with cursor chapter
@@ -129,7 +129,7 @@ class Modeline(QWidget):
         l_group = makeGroup(self.cursor_pos, self.pos_sep, self.line_pos,
                             tooltip="Line and character position of cursor")
 
-        t_group = makeGroup(self.title, tooltip="path (TODO)")
+        self.t_group = makeGroup(self.title, tooltip="?")
         self.title.setStyleSheet("font-weight:bold")
 
         c_group = makeGroup(self.chap_pre, self.chap_pos,
@@ -145,35 +145,35 @@ class Modeline(QWidget):
         self.layout_.setContentsMargins(0, self.padding, 0, 0)
         self.layout_.setSpacing(0)
 
-        self.separators = [Separator(self.colour1, self.padding),
-                           Separator(self.colour2, self.padding),
-                           Separator(self.colour3, self.padding, False),
-                           Separator(self.colour2, self.padding, False)]
-        self.elements = [l_group, self.separators[0], t_group,
-                         self.separators[1], c_group, Spacer(self.padding),
-                         v_group, Spacer(45, self), self.separators[2],
-                         self.separators[3]]
+        self.separators = [
+            Separator(self.colour1, self.padding),
+            Separator(self.colour2, self.padding),
+            Separator(self.colour3, self.padding, False),
+            Separator(self.colour2, self.padding, False)
+        ]
+        self.elements = [
+            l_group, self.separators[0],
+            self.t_group, self.separators[1],
+            c_group, Spacer(self.padding), v_group, Spacer(45, self),
+            self.separators[2], self.separators[3]
+        ]
         for element in self.elements:
             self.layout_.addWidget(element)
 
-    def setCursorPos(self, value):
-        self.cursor_pos.setText(str(value))
+    def update_(self, title=None, cursor_pos=None, line_pos=None,
+                chap_pos=None, viewed_chap_pos=None, chap_total=None,
+                path=None):
+        for p, v in vars().items():
+            if v and p != "self":
+                self.__dict__[p].setText(str(v))
 
-    def setTitle(self, title):
-        self.title.setText(title)
+        if chap_total:
+            self.chap_total_dupe.setText(str(chap_total))
 
-    def setLinePos(self, value):
-        self.line_pos.setText(str(value))
+        if path:
+            self.t_group.setToolTip(path)
 
-    def setChapPos(self, value):
-        self.chap_pos.setText(str(value))
-
-    def setViewedChapPos(self, value):
-        self.viewed_chap_pos.setText(str(value))
-
-    def setChapTotal(self, value):
-        self.chap_total.setText(str(value))
-        self.chap_total_dupe.setText(str(value))
+        self.repaint()
 
     def paintEvent(self, e):
         width = self.size().width()

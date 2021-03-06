@@ -27,6 +27,9 @@ class HighlightingService(object):
 
         if not v.isVisible():
             return
+        # In case there is no book loaded / variables not been initialised
+        if not getattr(v, 'persistent_pos', False):
+            return
 
         # Remove highlighting if things were deleted
         if len(text) + v.persistent_pos < v.cursor_pos:
@@ -75,7 +78,6 @@ class HighlightingService(object):
 
         self.updateHighlighting()
         self._console.clear()
-        # v.display.setTextCursor(v.cursor)
         v.display.centreAroundCursor()
 
     def updateHighlighting(self):

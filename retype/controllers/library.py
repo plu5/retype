@@ -45,7 +45,7 @@ class LibraryController(object):
 
 class BookWrapper(object):
     def __init__(self, path, idn):
-        self._path = path
+        self.path = path
         self._book = epub.read_epub(path)
         self.idn = idn
         self.title = self._book.title
