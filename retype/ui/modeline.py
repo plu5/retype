@@ -102,8 +102,8 @@ class Modeline(QWidget):
         # Dynamic
         self.title = QLabel("")
         self.path = QLabel("")
-        self.cursor_pos = QLabel(str(0))
         self.line_pos = QLabel(str(0))
+        self.cursor_pos = QLabel(str(0))
         self.chap_pos = QLabel(str(0))
         self.viewed_chap_pos = QLabel(str(0))
         # For chapTotal I need two: one for the group with cursor chapter
@@ -120,13 +120,12 @@ class Modeline(QWidget):
         self.colour1 = QColor(255, 215, 0)
         self.colour2 = QColor(205, 173, 0)
         self.colour3 = QColor(139, 117, 0)
-        self.colour4 = QColor(198, 171, 120)
 
         def makeGroup(*widgets, tooltip):
             return WidgetsGroup(*widgets, css_="hover", tooltip=tooltip,
                                 cursor=Qt.WhatsThisCursor)
 
-        l_group = makeGroup(self.cursor_pos, self.pos_sep, self.line_pos,
+        l_group = makeGroup(self.line_pos, self.pos_sep, self.cursor_pos,
                             tooltip="Line and character position of cursor")
 
         self.t_group = makeGroup(self.title, tooltip="?")
