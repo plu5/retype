@@ -56,10 +56,9 @@ class HighlightingService(object):
         v.line_pos += 1
 
         # Compensate
-        if v.cursor_pos - v.persistent_pos == len(v.current_line):
-            v.cursor_pos += 1
-        else:
-            v.cursor_pos += len(v.current_line) + 1
+        len_typed = v.cursor_pos - v.persistent_pos
+        difference = len(v.current_line) - len_typed
+        v.cursor_pos += difference + 1
 
         v.persistent_pos = v.cursor_pos
 
@@ -69,10 +68,10 @@ class HighlightingService(object):
 
         # Set the line that needs to be typed next
         try:
-            v.setLine(v.line_pos)
+            v._setLine(v.line_pos)
         except Exception as e:
             logger.error('can’t advance line \
-            {}/{}'.format(v.line_pos, len(v.to_be_typed_list)),
+            {}/{}\nerror:{}'.format(v.line_pos, len(v.to_be_typed_list), e),
                          exc_info=True)
             return
 

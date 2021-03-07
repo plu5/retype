@@ -42,7 +42,7 @@ class FakeBookView(QObject):
         self.line_pos = 0
         self.persistent_pos = 0
         self.to_be_typed_list = self.display.toPlainText().splitlines()
-        self.setLine(self.line_pos)
+        self._setLine(self.line_pos)
 
         self.highlight_format = QTextCharFormat()
         self.unhighlight_format = QTextCharFormat()
@@ -53,7 +53,7 @@ class FakeBookView(QObject):
     def isVisible(self):
         return True
 
-    def setLine(self, pos):
+    def _setLine(self, pos):
         self.current_line = self.to_be_typed_list[pos]
 
     def setChapter(self, pos):

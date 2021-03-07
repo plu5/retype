@@ -92,6 +92,9 @@ class BookView(QWidget):
  with you as well")
         self.nchap_action = a
 
+        a = self.toolbar.addAction("Skip line", self.advanceLine)
+        a.setToolTip("Move cursor to next line")
+
         self.display = BookDisplay(self)
         self.display.anchorClicked.connect(self.anchorClicked)
         self.display.keyPressed.connect(self._controller.console.transferFocus)
@@ -146,7 +149,7 @@ class BookView(QWidget):
         # replacements (do this better)
         to_be_typed_raw = to_be_typed_raw.replace('\ufffc', ' ')
         self.to_be_typed_list = to_be_typed_raw.splitlines()
-        self.setLine(self.line_pos)
+        self._setLine(self.line_pos)
 
         self.highlight_format = QTextCharFormat()
         self.highlight_format.setBackground(QColor('yellow'))
@@ -217,9 +220,12 @@ class BookView(QWidget):
         else:
             self.previousChapter(False)
 
-    def setLine(self, pos):
+    def _setLine(self, pos):
         if self.to_be_typed_list:
             self.current_line = self.to_be_typed_list[pos]
+
+    def advanceLine(self):
+        self._controller.console._command_service.advanceLine()
 
     def gotoCursorPosition(self):
         if (QApplication.instance().keyboardModifiers() == Qt.ControlModifier):
