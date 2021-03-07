@@ -77,6 +77,8 @@ class BookView(QWidget):
 
     def _initUI(self):
         self.toolbar = QToolBar(self)
+        self.toolbar.addAction("Back to shelves",
+                               self.switchToShelves)
         a = self.toolbar.addAction("Cursor position",
                                    self.gotoCursorPosition)
         a.setToolTip("Go to the cursor position. Hold Ctrl to move cursor\
@@ -226,6 +228,9 @@ class BookView(QWidget):
 
     def advanceLine(self):
         self._controller.console._command_service.advanceLine()
+
+    def switchToShelves(self):
+        self._controller.console._command_service.switch('shelves')
 
     def gotoCursorPosition(self, move=False):
         if QApplication.instance().keyboardModifiers() == Qt.ControlModifier\
