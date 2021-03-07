@@ -163,7 +163,7 @@ class Modeline(QWidget):
                 chap_pos=None, viewed_chap_pos=None, chap_total=None,
                 path=None):
         for p, v in vars().items():
-            if v and p != "self":
+            if v is not None and p != "self":
                 self.__dict__[p].setText(str(v))
 
         if chap_total:
