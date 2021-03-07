@@ -14,12 +14,14 @@ from math import floor, ceil
 
 
 class ShelvesLayout(QLayout):
-    def __init__(self, parent=None, cell_width=140, cell_height=140):
+    def __init__(self, parent=None,
+                 min_cell_width=140, max_cell_width=200, cell_height=140):
         super().__init__(parent)
-        self.cell_width = cell_width
+        self.min_cell_width = min_cell_width
+        self.max_cell_width = max_cell_width
         self.cell_height = cell_height
-        # Note that while the cell height will always be what you set,
-        #  the cell width will vary a bit as the window is resized
+        # The cell height is static, whereas cell width varies between min to
+        # max as the window is resized.
 
         self.item_list = []
 
@@ -88,11 +90,14 @@ If dry_run, only do the calculations and return the resulting grid’s height.""
         # Set the x and y to the top left corner of the bounding rect
         (x, y) = (rect.x(), rect.y())
 
-        # Calculate number of columns that can fit
-        columns = floor(rect.width() / self.cell_width) or 1
+        # Calculate number of columns that can fit. No more than our number of
+        #  items.
+        columns = min(floor(rect.width() / self.min_cell_width),
+                      len(self.item_list)) or 1
         # Calculate what the width of each cell is going to be,
-        #  based on the number of columns
-        cell_effective_width = rect.width() / columns
+        #  based on the number of columns. No more than max_cell_width.
+        cell_effective_width = min(rect.width() / columns,
+                                   self.max_cell_width)
         # Calculate number of rows
         rows = ceil(len(self.item_list) / columns)
 
@@ -138,13 +143,15 @@ class ShelvesWidget(QWidget):
     Use its addWidget() method to add children,
     setContentsMargins() to set the layout’s margins.
     """
-    def __init__(self, parent=None, cell_width=140, cell_height=140):
+    def __init__(self, parent=None,
+                 min_cell_width=140, max_cell_width=200, cell_height=140):
         super().__init__(parent)
         scrollArea = QScrollArea(self)
         scrollArea.setWidgetResizable(True)
         # Wrapper widget to contain shelves layout
         w = QWidget(scrollArea)
-        self.layout = ShelvesLayout(w, cell_width, cell_height)
+        self.layout = ShelvesLayout(
+            w, min_cell_width, max_cell_width, cell_height)
         w.setLayout(self.layout)
         scrollArea.setWidget(w)
         # Layout for us (this very widget) to put the scroll area in

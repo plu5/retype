@@ -20,7 +20,7 @@ class ShelfView(QWidget):
         self.layout.setContentsMargins(0, 0, 0, 0)
         self.layout.setSpacing(0)
         self.setLayout(self.layout)
-        self.shelves = ShelvesWidget(self, 130, 225)
+        self.shelves = ShelvesWidget(self, 130, 200, 225)
         self.shelves.setContentsMargins(0, 5, 5, 0)
         self.layout.addWidget(self.shelves)
 
