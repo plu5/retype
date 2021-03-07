@@ -27,12 +27,12 @@ class TestCommandService:
         console = FakeConsole()
         service = CommandService(console, None, console.fakeSwitch)
 
-        console.setText(">switchmain")
-        assert service.command_history == [">switchmain"]
+        console.setText(">switch main")
+        assert service.command_history == [">switch main"]
 
-        console.setText(">switchbook")
-        assert service.command_history == [">switchmain", ">switchbook"]
+        console.setText(">switch book")
+        assert service.command_history == [">switch main", ">switch book"]
 
         # Same command again should move it to end
-        console.setText(">switchmain")
-        assert service.command_history == [">switchbook", ">switchmain"]
+        console.setText(">switch main")
+        assert service.command_history == [">switch book", ">switch main"]
