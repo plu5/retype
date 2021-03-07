@@ -43,13 +43,6 @@ class HighlightingService(object):
         # Next line / chapter
         if text == v.current_line:
             self.advanceLine()
-            # Skip empty lines
-            while v.current_line.isspace() or v.current_line == '':
-                try:
-                    self.advanceLine()
-                except Exception as e:
-                    logger.error('empty lines loop exit', e)
-                    return
 
     def advanceLine(self):
         v = self.book_view
@@ -70,10 +63,17 @@ class HighlightingService(object):
         try:
             v._setLine(v.line_pos)
         except Exception as e:
-            logger.error('can’t advance line \
-            {}/{}\nerror:{}'.format(v.line_pos, len(v.to_be_typed_list), e),
-                         exc_info=True)
+            logger.error('can’t advance line {}/{}\n\
+error: {}'.format(v.line_pos, len(v.to_be_typed_list), e))
             return
+
+        # Skip empty lines
+        while v.current_line.isspace() or v.current_line == '':
+            try:
+                self.advanceLine()
+            except Exception as e:
+                logger.error('empty lines loop exit', e)
+                return
 
         self.updateHighlighting()
         self._console.clear()
