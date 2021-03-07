@@ -31,6 +31,10 @@ class ShelfView(QWidget):
             item = ShelfItem(book_wrapper, loadBook)
             self.shelves.addWidget(item)
 
+    def keyPressEvent(self, e):
+        self._controller.console.transferFocus(e)
+        QWidget.keyPressEvent(self, e)
+
 
 class ShelfItem(QWidget):
     """"""
