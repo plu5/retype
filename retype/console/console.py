@@ -1,4 +1,4 @@
-from PyQt5.Qt import QLineEdit, pyqtSignal, Qt
+from PyQt5.Qt import QLineEdit, pyqtSignal, Qt, QSize
 
 from retype.console import CommandService, HighlightingService
 
@@ -34,3 +34,14 @@ class Console(QLineEdit):
  another widget."""
         self.setFocus()
         self.keyPressEvent(e)
+
+    # TODO
+    def sizeHint(self):
+        return QSize(15, 15)
+
+    def resizeEvent(self, e):
+        height = self.size().height()
+        if height:
+            px = int(0.8 * height - 5)
+            self.setStyleSheet("font-size: {}px".format(px))
+        QLineEdit.resizeEvent(self, e)

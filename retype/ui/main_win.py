@@ -1,5 +1,5 @@
 from os import path
-from PyQt5.Qt import QMainWindow, QStackedWidget, QVBoxLayout, QWidget
+from PyQt5.Qt import QMainWindow, QStackedWidget, QVBoxLayout, QWidget, QSplitter, Qt
 
 from retype.resource_handler import getStylePath
 
@@ -13,15 +13,17 @@ class MainWin(QMainWindow):
 
     def _initUI(self):
         self.stacker = QStackedWidget()
-        self.consistent_layout = QVBoxLayout()
+        self.consistent_layout = QSplitter()
+        self.consistent_layout.setOrientation(Qt.Vertical)
         self.consistent_layout.setContentsMargins(0, 0, 0, 0)
-        self.consistent_layout.setSpacing(0)
+        # self.consistent_layout.setSpacing(0)
         self.consistent_layout.addWidget(self.stacker)
         self.consistent_layout.addWidget(self.console)
-        self.layout_container = QWidget()
-        self.layout_container.setLayout(self.consistent_layout)
+        # self.layout_container = QWidget()
+        # self.layout_container.setLayout(self.consistent_layout)
 
-        self.setCentralWidget(self.layout_container)
+        #self.setCentralWidget(self.layout_container)
+        self.setCentralWidget(self.consistent_layout)
         self.setGeometry(-900, 300, 800, 600)
         self.setWindowTitle('retype')
 
