@@ -12,9 +12,9 @@ class Console(QLineEdit):
         self.setAccessibleName("console")
         self.returnPressed.connect(self._handleReturnPressed)
 
-    def initServices(self, book_view, switchView):
-        self._command_service = CommandService(self, book_view, switchView)
-        self._highlighting_service = HighlightingService(self, book_view)
+    def initServices(self, book_view, switchViewSignal):
+        self.command_service = CommandService(self, book_view, switchViewSignal)
+        self.highlighting_service = HighlightingService(self, book_view)
 
     def _handleReturnPressed(self):
         self.submitted.emit(self.text())
@@ -24,9 +24,9 @@ class Console(QLineEdit):
 
     def keyPressEvent(self, e):
         if e.key() == Qt.Key_Up:
-            self._command_service.commandHistoryUp()
+            self.command_service.commandHistoryUp()
         if e.key() == Qt.Key_Down:
-            self._command_service.commandHistoryDown()
+            self.command_service.commandHistoryDown()
         QLineEdit.keyPressEvent(self, e)
 
     def transferFocus(self, e):

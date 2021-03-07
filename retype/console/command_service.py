@@ -4,10 +4,10 @@ logger = logging.getLogger(__name__)
 
 
 class CommandService(object):
-    def __init__(self, console, book_view, switchView):
+    def __init__(self, console, book_view, switchViewSignal):
         self._console = console
         self.book_view = book_view
-        self.switchView = switchView
+        self.switchViewSignal = switchViewSignal
         self._console.submitted.connect(self._handleCommands)
         self.prompt = '>'
         self._initCommands()
@@ -84,13 +84,14 @@ class CommandService(object):
         return self.book_view.isVisible()
 
     def switch(self, view=None):
+        v = None
         if view in ['shelf', 'shelves', 'main']:
             v = 1
         elif view == 'book':
             v = 2
         if not v:
             return
-        self.switchView.emit(v)
+        self.switchViewSignal.emit(v)
 
     def loadBook(self, book_id=0):
         try:
@@ -113,7 +114,7 @@ class CommandService(object):
                     self.book_view.previousChapter(m)
 
     def advanceLine(self):
-        self._console._highlighting_service.advanceLine()
+        self._console.highlighting_service.advanceLine()
 
     def gotoCursorPosition(self, move=None):
         if self.onBookView():

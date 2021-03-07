@@ -227,10 +227,10 @@ class BookView(QWidget):
             self.current_line = self.to_be_typed_list[pos]
 
     def advanceLine(self):
-        self._controller.console._command_service.advanceLine()
+        self._controller.console.command_service.advanceLine()
 
     def switchToShelves(self):
-        self._controller.console._command_service.switch('shelves')
+        self._controller.console.command_service.switch('shelves')
 
     def gotoCursorPosition(self, move=False):
         if QApplication.instance().keyboardModifiers() == Qt.ControlModifier\

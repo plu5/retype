@@ -1,6 +1,6 @@
 import logging
 from enum import Enum
-from PyQt5.Qt import QObject, qApp
+from PyQt5.Qt import QObject, qApp, pyqtSignal
 
 from retype.ui import MainWin, ShelfView, BookView
 from retype.controllers import MenuController, LibraryController
@@ -16,12 +16,13 @@ class View(Enum):
 
 class MainController(QObject):
     views = {}
+    switchViewRequested = pyqtSignal(int)
 
     def __init__(self):
         super().__init__()
         self.console = Console()
         self._window = MainWin(self.console)
-        self._window.switchView.connect(self.switchView)
+        self.switchViewRequested.connect(self.switchView)
 
         # this will have settings, qss etc
         self._initLibrary()
@@ -72,5 +73,5 @@ class MainController(QObject):
     def _connectConsole(self):
         console = self._window.console
         console.initServices(self.views[View.book_view],
-                             self._window.switchView)
+                             self.switchViewRequested)
         console.loadBook.connect(self.loadBook)

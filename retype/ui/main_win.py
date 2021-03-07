@@ -1,13 +1,10 @@
 from os import path
-from PyQt5.QtCore import pyqtSignal
-from PyQt5.QtWidgets import QMainWindow, QStackedWidget, QVBoxLayout, QWidget
+from PyQt5.Qt import QMainWindow, QStackedWidget, QVBoxLayout, QWidget
 
 from retype.resource_handler import getStylePath
 
 
 class MainWin(QMainWindow):
-    switchView = pyqtSignal(int)
-
     def __init__(self, console, parent=None): # qss_file
         super().__init__(parent)
         self.console = console
