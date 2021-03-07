@@ -28,7 +28,7 @@ class HighlightingService(object):
         if not v.isVisible():
             return
         # In case there is no book loaded / variables not been initialised
-        if not getattr(v, 'persistent_pos', False):
+        if getattr(v, 'persistent_pos', False) is False:
             return
 
         # Remove highlighting if things were deleted
@@ -47,7 +47,7 @@ class HighlightingService(object):
             while v.current_line.isspace() or v.current_line == '':
                 try:
                     self.advanceLine()
-                except e as e:
+                except Exception as e:
                     logger.error('empty lines loop exit', e)
                     return
 
@@ -70,7 +70,7 @@ class HighlightingService(object):
         # Set the line that needs to be typed next
         try:
             v.setLine(v.line_pos)
-        except e as e:
+        except Exception as e:
             logger.error('can’t advance line \
             {}/{}'.format(v.line_pos, len(v.to_be_typed_list)),
                          exc_info=True)
