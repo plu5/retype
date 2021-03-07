@@ -227,8 +227,9 @@ class BookView(QWidget):
     def advanceLine(self):
         self._controller.console._command_service.advanceLine()
 
-    def gotoCursorPosition(self):
-        if (QApplication.instance().keyboardModifiers() == Qt.ControlModifier):
+    def gotoCursorPosition(self, move=False):
+        if QApplication.instance().keyboardModifiers() == Qt.ControlModifier\
+           or move:
             self.setChapter(self.viewed_chapter_pos, True)
         else:
             self.setChapter(self.chapter_pos)

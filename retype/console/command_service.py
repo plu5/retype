@@ -15,15 +15,14 @@ class CommandService(object):
 
     def _initCommands(self):
         self.commands = {}
-        self.commands['switchmain'] = self.switchMain
-        self.commands['switchbook'] = self.switchBook
-        self.commands['loadbook'] = self.loadBook
-        self.commands['booklist'] = self.bookList
-        self.commands['nextchapter'] = self.nextChapter
-        self.commands['previouschapter'] = self.previousChapter
-        # next chapter, previous chapter. set chapter?
+        self.commands['switch'] = self.switch
+        self.commands['load'] = self.loadBook
+        self.commands['book'] = self.loadBook
+        self.commands['cursor'] = self.gotoCursorPosition
         self.commands['advanceline'] = self.advanceLine
+        self.commands['skipline'] = self.advanceLine
         self.commands['l'] = self.advanceLine
+        self.commands['chapter'] = self.setChapter
 
     def _handleCommands(self, text):
         e = text[len(self.prompt):].lower()
@@ -81,11 +80,17 @@ class CommandService(object):
         logger.info("{} {}".format(self.command_history_pos,
                                    self.command_history))
 
-    def switchMain(self):
-        self.switchView.emit(1)
+    def onBookView(self):
+        return self.book_view.isVisible()
 
-    def switchBook(self):
-        self.switchView.emit(2)
+    def switch(self, view=None):
+        if view in ['shelf', 'shelves', 'main']:
+            v = 1
+        elif view == 'book':
+            v = 2
+        if not v:
+            return
+        self.switchView.emit(v)
 
     def loadBook(self, book_id=0):
         try:
@@ -93,25 +98,24 @@ class CommandService(object):
         except ValueError:
             logger.error('{} is not a valid book_id'.format(book_id))
 
-    def bookList(self):
-        print()
-        # get main_controller’s library’s booklist, and id of each book
-        # actually, it’d be better to connect it to a function elsewhere.
-        # how would i show it? some way to print it to users not in the console
-        # TODO: a function to refresh booklist if users have added a book while
-        # the program was running
-
-    def nextChapter(self):  # not the best
-        if self.book_view.isVisible():
-            self.book_view.nextChapter()
-        else:
-            logger.error('not in BookView')
-
-    def previousChapter(self):
-        if self.book_view.isVisible():
-            self.book_view.previousChapter()
-        else:
-            logger.error('not in BookView')
+    def setChapter(self, pos=None, move=None):
+        if pos is None:
+            return
+        if self.onBookView():
+            m = True if move in ['move', 'm'] else False
+            try:
+                p = int(pos)
+                self.book_view.setChapter(p, m)
+            except (TypeError, ValueError):
+                if pos in ['next', 'n']:
+                    self.book_view.nextChapter(m)
+                elif pos in ['previous', 'prev', 'p']:
+                    self.book_view.previousChapter(m)
 
     def advanceLine(self):
         self._console._highlighting_service.advanceLine()
+
+    def gotoCursorPosition(self, move=None):
+        if self.onBookView():
+            m = True if move == 'move' else False
+            self.book_view.gotoCursorPosition(m)
