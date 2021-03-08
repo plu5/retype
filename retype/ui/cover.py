@@ -100,7 +100,7 @@ class Cover(QWidget):
 
         self.height = self.image.size().height()
         self.width = self.image.size().width()
-        self.setMaximumSize(self.width, self.height + 10)
+        self.setMaximumSize(self.width, self.height)
 
         info = (self.width, self.height, self.title, self.author)
         if self.pregenerated:
@@ -108,27 +108,17 @@ class Cover(QWidget):
         self.hover_image = HoverCover(*info).pixmap()
 
     def sizeHint(self):
-        size = QSize(self.width, self.height + 10)
+        size = QSize(self.width, self.height)
         return size
 
     def paintEvent(self, e):
         qp = QPainter(self)
 
-        s = 10
-        qp.drawPixmap(0, s, self.image)
+        qp.drawPixmap(0, 0, self.image)
 
         if self.hovered:
             self.setCursor(Qt.PointingHandCursor)
-            qp.drawPixmap(0, s, self.hover_image)
-
-        # Draw id
-        (w, h) = (self.width, self.height)
-        qp.setPen(Qt.gray)
-        font = QFont('Times', 9, 99)
-        qp.drawPixmap(0, -3,
-                      textPixmap(str(self.idn), w, h, font, Qt.gray,
-                                 Qt.AlignHCenter))
-
+            qp.drawPixmap(0, 0, self.hover_image)
 
     def enterEvent(self, e):
         self.hovered = True
