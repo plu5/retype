@@ -1,7 +1,7 @@
 import os
 import logging
 from lxml import html
-from ebooklib import epub, ITEM_DOCUMENT, ITEM_IMAGE
+from ebooklib import epub
 
 from retype.resource_handler import getLibraryPath
 
@@ -51,43 +51,79 @@ class BookWrapper(object):
         self.title = self._book.title
         self._chapters = None
         self._images = None
+        self._author = None
+        self._cover = None
+        self._images = []
+        self.documents = {}
+        self._unparsed_chapters = []
 
-    def parseContent(self, book):
-        chapters = []
+    def _parseChaptersContent(self, chapters):
+        parsed_chapters = []
         self.chapter_lookup = {}
-        for i, document in enumerate(book.get_items_of_type(ITEM_DOCUMENT)):
-            raw = document.content
+        for i, chapter in enumerate(chapters):
+            raw = chapter.content
             tree = html.fromstring(raw)
             links = tree.xpath('//a/@href')
             image_links = tree.xpath('//img/@src')
+
             images = []
             for image_link in image_links:
                 for image in self.images:
                     if image_link in image.file_name:
                         images.append({'link': image_link,
                                        'raw': image.content})
-            chapters.append({'raw': raw,
-                             'links': links,
-                             'images': images})
-            self.chapter_lookup[document.file_name] = i
 
-        return chapters
+            parsed_chapters.append({'raw': raw,
+                                    'links': links,
+                                    'images': images})
+            self.chapter_lookup[chapter.file_name] = i
+
+        return parsed_chapters
 
     @property
     def chapters(self):
+        if not self._unparsed_chapters:
+            self._getItems(self._book)
         if not self._chapters:
-            self._chapters = self.parseContent(self._book)
+            self._chapters = self._parseChaptersContent(
+                self._unparsed_chapters)
         return self._chapters
 
     @property
     def images(self):
         if not self._images:
-            self._images = self._initImages(self._book)
+            self._getItems(self._book)
         return self._images
 
-    def _initImages(self, book):
-        images = []
-        for image in book.get_items_of_type(ITEM_IMAGE):
-            print(image)
-            images.append(image)
-        return images
+    @property
+    def cover(self):
+        if not self._images:
+            self._getItems(self._book)
+        return self._cover
+
+    def _getItems(self, book):
+        for item in book.get_items():
+            if type(item) is epub.EpubCover:
+                self._cover = item
+            if type(item) is epub.EpubImage:
+                if item.id == 'cover':
+                    self._cover = item
+                self._images.append(item)
+            if type(item) is epub.EpubHtml:
+                self.documents[item.id] = item
+
+        for item in book.spine:
+            uid = item[0]
+            if uid in self.documents.keys():
+                self._unparsed_chapters.append(self.documents[uid])
+
+    @property
+    def author(self):
+        book = self._book
+        if not self._author:
+            for namespace in book.metadata.keys():
+                data = book.metadata[namespace]
+                for key, value in data.items():
+                    if key == 'creator':
+                        self._author = value[0][0]
+        return self._author
