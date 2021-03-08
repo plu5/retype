@@ -1,6 +1,8 @@
 import logging
 from PyQt5.Qt import (QWidget, QPixmap, QPainter, QFont, QColor, Qt,
-                      QRectF, QSize, QPoint, QPolygon)
+                      QSize, QPoint, QPolygon)
+
+from retype.ui.painting import rectPixmap, textPixmap
 
 logger = logging.getLogger(__name__)
 
@@ -8,27 +10,6 @@ colours = [QColor('#264653'), QColor('#2A9D8F'), QColor('#E76F51'),
            QColor('#6B705C'), QColor('#FCA311'), QColor('#3D405B'),
            QColor('#212529'), QColor('#540B0E'), QColor('#3E1F47'),
            QColor('#6C584C')]
-
-
-def rectanglePixmap(w, h, fg=Qt.white, bg=Qt.transparent):
-    pixmap = QPixmap(w + 1, h + 1)
-    pixmap.fill(Qt.transparent)
-    qp = QPainter(pixmap)
-    qp.setPen(fg)
-    qp.setBrush(bg)
-    qp.drawRect(0, 0, w, h)
-    return pixmap
-
-
-def textPixmap(text, w, h, font, fg=Qt.white,
-               alignment=Qt.AlignCenter | Qt.TextWordWrap):
-    pixmap = QPixmap(w, h)
-    pixmap.fill(Qt.transparent)
-    qp = QPainter(pixmap)
-    qp.setFont(font)
-    qp.setPen(fg)
-    qp.drawText(QRectF(0, 0, w, h), alignment, text)
-    return pixmap
 
 
 class PregeneratedCover:
@@ -51,7 +32,7 @@ class PregeneratedCover:
 
         inner_xy = (10, 10)
         inner_size = (w - 20, h - 20)
-        qp.drawPixmap(*inner_xy, rectanglePixmap(*inner_size))
+        qp.drawPixmap(*inner_xy, rectPixmap(*inner_size))
         font = QFont('Times', 9, 99)
         qp.drawPixmap(inner_xy[0], 0,
                       textPixmap(self.title, *inner_size, font))
@@ -131,8 +112,7 @@ class Cover(QWidget):
         return size
 
     def paintEvent(self, e):
-        qp = QPainter()
-        qp.begin(self)
+        qp = QPainter(self)
 
         s = 10
         qp.drawPixmap(0, s, self.image)
@@ -149,7 +129,6 @@ class Cover(QWidget):
                       textPixmap(str(self.idn), w, h, font, Qt.gray,
                                  Qt.AlignHCenter))
 
-        qp.end()
 
     def enterEvent(self, e):
         self.hovered = True
