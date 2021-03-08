@@ -13,7 +13,8 @@ class Console(QLineEdit):
         self.returnPressed.connect(self._handleReturnPressed)
 
     def initServices(self, book_view, switchViewSignal):
-        self.command_service = CommandService(self, book_view, switchViewSignal)
+        self.command_service = CommandService(self, book_view,
+                                              switchViewSignal)
         self.highlighting_service = HighlightingService(self, book_view)
 
     def _handleReturnPressed(self):
@@ -35,8 +36,7 @@ class Console(QLineEdit):
         self.setFocus()
         self.keyPressEvent(e)
 
-    # TODO
-    def sizeHint(self):
+    def sizeHint(self):  # TODO
         return QSize(15, 15)
 
     def resizeEvent(self, e):

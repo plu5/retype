@@ -17,3 +17,7 @@ QScrollArea {
     background: transparent;
     border: 0px;
 }
+
+QSplitter::handle {
+  background: url(style/stripe.png) repeat;
+}
