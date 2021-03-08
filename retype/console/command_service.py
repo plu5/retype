@@ -89,7 +89,9 @@ class CommandService(object):
             v = 1
         elif view == 'book':
             v = 2
-        if not v:
+        elif not view:
+            v = 1 if self.onBookView() else 2
+        else:
             return
         self.switchViewSignal.emit(v)
 

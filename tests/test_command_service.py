@@ -76,7 +76,7 @@ def setup():
 
 
 class TestCommandService:
-    def test_command_arguments(self):
+    def test_switch(self):
         (console, _, _) = setup()
         switchView = console.switchView
 
@@ -86,12 +86,11 @@ class TestCommandService:
         console.submitText(">switch book")
         assert switchView.emitted == (2,)
 
+        console.submitText(">switch")
+        assert switchView.emitted == (1,)
+
         # Non-supported argument
         console.submitText(">switch nothing")
-        assert switchView.emitted is None
-
-        # No argument
-        console.submitText(">switch")
         assert switchView.emitted is None
 
         # Too many arguments
