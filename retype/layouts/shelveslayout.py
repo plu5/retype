@@ -8,8 +8,8 @@ contentsMargins."""
 #  layout then is only based on the given cell width and height, plus
 #  contentsMargins at the edges.
 
-from PyQt5.QtCore import QSize, QRect, QPoint
-from PyQt5.QtWidgets import QWidget, QGridLayout, QScrollArea, QLayout
+from PyQt5.Qt import (QSize, QRect, QPoint, QWidget, QGridLayout, QScrollArea,
+                      QLayout)
 from math import floor, ceil
 
 
@@ -146,17 +146,20 @@ class ShelvesWidget(QWidget):
     def __init__(self, parent=None,
                  min_cell_width=140, max_cell_width=200, cell_height=140):
         super().__init__(parent)
-        scrollArea = QScrollArea(self)
-        scrollArea.setWidgetResizable(True)
+        self.scroll = QScrollArea(self)
+        # Unlike widgets and layouts, scroll areas have a solid background you
+        #  can’t draw behind by default.
+        self.scroll.setStyleSheet('background: transparent')
+        self.scroll.setWidgetResizable(True)
         # Wrapper widget to contain shelves layout
-        w = QWidget(scrollArea)
+        self.container = QWidget(self.scroll)
         self.layout = ShelvesLayout(
-            w, min_cell_width, max_cell_width, cell_height)
-        w.setLayout(self.layout)
-        scrollArea.setWidget(w)
+            self.container, min_cell_width, max_cell_width, cell_height)
+        self.container.setLayout(self.layout)
+        self.scroll.setWidget(self.container)
         # Layout for us (this very widget) to put the scroll area in
         outer_layout = QGridLayout(self)
-        outer_layout.addWidget(scrollArea)
+        outer_layout.addWidget(self.scroll)
         outer_layout.setSpacing(0)
         outer_layout.setContentsMargins(0, 0, 0, 0)
 
