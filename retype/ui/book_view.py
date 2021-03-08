@@ -190,6 +190,9 @@ class BookView(QWidget):
         if move_cursor:
             self.chapter_pos = pos
             self._initChapter()
+            chapter_content = self.display.toPlainText()
+            if chapter_content.isspace() or chapter_content == '':
+                self.setChapter(pos + 1, move_cursor)
         elif pos == self.chapter_pos:
             self.setCursor()
         self.updateModeline()
