@@ -14,9 +14,8 @@ class ShelfView(QWidget):
         super().__init__(parent)
         self.parent = parent
         self._controller = main_controller
-        self._library = self._controller._library
+        self._library = self._controller.library
         self._initUI()
-        self._populate()
 
     def _initUI(self):
         self.cell_dimensions = (130, 200, 232)  # min width, max width, height
@@ -31,10 +30,9 @@ class ShelfView(QWidget):
         self.layout_.addWidget(self.shelves)
 
     def _populate(self):
-        for book in self._library._book_list:
-            book_wrapper = self._library._instantiateBook(book)
-            loadBook = self._controller.console.loadBook
-            item = ShelfItem(book_wrapper, loadBook)
+        for book in self._library.books.values():
+            loadBook = self._controller.loadBookRequested
+            item = ShelfItem(book, loadBook)
             self.shelves.addWidget(item)
 
     def keyPressEvent(self, e):
@@ -101,13 +99,13 @@ class ShelfView(QWidget):
 
 
 class ShelfItem(QWidget):
-    """"""
     def __init__(self, book, loadBook, parent=None):
         super().__init__(parent)
         self.book = book
         self.idn = book.idn
         self.cover = Cover(book, self)
         self.loadBook = loadBook
+        self.progress = self.book.progress
         self._initUI()
 
     def _initUI(self):
@@ -117,6 +115,9 @@ class ShelfItem(QWidget):
         self.setLayout(self.layout_)
         self.layout_.addWidget(IDNDisplay(self.idn, self.cover.width))
         self.layout_.addWidget(self.cover)
+        self.progress_bar = ProgressBar(self.cover.width, self.progress)
+        self.book.progress_subscribers.append(self.progress_bar.update_)
+        self.layout_.addWidget(self.progress_bar)
 
     def mouseReleaseEvent(self, e):
         self.loadBook.emit(self.book.idn)
@@ -145,3 +146,39 @@ class IDNDisplay(QWidget):
 
     def sizeHint(self):
         return QSize(self.w, 10)
+
+
+class ProgressBar(QWidget):
+    def __init__(self, w, progress):
+        super().__init__()
+        self.w = w
+        self.h = 2
+        self.progress = progress
+        self.progress_colour = Qt.yellow
+        self.background_colour = Qt.black
+
+    def pixmap(self):
+        (w, h) = (self.w, self.h)
+        (pc, bc) = (self.progress_colour, self.background_colour)
+        progress = self.progress / 100
+        pixmap = QPixmap(self.w, h)
+        pixmap.fill(Qt.transparent)
+        qp = QPainter(pixmap)
+        qp.drawPixmap(0, 0,
+                      rectPixmap(w, h, bc, bc))
+        qp.drawPixmap(0, 0,
+                      rectPixmap(w * progress, h, pc, pc))
+        return pixmap
+
+    def paintEvent(self, e):
+        qp = QPainter(self)
+        # If no progress, don’t draw anything
+        if not self.progress:
+            return
+        qp.drawPixmap(0, 0, self.pixmap())
+
+    def sizeHint(self):
+        return QSize(self.w, self.h)
+
+    def update_(self, progress):
+        self.progress = progress

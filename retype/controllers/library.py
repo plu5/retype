@@ -1,7 +1,9 @@
 import os
+import json
 import logging
-from lxml import html
+from lxml.html import fromstring, builder, tostring
 from ebooklib import epub
+from PyQt5.Qt import QTextBrowser
 
 from retype.resource_handler import getLibraryPath
 
@@ -10,9 +12,10 @@ logger = logging.getLogger(__name__)
 
 class LibraryController(object):
     def __init__(self, main_controller):
-        self._main_controller = main_controller  #
+        self._main_controller = main_controller
         self._library_path = getLibraryPath()
-        self._book_list = self.indexLibrary(self._library_path)
+        self._book_files = self.indexLibrary(self._library_path)
+        self.books = None
 
     def indexLibrary(self, library_path):
         book_path_list = []
@@ -26,25 +29,49 @@ class LibraryController(object):
             book_list[i] = book_path_list[i]
         return book_list
 
-    def _instantiateBook(self, book_id):
-        if book_id in self._book_list:
-            logger.info("Instantiating book {}-{}".format(
-                book_id, self._book_list[book_id]))
-            book = BookWrapper(self._book_list[book_id], book_id)
-        else:
-            logger.error("book_id {} cannot be found").format(book_id)
-            return
-        return book
+    def instantiateBooks(self):
+        self.books = {}
+        for idn, path in self._book_files.items():
+            book = BookWrapper(path, idn, self.load(path))
+            self.books[idn] = book
 
-    def setBook(self, book_id, book_view):
-        self.book = self._instantiateBook(book_id)
-        book_view.setBook(self.book)
-        book_view.setChapter(0, True)
-        self._main_controller.switchView(2)
+    def setBook(self, book_id, book_view, switchView):
+        if book_id in self.books:
+            book = self.books[book_id]
+            logger.info("Loading book {}: {}".format(book_id, book.title))
+        else:
+            logging.error("book_id {} cannot be found".format(book_id))
+            logging.debug("books: {}".format(self.books))
+            return
+
+        save_data = book.save_data
+        logger.info("Save data: {}".format(save_data))
+        book_view.setBook(book, save_data)
+        switchView.emit(2)
+
+    def save(self, book, key, data):
+        if os.path.exists('save.json'):
+            with open('save.json', 'r') as f:
+                save = json.load(f)
+                save[key] = data
+        else:
+            save = {key: data}
+        with open('save.json', 'w', encoding='utf-8') as f:
+            json.dump(save, f, ensure_ascii=False, indent=2)
+
+        book.save_data = {key: data}
+
+    def load(self, key):
+        if os.path.exists('save.json'):
+            with open('save.json', 'r') as f:
+                save = json.load(f)
+                if key in save:
+                    return save[key]
+        return None
 
 
 class BookWrapper(object):
-    def __init__(self, path, idn):
+    def __init__(self, path, idn, save_data=None):
         self.path = path
         self._book = epub.read_epub(path)
         self.idn = idn
@@ -56,13 +83,33 @@ class BookWrapper(object):
         self._images = []
         self.documents = {}
         self._unparsed_chapters = []
+        self.updateSave(save_data)
+        self.progress = save_data['progress'] if save_data else None
+        self.progress_subscribers = []
 
     def _parseChaptersContent(self, chapters):
         parsed_chapters = []
         self.chapter_lookup = {}
         for i, chapter in enumerate(chapters):
             raw = chapter.content
-            tree = html.fromstring(raw)
+            tree = fromstring(raw)
+
+            # Replace xml svg elements with valid html
+            svg_elements = tree.xpath('//svg')
+            if svg_elements:
+                for svg in svg_elements:
+                    image = svg.xpath('//image')[0]
+                    attrs = {item[0]: item[1] for item in image.items()}
+                    try:
+                        href = attrs['xlink:href']
+                        del attrs['xlink:href']
+                        attrs['src'] = href
+                    except AttributeError:
+                        pass
+                    proper_img = builder.IMG(**attrs)
+                    svg.getparent().replace(svg, proper_img)
+            raw = tostring(tree)
+
             links = tree.xpath('//a/@href')
             image_links = tree.xpath('//img/@src')
 
@@ -73,7 +120,15 @@ class BookWrapper(object):
                         images.append({'link': image_link,
                                        'raw': image.content})
 
+            # We to store the length of the plain text of all chapters for
+            #  progress-calculation purposes
+            dummy_display = QTextBrowser()
+            dummy_display.setHtml(str(raw, 'utf-8'))
+            plain = dummy_display.toPlainText()
+
             parsed_chapters.append({'raw': raw,
+                                    'plain': plain,
+                                    'len': len(plain),
                                     'links': links,
                                     'images': images})
             self.chapter_lookup[chapter.file_name] = i
@@ -127,3 +182,12 @@ class BookWrapper(object):
                     if key == 'creator':
                         self._author = value[0][0]
         return self._author
+
+    def updateProgress(self, progress):
+        self.progress = progress
+
+        for subscriber in self.progress_subscribers:
+            subscriber(progress)
+
+    def updateSave(self, save_data):
+        self.save_data = save_data

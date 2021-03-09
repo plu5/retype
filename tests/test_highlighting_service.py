@@ -6,8 +6,14 @@ from retype.console import HighlightingService
 
 
 SAMPLE_CONTENT = '''<html><body>some test text<br/>
-next line
+<span>next line </span><br/>
+again
 </body></html>'''
+
+SAMPLE_CONTENT2 = '''<html><body><br/>
+begins with an empty line
+<span>  </span><br/>
+followed by a line of just spaces</body></html>'''
 
 
 class FakeConsole(QObject):
@@ -32,16 +38,16 @@ class FakeBookDisplay(QTextBrowser):
 
 
 class FakeBookView(QObject):
-    def __init__(self):
+    def __init__(self, html):
         QObject.__init__(self)
         self.display = FakeBookDisplay()
-        self.display.setHtml(SAMPLE_CONTENT)
+        self.display.setHtml(html)
 
         self.chapter_pos = 0
         self.cursor_pos = 0
         self.line_pos = 0
         self.persistent_pos = 0
-        self.to_be_typed_list = self.display.toPlainText().splitlines()
+        self.tobetyped_list = self.display.toPlainText().splitlines()
         self._setLine(self.line_pos)
 
         self.highlight_format = QTextCharFormat()
@@ -54,7 +60,7 @@ class FakeBookView(QObject):
         return True
 
     def _setLine(self, pos):
-        self.current_line = self.to_be_typed_list[pos]
+        self.current_line = self.tobetyped_list[pos]
 
     def setChapter(self, pos):
         pass
@@ -65,6 +71,9 @@ class FakeBookView(QObject):
     def updateModeline(self):
         pass
 
+    def updateProgress(self):
+        pass
+
 
 class TestHighlightingService:
     def test_handleHighlighting(self):
@@ -73,7 +82,7 @@ class TestHighlightingService:
         app = QApplication(sys.argv)  # noqa: F841
 
         console = FakeConsole()
-        book_view = FakeBookView()
+        book_view = FakeBookView(SAMPLE_CONTENT)
         highlighting_service = HighlightingService(console,  # noqa: F841
                                                    book_view)
         cursor = book_view.cursor
@@ -108,3 +117,23 @@ class TestHighlightingService:
 
         console.setText("")
         assert cursor.position() == 15
+
+        # Trailing spaces should be skipped
+        console.setText("next line")
+        assert cursor.position() == 26
+
+    def test_skipEmptyLines(self):
+        app = QApplication(sys.argv)  # noqa: F841
+
+        console = FakeConsole()
+        book_view = FakeBookView(SAMPLE_CONTENT2)
+        highlighting_service = HighlightingService(console,  # noqa: F841
+                                                   book_view)
+        cursor = book_view.cursor
+
+        console.setText("")
+        assert cursor.position() == 1
+
+        t = "begins with an empty line"
+        console.setText(t)
+        assert cursor.position() == 1 + (len(t) - 1) + 3

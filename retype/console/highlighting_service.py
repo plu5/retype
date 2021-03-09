@@ -44,6 +44,10 @@ class HighlightingService(object):
         if text == v.current_line:
             self.advanceLine()
 
+        # Skip trailing spaces
+        if text == v.current_line.rstrip(' '):
+            self.advanceLine()
+
     def advanceLine(self):
         v = self.book_view
         v.line_pos += 1
@@ -56,7 +60,7 @@ class HighlightingService(object):
         v.persistent_pos = v.cursor_pos
 
         # Reached last line of this chapter, move to next one
-        if len(v.to_be_typed_list) == v.line_pos:
+        if len(v.tobetyped_list) == v.line_pos:
             v.nextChapter(True)
 
         # Set the line that needs to be typed next
@@ -64,7 +68,7 @@ class HighlightingService(object):
             v._setLine(v.line_pos)
         except Exception as e:
             logger.error('can’t advance line {}/{}\n\
-error: {}'.format(v.line_pos, len(v.to_be_typed_list), e))
+error: {}'.format(v.line_pos, len(v.tobetyped_list), e))
             return
 
         # Skip empty lines
@@ -78,6 +82,7 @@ error: {}'.format(v.line_pos, len(v.to_be_typed_list), e))
         self.updateHighlighting()
         self._console.clear()
         v.display.centreAroundCursor()
+        v.updateProgress()
 
     def updateHighlighting(self):
         v = self.book_view

@@ -1,9 +1,12 @@
+import logging
 from PyQt5.Qt import (QWidget, QVBoxLayout, QTextBrowser, QTextDocument, QUrl,
                       QTextCursor, QTextCharFormat, QColor, QPainter, QPixmap,
                       QToolBar, QFont, QKeySequence, Qt, QApplication,
                       pyqtSignal)
 
 from retype.ui.modeline import Modeline
+
+logger = logging.getLogger(__name__)
 
 
 class BookDisplay(QTextBrowser):
@@ -70,10 +73,14 @@ class BookView(QWidget):
         super().__init__(parent)
         self._main_win = main_win
         self._controller = main_controller
-        self._library = self._controller._library
+        self._library = self._controller.library
+        self._console = self._controller.console
         self._initUI()
 
         self.chapter_pos = None
+        self.line_pos = None
+        self.persistent_pos = None
+        self.progress = None
 
     def _initUI(self):
         self.toolbar = QToolBar(self)
@@ -128,29 +135,35 @@ class BookView(QWidget):
             line_pos=self.line_pos,
             chap_pos=self.chapter_pos,
             viewed_chap_pos=self.viewed_chapter_pos,
-            chap_total=len(self.book.chapters) - 1
+            chap_total=len(self.book.chapters) - 1,
+            progress=int(self.progress),
         )
 
-    def _initChapter(self):
+    def _initChapter(self, reset=True):
         if not self.chapter_pos:
             self.chapter_pos = 0
             # This is the position of the chapter on actual display, which may
             #  not be the same as the chapter the cursor is on
             self.viewed_chapter_pos = 0
-        # Character position in chapter
-        self.cursor_pos = 0
-        # We split the text of the chapter on new lines, and for each line the
-        #  user types correctly, the `cursor_pos' is added to `persistent_pos'
-        #  and the console is cleared. We use the `line_pos' to set what line
-        #  needs to be typed at the moment; this corresponds to the index of
-        #  the line in `to_be_typed_list'
-        self.line_pos = 0
-        self.persistent_pos = 0
 
-        to_be_typed_raw = self.display.toPlainText()
+        # We split the text of the chapter on new lines, and for each line the
+        #  user types correctly, the `cursor_pos' (character position in
+        #  chapter) is added to `persistent_pos' and the console is cleared.
+        # We use the `line_pos' to set what line needs to be typed
+        #  at the moment; this corresponds to the index of the line
+        #  in `tobetyped_list'.
+        if not self.line_pos or reset:
+            self.cursor_pos = 0
+            self.line_pos = 0
+            self.persistent_pos = 0
+
+        if not self.progress:
+            self.progress = 0
+
+        tobetyped = self.book.chapters[self.chapter_pos]['plain']
         # replacements (do this better)
-        to_be_typed_raw = to_be_typed_raw.replace('\ufffc', ' ')
-        self.to_be_typed_list = to_be_typed_raw.splitlines()
+        self.tobetyped = tobetyped.replace('\ufffc', ' ')
+        self.tobetyped_list = self.tobetyped.splitlines()
         self._setLine(self.line_pos)
 
         self.highlight_format = QTextCharFormat()
@@ -181,18 +194,29 @@ class BookView(QWidget):
         pos = self.book.chapter_lookup[link.fileName()]
         self.setChapter(pos)
 
-    def setBook(self, book):
+    def setBook(self, book, save_data=None):
         self.book = book
+        if save_data:
+            for p, v in save_data.items():
+                self.__dict__[p] = v
+            self.cursor_pos = self.persistent_pos
+            reset = False
+        else:
+            self.chapter_pos = 0
+            reset = True
 
-    def setChapter(self, pos, move_cursor=False):
+        self.setChapter(self.chapter_pos, True, reset)
+
+    def setChapter(self, pos, move_cursor=False, reset=True):
         self.setSource(self.book.chapters[pos])
         self.viewed_chapter_pos = pos
         if move_cursor:
             self.chapter_pos = pos
-            self._initChapter()
-            chapter_content = self.display.toPlainText()
-            if chapter_content.isspace() or chapter_content == '':
+            self._initChapter(reset)
+            if self.tobetyped.isspace() or self.tobetyped == '':
+                logger.info("Skipping empty chapter")
                 self.setChapter(pos + 1, move_cursor)
+            self.updateProgress()
         elif pos == self.chapter_pos:
             self.setCursor()
         self.updateModeline()
@@ -226,19 +250,32 @@ class BookView(QWidget):
             self.previousChapter(False)
 
     def _setLine(self, pos):
-        if self.to_be_typed_list:
-            self.current_line = self.to_be_typed_list[pos]
+        if self.tobetyped_list:
+            self.current_line = self.tobetyped_list[pos]
+            if self.current_line.isspace() or self.current_line == '':
+                logger.info("Skipping empty line")
+                self.advanceLine()
+        else:
+            logger.error("Bad tobetyped_list; {}".format(self.tobetyped_list))
 
     def advanceLine(self):
         self._controller.console.command_service.advanceLine()
 
     def switchToShelves(self):
+        key = self.book.path
+        data = {'persistent_pos': self.persistent_pos,
+                'line_pos': self.line_pos,
+                'chapter_pos': self.chapter_pos,
+                'progress': self.progress}
+        self._library.save(self.book, key, data)
+
         self._controller.console.command_service.switch('shelves')
 
     def gotoCursorPosition(self, move=False):
         if QApplication.instance().keyboardModifiers() == Qt.ControlModifier\
            or move:
             self.setChapter(self.viewed_chapter_pos, True)
+            self.updateProgress()
         else:
             self.setChapter(self.chapter_pos)
             self.setCursor()
@@ -250,3 +287,13 @@ class BookView(QWidget):
             self.nchap_action.setDisabled(True)
         elif self.viewed_chapter_pos == 0:
             self.pchap_action.setDisabled(True)
+
+    def updateProgress(self):
+        chapter_lens = [chapter['len'] for chapter in self.book.chapters]
+        typed = self.persistent_pos
+        for chapter_len in chapter_lens[0:self.chapter_pos]:
+            typed += chapter_len
+        total = sum(chapter_lens)
+
+        self.progress = (typed / total) * 100
+        self.book.updateProgress(self.progress)

@@ -4,10 +4,11 @@ logger = logging.getLogger(__name__)
 
 
 class CommandService(object):
-    def __init__(self, console, book_view, switchViewSignal):
+    def __init__(self, console, book_view, switchView, loadBook):
         self._console = console
         self.book_view = book_view
-        self.switchViewSignal = switchViewSignal
+        self.switchView = switchView
+        self.loadBook = loadBook
         self._console.submitted.connect(self._handleCommands)
         self.prompt = '>'
         self._initCommands()
@@ -16,8 +17,8 @@ class CommandService(object):
     def _initCommands(self):
         self.commands = {}
         self.commands['switch'] = self.switch
-        self.commands['load'] = self.loadBook
-        self.commands['book'] = self.loadBook
+        self.commands['load'] = self.load
+        self.commands['book'] = self.load
         self.commands['cursor'] = self.gotoCursorPosition
         self.commands['advanceline'] = self.advanceLine
         self.commands['skipline'] = self.advanceLine
@@ -93,11 +94,11 @@ class CommandService(object):
             v = 1 if self.onBookView() else 2
         else:
             return
-        self.switchViewSignal.emit(v)
+        self.switchView.emit(v)
 
-    def loadBook(self, book_id=0):
+    def load(self, book_id=0):
         try:
-            self._console.loadBook.emit(int(book_id))
+            self.loadBook.emit(int(book_id))
         except ValueError:
             logger.error('{} is not a valid book_id'.format(book_id))
 

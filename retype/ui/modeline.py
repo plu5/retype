@@ -76,6 +76,8 @@ class WidgetsGroup(QFrame):
         self.layout_.setContentsMargins(0, 0, 0, 0)
         self.layout_.setSpacing(0)
 
+        self.hover_css = ''
+
         self.setMinimumHeight(height)
         if css_:
             self.setProperty("css_", css_)
@@ -89,6 +91,16 @@ class WidgetsGroup(QFrame):
 
     def addWidget(self, widget):
         self.layout_.addWidget(widget)
+
+    def setHoverStyle(self, css):
+        self.hover_css = css
+
+    def enterEvent(self, e):
+        self.old_stylesheet = self.styleSheet()
+        self.setStyleSheet(self.old_stylesheet + self.hover_css)
+
+    def leaveEvent(self, e):
+        self.setStyleSheet(self.old_stylesheet)
 
 
 class Modeline(QWidget):
@@ -106,11 +118,12 @@ class Modeline(QWidget):
         self.cursor_pos = QLabel(str(0))
         self.chap_pos = QLabel(str(0))
         self.viewed_chap_pos = QLabel(str(0))
-        # For chapTotal I need two: one for the group with cursor chapter
-        #  information and one for viewed chapter information
+        # Two chap totals because it needs to be displayed twice; in the cursor
+        #  chapter information and viewed chapter information. Qt does not
+        #  allow the same widget to be in two different places at once.
         self.chap_total = QLabel(str(0))
         self.chap_total_dupe = QLabel(str(0))
-        self.percentage = QLabel(str(0))
+        self.progress = QLabel(str(0))
 
         # Static
         self.padding = 5
@@ -130,6 +143,11 @@ class Modeline(QWidget):
 
         self.t_group = makeGroup(self.title, tooltip="?")
         self.title.setStyleSheet("font-weight:bold")
+
+        p_group = makeGroup(self.progress, QLabel("%"),
+                            tooltip="Progress percentage")
+        p_group.setStyleSheet("QLabel{color: yellow}")
+        p_group.setHoverStyle("QLabel{color: brown}")
 
         c_group = makeGroup(self.chap_pre, self.chap_pos,
                             self.chap_sep, self.chap_total,
@@ -151,8 +169,13 @@ class Modeline(QWidget):
             Separator(self.colour2, self.padding, False)
         ]
         self.elements = [
+            # line:char
             l_group, self.separators[0],
+            # title
             self.t_group, self.separators[1],
+            # progress %
+            Spacer(self.padding / 2), p_group, Spacer(self.padding * 2),
+            # chapter/total, viewed_chapter/total
             c_group, Spacer(self.padding), v_group, Spacer(45, self),
             self.separators[2], self.separators[3]
         ]
@@ -161,7 +184,7 @@ class Modeline(QWidget):
 
     def update_(self, title=None, cursor_pos=None, line_pos=None,
                 chap_pos=None, viewed_chap_pos=None, chap_total=None,
-                path=None):
+                path=None, progress=None):
         for p, v in vars().items():
             if v is not None and p != "self":
                 self.__dict__[p].setText(str(v))

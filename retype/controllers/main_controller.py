@@ -17,35 +17,40 @@ class View(Enum):
 class MainController(QObject):
     views = {}
     switchViewRequested = pyqtSignal(int)
+    loadBookRequested = pyqtSignal(int)
 
     def __init__(self):
         super().__init__()
         self.console = Console()
         self._window = MainWin(self.console)
-        self.switchViewRequested.connect(self.switchView)
 
-        # this will have settings, qss etc
+        self.switchViewRequested.connect(self.setView)
+        self.loadBookRequested.connect(self.loadBook)
+
         self._initLibrary()
         self._initMenuBar()
         self._instantiateViews()
-        self._initView()
+        self.setView()
         self._connectConsole()
+        self._populateLibrary()
 
     def _instantiateViews(self):
         self.views[View.shelf_view] = ShelfView(self._window, self)
         self.views[View.book_view] = BookView(self._window, self)
 
-    def _initView(self, view=View.shelf_view):
-        self._view = self.views[view]
+    def setView(self, view=View.shelf_view):
+        """Gets the view instance and and brings it to fore"""
+        if type(view) is View:
+            self._view = self.views[view]
+        elif type(view) is int:
+            self._view = self.views[View(view)]
+        else:
+            logger.error("Improper view identifier {}".format(view))
         self._window.stacker.addWidget(self._view)
         self._window.stacker.setCurrentWidget(self._view)
 
     def getView(self):
         return self._view
-
-    def switchView(self, intview):
-        """gets the view instance and calls _initView with it"""
-        self._initView(View(intview))
 
     def show(self):
         self._window.show()
@@ -58,20 +63,21 @@ class MainController(QObject):
         qApp.quit()
 
     def _initLibrary(self):
-        self._library = LibraryController(self)
+        self.library = LibraryController(self)
+
+    def _populateLibrary(self):
+        """Instantiate all the book wrappers and shelf items"""
+        shelf_view = self.views[View.shelf_view]
+        self.library.instantiateBooks()
+        shelf_view._populate()
 
     def loadBook(self, book_id=0):
         book_view = self.views[View.book_view]
-        if book_id in self._library._book_list:
-            logger.info("Loading book {}".format(book_id))
-            self._library.setBook(book_id, book_view)
-        else:
-            logging.error("book_id {} cannot be found".format(book_id))
-            logging.debug("_book_list: {}".format(self._library._book_list))
-            return
+        self.library.setBook(book_id, book_view, self.switchViewRequested)
 
     def _connectConsole(self):
+        """Pass some signals console services need access to"""
         console = self._window.console
         console.initServices(self.views[View.book_view],
-                             self.switchViewRequested)
-        console.loadBook.connect(self.loadBook)
+                             self.switchViewRequested,
+                             self.loadBookRequested)

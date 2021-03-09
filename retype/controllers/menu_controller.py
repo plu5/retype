@@ -19,7 +19,7 @@ class MenuController(QObject):
         fileMenu.addAction(self._exitAction())
 
     def _switchMenu(self):
-        switchMenu = self._menu.addMenu('&switch')
+        switchMenu = self._menu.addMenu('&view')
 
     def _optionsMenu(self):
         optionsMenu = self._menu.addMenu('&options')
