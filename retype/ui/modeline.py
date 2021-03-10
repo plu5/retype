@@ -149,18 +149,22 @@ class Modeline(QWidget):
         p_group.setStyleSheet("QLabel{color: yellow}")
         p_group.setHoverStyle("QLabel{color: brown}")
 
-        c_group = makeGroup(self.chap_pre, self.chap_pos,
-                            self.chap_sep, self.chap_total,
-                            tooltip="Chapter position of cursor")
+        self.c_group = makeGroup(self.chap_pre, self.chap_pos,
+                                 self.chap_sep, self.chap_total,
+                                 tooltip="Chapter position of cursor")
 
-        v_group = makeGroup(QLabel("v:"), self.viewed_chap_pos,
-                            QLabel(self.chap_sep.text()),
-                            self.chap_total_dupe,
-                            tooltip="Chapter position of view")
+        self.v_group = makeGroup(QLabel("v:"), self.viewed_chap_pos,
+                                 QLabel(self.chap_sep.text()),
+                                 self.chap_total_dupe,
+                                 tooltip="Chapter position of view")
 
         self.layout_ = RowLayout(self)
         self.layout_.setContentsMargins(0, self.padding, 0, 0)
         self.layout_.setSpacing(0)
+
+        # A spacer which serves to push the left-facing end separators to the
+        #  right
+        self.push_to_right = Spacer(112, self)
 
         self.separators = [
             Separator(self.colour1, self.padding),
@@ -174,10 +178,11 @@ class Modeline(QWidget):
             # title
             self.t_group, self.separators[1],
             # progress %
-            Spacer(self.padding / 2), p_group, Spacer(self.padding * 2),
+            Spacer(self.padding / 2), p_group,
+            self.push_to_right,
             # chapter/total, viewed_chapter/total
-            c_group, Spacer(self.padding), v_group, Spacer(45, self),
-            self.separators[2], self.separators[3]
+            self.separators[2], self.v_group,
+            self.separators[3], self.c_group,
         ]
         for element in self.elements:
             self.layout_.addWidget(element)
@@ -189,11 +194,19 @@ class Modeline(QWidget):
             if v is not None and p != "self":
                 self.__dict__[p].setText(str(v))
 
-        if chap_total:
+        if chap_total is not None:
             self.chap_total_dupe.setText(str(chap_total))
 
-        if path:
+        if path is not None:
             self.t_group.setToolTip(path)
+
+        # Update width of push_to_right spacer based on new width of right
+        #  widgets if their values changed
+        if any([chap_pos, viewed_chap_pos, chap_total]):
+            self.c_group.adjustSize()
+            self.v_group.adjustSize()
+            self.push_to_right.width = self.c_group.rect().width() + \
+                self.v_group.rect().width() + 50
 
         self.repaint()
 
