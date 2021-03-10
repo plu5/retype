@@ -49,6 +49,7 @@ class LibraryController(object):
         logger.info("Save data: {}".format(save_data))
         book_view.setBook(book, save_data)
         switchView.emit(2)
+        book_view.display.centreAroundCursor()
 
     def save(self, book, key, data):
         if os.path.exists(self.save_file):
