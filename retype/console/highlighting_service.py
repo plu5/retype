@@ -21,6 +21,10 @@ class HighlightingService(object):
         self._console = console
         self.book_view = book_view
         self._console.textChanged.connect(self._handleHighlighting)
+        self.wrong = False
+        self.wrong_start = None
+        self.wrong_end = None
+        self.wrong_text = ""
 
     def _handleHighlighting(self, text):
         v = self.book_view
@@ -36,8 +40,11 @@ class HighlightingService(object):
             v.cursor.mergeCharFormat(v.unhighlight_format)
 
         # Cursor position in the line
-        v.cursor_pos = v.persistent_pos + \
-            compareStrings(text, v.current_line)
+        end_correctness_index = compareStrings(text, v.current_line)
+        v.cursor_pos = v.persistent_pos + end_correctness_index
+
+        self._handleMistakes(v, text, end_correctness_index)
+
         self.updateHighlighting()
 
         # Next line / chapter
@@ -47,6 +54,38 @@ class HighlightingService(object):
         # Skip trailing spaces
         if text == v.current_line.rstrip(' '):
             self.advanceLine()
+
+    def _handleMistakes(self, v, text, end_correctness_index):
+        # The way this works is if there’s any previous wrong_text it gets
+        #  entirely removed, then readded as necessary.
+        if self.wrong_start is not None:
+            self._removeWrongText(v, self.wrong_start, self.wrong_end)
+        else:
+            self.wrong_start = v.persistent_pos + end_correctness_index
+
+        self.wrong_text = text[end_correctness_index:]
+
+        # If not (or no longer) wrong, reset wrong-tracking variables and
+        #  silently follow the cursor pos.
+        if not self.wrong_text:
+            self.wrong = False
+            self.wrong_start = None
+            self.wrong_end = None
+            v.mistake_cursor.setPosition(v.cursor_pos)
+            return
+
+        self.wrong = True
+        self._insertWrongText(v, v.mistake_cursor.position(), self.wrong_text)
+        self.wrong_end = self.wrong_start + len(self.wrong_text)
+
+    def _insertWrongText(self, v, pre_pos, text):
+        v.mistake_cursor.setPosition(pre_pos, v.mistake_cursor.MoveAnchor)
+        v.mistake_cursor.insertText(text, v.mistake_format)
+
+    def _removeWrongText(self, v, start, end):
+        v.mistake_cursor.setPosition(start, v.mistake_cursor.MoveAnchor)
+        v.mistake_cursor.setPosition(end, v.mistake_cursor.KeepAnchor)
+        v.mistake_cursor.removeSelectedText()
 
     def advanceLine(self):
         v = self.book_view
@@ -87,6 +126,9 @@ error: {}'.format(v.line_pos, len(v.tobetyped_list), e))
     def updateHighlighting(self):
         v = self.book_view
         v.cursor.setPosition(v.cursor_pos, v.cursor.KeepAnchor)
+        if self.wrong:
+            v.mistake_cursor.mergeCharFormat(v.mistake_format)
+            return
         v.cursor.mergeCharFormat(v.unhighlight_format)
         v.cursor.mergeCharFormat(v.highlight_format)
         v.updateModeline()

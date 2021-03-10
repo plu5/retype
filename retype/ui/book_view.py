@@ -170,6 +170,9 @@ class BookView(QWidget):
         self.highlight_format.setBackground(QColor('yellow'))
         self.unhighlight_format = QTextCharFormat()
         self.unhighlight_format.setBackground(QColor('white'))
+        self.mistake_format = QTextCharFormat()
+        self.mistake_format.setBackground(QColor('red'))
+        self.mistake_format.setForeground(QColor('white'))
         self.setCursor()
 
     def setCursor(self):
@@ -177,6 +180,8 @@ class BookView(QWidget):
         self.cursor.setPosition(self.cursor_pos, self.cursor.KeepAnchor)
         self.display.setCursor(self.cursor)
         self.cursor.mergeCharFormat(self.highlight_format)
+        self.mistake_cursor = QTextCursor(self.display.document())
+        self.mistake_cursor.setPosition(self.cursor_pos)
 
     def setSource(self, chapter):
         document = QTextDocument()

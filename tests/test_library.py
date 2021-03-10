@@ -127,16 +127,17 @@ class FakeImage:
         self.content = None
 
 
+# This is here just to be able to use QTextBrowser, as without a
+#  QApplication Qt doesn’t let you instantiate QWidgets.
+app = QApplication(sys.argv)
+
+
 class TestBookWrapper:
     @patch('ebooklib.epub.read_epub')
     def test_parseChaptersContent(self, _):
         book = BookWrapper(None, None)
         chapters = [FakeChapter(SAMPLE_CONTENT, "one"),
                     FakeChapter(SAMPLE_CONTENT2, "two")]
-
-        # This is here just to be able to use QTextBrowser, as without a
-        #  QApplication Qt doesn’t let you instantiate QWidgets.
-        app = QApplication(sys.argv)  # noqa: F841
 
         book._images = [FakeImage('dummy'), FakeImage('inline-image'),
                         FakeImage('cover.jpg')]
