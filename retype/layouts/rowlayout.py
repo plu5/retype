@@ -58,8 +58,7 @@ class RowLayout(QLayout):
     def minimumSize(self):
         size = QSize()
         margins = self.getContentsMargins()
-        for item in self.item_list:
-            size = size.expandedTo(item.minimumSize())
+        size = size.expandedTo(self.item_list[0].minimumSize())
         # Account for the margins
         size += QSize(margins[1] + margins[2], margins[0] + margins[3])
         return size

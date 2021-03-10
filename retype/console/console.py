@@ -10,6 +10,7 @@ class Console(QLineEdit):
         super().__init__(parent)
         self.setAccessibleName("console")
         self.returnPressed.connect(self._handleReturnPressed)
+        self.setMaximumHeight(200)
 
     def initServices(self, book_view, switchView, loadBook):
         self.command_service = CommandService(self, book_view,
