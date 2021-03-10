@@ -1,7 +1,7 @@
 import os
 import json
 import logging
-from lxml.html import fromstring, builder, tostring
+from lxml.html import fromstring, builder, tostring, xhtml_to_html
 from ebooklib import epub
 from PyQt5.Qt import QTextBrowser
 
@@ -14,6 +14,7 @@ class LibraryController(object):
     def __init__(self, main_controller):
         self._main_controller = main_controller
         self._library_path = getLibraryPath()
+        self.save_file = 'save.json'
         self._book_files = self.indexLibrary(self._library_path)
         self.books = None
 
@@ -50,20 +51,20 @@ class LibraryController(object):
         switchView.emit(2)
 
     def save(self, book, key, data):
-        if os.path.exists('save.json'):
-            with open('save.json', 'r') as f:
+        if os.path.exists(self.save_file):
+            with open(self.save_file, 'r') as f:
                 save = json.load(f)
                 save[key] = data
         else:
             save = {key: data}
-        with open('save.json', 'w', encoding='utf-8') as f:
+        with open(self.save_file, 'w', encoding='utf-8') as f:
             json.dump(save, f, ensure_ascii=False, indent=2)
 
         book.save_data = {key: data}
 
     def load(self, key):
-        if os.path.exists('save.json'):
-            with open('save.json', 'r') as f:
+        if os.path.exists(self.save_file):
+            with open(self.save_file, 'r') as f:
                 save = json.load(f)
                 if key in save:
                     return save[key]
@@ -83,7 +84,7 @@ class BookWrapper(object):
         self._images = []
         self.documents = {}
         self._unparsed_chapters = []
-        self.updateSave(save_data)
+        self.save_data = save_data
         self.progress = save_data['progress'] if save_data else None
         self.progress_subscribers = []
 
@@ -108,7 +109,9 @@ class BookWrapper(object):
                         pass
                     proper_img = builder.IMG(**attrs)
                     svg.getparent().replace(svg, proper_img)
-            raw = tostring(tree)
+
+            xhtml_to_html(tree)
+            raw = tostring(tree, method='xml')
 
             links = tree.xpath('//a/@href')
             image_links = tree.xpath('//img/@src')
@@ -188,6 +191,3 @@ class BookWrapper(object):
 
         for subscriber in self.progress_subscribers:
             subscriber(progress)
-
-    def updateSave(self, save_data):
-        self.save_data = save_data
