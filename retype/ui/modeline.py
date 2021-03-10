@@ -164,7 +164,7 @@ class Modeline(QWidget):
 
         # A spacer which serves to push the left-facing end separators to the
         #  right
-        self.push_to_right = Spacer(112, self)
+        self.push_to_right = Spacer(100, self)
 
         self.separators = [
             Separator(self.colour1, self.padding),

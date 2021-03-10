@@ -32,7 +32,8 @@ class HighlightingService(object):
         if not v.isVisible():
             return
         # In case there is no book loaded / variables not been initialised
-        if getattr(v, 'persistent_pos', False) is False:
+        if any([getattr(v, 'persistent_pos', False) is False,
+                v.persistent_pos is None]):
             return
 
         # Remove highlighting if things were deleted
