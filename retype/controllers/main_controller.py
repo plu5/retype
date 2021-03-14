@@ -26,7 +26,7 @@ class MainController(QObject):
         self.console = Console()
         self._window = MainWin(self.console)
 
-        self.switchViewRequested.connect(self.setView)
+        self.switchViewRequested.connect(self.switchView)
         self.loadBookRequested.connect(self.loadBook)
 
         self.config_file = 'config.json'
@@ -46,19 +46,33 @@ class MainController(QObject):
         self.views[View.book_view] = BookView(self._window, self,
                                               rdict)
 
-    def setView(self, view=View.shelf_view):
-        """Gets the view instance and and brings it to fore"""
-        if type(view) is View:
-            self._view = self.views[view]
-        elif type(view) is int:
-            self._view = self.views[View(view)]
+    def _viewFromEnumOrInt(self, view):
+        if isinstance(view, View):
+            return self.views[view]
+        elif isinstance(view, int):
+            return self.views[View(view)]
         else:
             logger.error("Improper view identifier {}".format(view))
+
+    def setView(self, view=View.shelf_view):
+        """Gets the view instance and and brings it to fore"""
+        self._view = self._viewFromEnumOrInt(view)
         self._window.stacker.addWidget(self._view)
         self._window.stacker.setCurrentWidget(self._view)
 
-    def getView(self):
+    def view(self):
         return self._view
+
+    def isVisible(self, view):
+        return self._viewFromEnumOrInt(view).isVisible()
+
+    def switchView(self, view=None):
+        # If no argument (or 0), switch to shelf view if not on it, otherwise
+        #  switch to book view
+        if not view:
+            view = View.shelf_view if not self.isVisible(View.shelf_view)\
+                else View.book_view
+        self.setView(view)
 
     def show(self):
         self._window.show()

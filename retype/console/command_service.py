@@ -87,15 +87,11 @@ class CommandService(object):
         return self.book_view.isVisible()
 
     def switch(self, view=None):
-        v = None
+        v = 0
         if view in ['shelf', 'shelves', 'main']:
             v = 1
         elif view == 'book':
             v = 2
-        elif not view:
-            v = 1 if self.onBookView() else 2
-        else:
-            return
         self.switchView.emit(v)
 
     def load(self, book_id=0):
