@@ -10,34 +10,43 @@ class FakeBookWrapper:
         self.save_data = None
 
 
-class TestLibraryController:
-    @patch('os.path.exists')
-    @patch('builtins.open')
-    @patch('json.load')
-    @patch('json.dump')
-    def test_save(self, m_jsondump, m_jsonload, m_open, m_exists):
-        library = LibraryController(None)
-        book = FakeBookWrapper()
-        key = "hey"
-        data = {"test": "data"}
-        save = {"dummykey": {"test": "data"}}
+def setup():
+    library = LibraryController(None)
+    book = FakeBookWrapper()
+    key = "hey"
+    data = {"test": "data"}
+    save = {"dummykey": {"test": "data"}}
+    return library, book, key, data, save
 
-        # Save file exists and has key
+
+@patch('os.path.exists')
+@patch('builtins.open')
+@patch('json.load')
+@patch('json.dump')
+class TestLibraryControllerSaveFunction:
+    def test_save_file_exists_and_has_key(
+            self, m_jsondump, m_jsonload, m_open, m_exists):
+        (library, book, key, data, save) = setup()
+
         m_exists.return_value = True
         m_jsonload.return_value = {key: data}
+
         library.save(book, key, data)
+
         m_jsonload.assert_called_once()
         m_jsondump.assert_called_once_with({key: data}, ANY,
                                            ensure_ascii=False, indent=2)
         assert book.save_data == {key: data}
 
-        m_jsonload.reset_mock()
-        m_jsondump.reset_mock()
+    def test_save_file_exists_and_does_not_have_key(
+            self, m_jsondump, m_jsonload, m_open, m_exists):
+        (library, book, key, data, save) = setup()
 
-        # Save file exists and does not have key
         m_exists.return_value = True
         m_jsonload.return_value = save
+
         library.save(book, key, data)
+
         m_jsonload.assert_called_once()
         new_save = save
         new_save[key] = data
@@ -45,52 +54,60 @@ class TestLibraryController:
                                            ensure_ascii=False, indent=2)
         assert book.save_data == {key: data}
 
-        m_jsonload.reset_mock()
-        m_jsondump.reset_mock()
+    def test_save_file_does_not_exist(
+            self, m_jsondump, m_jsonload, m_open, m_exists):
+        (library, book, key, data, save) = setup()
 
-        # Save file does not exist
         m_exists.return_value = False
+
         library.save(book, key, data)
+
         m_jsonload.assert_not_called()
         m_jsondump.assert_called_once_with({key: data}, ANY,
                                            ensure_ascii=False, indent=2)
         assert book.save_data == {key: data}
 
-        m_jsonload.reset_mock()
-        m_jsondump.reset_mock()
 
-    @patch('os.path.exists')
-    @patch('builtins.open')
-    @patch('json.load')
-    def test_load(self, m_jsonload, m_open, m_exists):
-        library = LibraryController(None)
+@patch('os.path.exists')
+@patch('builtins.open')
+@patch('json.load')
+class TestLibraryControllerLoadFunction:
+    def test_load_save_file_exists(self, m_jsonload, m_open, m_exists):
+        (library, _, _, data, _) = setup()
         key = "dummykey"
-        data = {"test": "data"}
         save = {key: data}
 
-        # Save file exists
         m_exists.return_value = True
         m_jsonload.return_value = save
-        return_value = library.load(key)
+
+        loaded = library.load(key)
+
         m_jsonload.assert_called_once()
-        assert return_value == data
+        assert loaded == data
 
-        m_jsonload.reset_mock()
+    def test_load_save_file_does_not_exist(self, m_jsonload, m_open, m_exists):
+        (library, _, _, data, _) = setup()
+        key = "dummykey"
 
-        # Save file does not exist
         m_exists.return_value = False
-        return_value = library.load(key)
+
+        loaded = library.load(key)
         m_jsonload.assert_not_called()
-        assert return_value is None
+        assert loaded is None
 
-        m_jsonload.reset_mock()
+    def test_load_save_file_exists_and_does_not_have_key(
+            self, m_jsonload, m_open, m_exists):
+        (library, _, _, data, _) = setup()
+        key = "dummykey"
+        save = {key: data}
 
-        # Save file exists, key does not exist
         m_exists.return_value = True
         m_jsonload.return_value = save
-        return_value = library.load("nonexistent-key")
+
+        loaded = library.load("nonexistent-key")
+
         m_jsonload.assert_called_once()
-        assert return_value is None
+        assert loaded is None
 
 
 SAMPLE_CONTENT = b'<html><body>\
