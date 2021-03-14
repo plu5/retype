@@ -5,6 +5,7 @@ from PyQt5.Qt import (QWidget, QVBoxLayout, QTextBrowser, QTextDocument, QUrl,
                       pyqtSignal)
 
 from retype.ui.modeline import Modeline
+from retype.extras import ManifoldStr
 
 logger = logging.getLogger(__name__)
 
@@ -69,13 +70,16 @@ class BookDisplay(QTextBrowser):
 
 
 class BookView(QWidget):
-    def __init__(self, main_win, main_controller, parent=None):
+    def __init__(self, main_win, main_controller, rdict,
+                 parent=None):
         super().__init__(parent)
         self._main_win = main_win
         self._controller = main_controller
         self._library = self._controller.library
         self._console = self._controller.console
         self._initUI()
+
+        self.rdict = rdict
 
         self.chapter_pos = None
         self.line_pos = None
@@ -160,9 +164,7 @@ class BookView(QWidget):
         if not self.progress:
             self.progress = 0
 
-        tobetyped = self.book.chapters[self.chapter_pos]['plain']
-        # replacements (do this better)
-        self.tobetyped = tobetyped.replace('\ufffc', ' ')
+        self.tobetyped = self.book.chapters[self.chapter_pos]['plain']
         self.tobetyped_list = self.tobetyped.splitlines()
         self._setLine(self.line_pos)
 
@@ -256,7 +258,12 @@ class BookView(QWidget):
 
     def _setLine(self, pos):
         if self.tobetyped_list:
-            self.current_line = self.tobetyped_list[pos]
+            if self.rdict:
+                self.current_line = ManifoldStr(self.tobetyped_list[pos],
+                                                self.rdict)
+            else:
+                self.current_line = self.tobetyped_list[pos]
+
             if self.current_line.isspace() or self.current_line == '':
                 logger.info("Skipping empty line")
                 self.advanceLine()

@@ -6,7 +6,7 @@ logger = logging.getLogger(__name__)
 def compareStrings(str1, str2):
     """Compare strings `str1' and `str2', returning index at which they stop
  matching"""
-    length_of_shorter_str = len(min([str1, str2]))
+    length_of_shorter_str = min([len(str1), len(str2)])
     for i, a, b in zip(range(length_of_shorter_str), str1, str2):
         if a != b:
             # Found character that doesn’t match; return index at which the
@@ -53,7 +53,7 @@ class HighlightingService(object):
             self.advanceLine()
 
         # Skip trailing spaces
-        if text == v.current_line.rstrip(' '):
+        if text == v.current_line.rstrip():
             self.advanceLine()
 
     def _handleMistakes(self, v, text, end_correctness_index):

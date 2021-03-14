@@ -1,3 +1,5 @@
+import os
+import json
 import logging
 from enum import Enum
 from PyQt5.Qt import QObject, qApp, pyqtSignal
@@ -27,6 +29,9 @@ class MainController(QObject):
         self.switchViewRequested.connect(self.setView)
         self.loadBookRequested.connect(self.loadBook)
 
+        self.config_file = 'config.json'
+        self.config = self.loadConfig()
+        
         self._initLibrary()
         self._initMenuBar()
         self._instantiateViews()
@@ -36,7 +41,10 @@ class MainController(QObject):
 
     def _instantiateViews(self):
         self.views[View.shelf_view] = ShelfView(self._window, self)
-        self.views[View.book_view] = BookView(self._window, self)
+
+        replacements_dict = self.config.get('replacements_dict', None)
+        self.views[View.book_view] = BookView(self._window, self,
+                                              replacements_dict)
 
     def setView(self, view=View.shelf_view):
         """Gets the view instance and and brings it to fore"""
@@ -81,3 +89,9 @@ class MainController(QObject):
         console.initServices(self.views[View.book_view],
                              self.switchViewRequested,
                              self.loadBookRequested)
+
+    def loadConfig(self):
+        if os.path.exists(self.config_file):
+            with open(self.config_file, 'r') as f:
+                config = json.load(f)
+                return config
