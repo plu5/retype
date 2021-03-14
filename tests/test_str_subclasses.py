@@ -54,9 +54,9 @@ class TestAnyStr:
         assert s.possibilities == ('1   ', '2   ')
 
 
-def getMS(string, replacements_dict):
-    ms = ManifoldStr(string, replacements_dict)
-    anystrs = {k: AnyStr(k, *v) for k, v in replacements_dict.items()}
+def getMS(string, rdict):
+    ms = ManifoldStr(string, rdict)
+    anystrs = {k: AnyStr(k, *v) for k, v in rdict.items()}
     return ms, anystrs
 
 

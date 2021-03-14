@@ -103,15 +103,15 @@ not {}".format(i))
 
 
 class ManifoldStr(UserString):
-    def __init__(self, data, replacements_dict):
+    def __init__(self, data, rdict):
         """A string structure that takes an str `data' and a dictionary
- `replacements_dict' where each key is a substring to be replaced, and
+ `rdict' where each key is a substring to be replaced, and
  corresponding value is an array of possible replacements of equal length. Each
  key in `replacement_dict' is replaced where found in `data' with an AnyStr
  containing key and replacements."""
         super().__init__(data)
         self.base = data
-        self.rdict = replacements_dict
+        self.rdict = rdict
         # A dictionary of strs and AnyStrs with the index of where each begins
         self.manifold = {0: data}
 
@@ -123,7 +123,7 @@ class ManifoldStr(UserString):
         logger.debug("Initialisation start. Initial value of manifold: {}"
                      .format(self.manifold))
 
-        for replace_me, replacements in replacements_dict.items():
+        for replace_me, replacements in rdict.items():
             logger.debug('--- New iteration on replacements loop ---')
             logger.debug("Current replace: '{}'".format(replace_me))
             logger.debug('Current value of manifold: {}'.format(self.manifold))

@@ -1,5 +1,5 @@
 {
-  "replacements_dict": {
+  "rdict": {
     "\ufffc": [" "],
     "\u00ae": ["r", "R"],
     "\u00a9": ["c", "C"],

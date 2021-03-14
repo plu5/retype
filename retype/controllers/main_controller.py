@@ -31,7 +31,7 @@ class MainController(QObject):
 
         self.config_file = 'config.json'
         self.config = self.loadConfig()
-        
+
         self._initLibrary()
         self._initMenuBar()
         self._instantiateViews()
@@ -42,9 +42,9 @@ class MainController(QObject):
     def _instantiateViews(self):
         self.views[View.shelf_view] = ShelfView(self._window, self)
 
-        replacements_dict = self.config.get('replacements_dict', None)
+        rdict = self.config.get('rdict', None)
         self.views[View.book_view] = BookView(self._window, self,
-                                              replacements_dict)
+                                              rdict)
 
     def setView(self, view=View.shelf_view):
         """Gets the view instance and and brings it to fore"""

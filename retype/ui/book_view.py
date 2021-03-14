@@ -70,8 +70,7 @@ class BookDisplay(QTextBrowser):
 
 
 class BookView(QWidget):
-    def __init__(self, main_win, main_controller, rdict,
-                 parent=None):
+    def __init__(self, main_win, main_controller, rdict, parent=None):
         super().__init__(parent)
         self._main_win = main_win
         self._controller = main_controller
