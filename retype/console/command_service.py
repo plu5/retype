@@ -16,14 +16,16 @@ class CommandService(object):
 
     def _initCommands(self):
         self.commands = {}
-        self.commands['switch'] = self.switch
-        self.commands['load'] = self.load
-        self.commands['book'] = self.load
-        self.commands['cursor'] = self.gotoCursorPosition
-        self.commands['advanceline'] = self.advanceLine
-        self.commands['skipline'] = self.advanceLine
-        self.commands['l'] = self.advanceLine
-        self.commands['chapter'] = self.setChapter
+
+        def add(commands_list, func):
+            for command in commands_list:
+                self.commands[command] = func
+
+        add(['switch', 'view'], self.switch)
+        add(['load', 'book'], self.load)
+        add(['cursor'], self.gotoCursorPosition)
+        add(['line', 'advanceline', 'skipline', 'l'], self.advanceLine)
+        add(['chapter'], self.setChapter)
 
     def _handleCommands(self, text):
         e = text[len(self.prompt):].lower()
