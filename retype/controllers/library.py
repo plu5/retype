@@ -10,10 +10,19 @@ logger = logging.getLogger(__name__)
 
 class LibraryController(object):
     def __init__(self, user_dir, library_paths):
-        self.save_abs_path = os.path.join(user_dir, 'save.json')
+        self.user_dir = user_dir
         self.library_paths = library_paths
         self._book_files = self.indexLibrary(library_paths)
         self.books = None
+
+    @property
+    def user_dir(self):
+        return self._user_dir
+
+    @user_dir.setter
+    def user_dir(self, value):
+        self._user_dir = value
+        self.save_abs_path = os.path.join(value, 'save.json')
 
     def indexLibrary(self, library_paths):
         book_path_list = []

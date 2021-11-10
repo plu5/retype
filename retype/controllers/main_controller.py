@@ -188,5 +188,8 @@ Attempting to load config from: {}".format(user_dir, custom_path))
         # Update rdict
         self.views[View.book_view].rdict = config['rdict']
 
+        # Update library’s user_dir
+        self.library.user_dir = config['user_dir']
+
     def getGeometry(self, config):
         return config.get('window', default_config['window'])
