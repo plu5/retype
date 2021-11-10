@@ -59,7 +59,7 @@ class LibraryController(object):
         else:
             save = {key: data}
         with open(self.save_abs_path, 'w', encoding='utf-8') as f:
-            json.dump(save, f, ensure_ascii=False, indent=2)
+            json.dump(save, f, indent=2)
 
         book.save_data = {key: data}
 

@@ -168,13 +168,13 @@ Attempting to load config from: {}".format(user_dir, custom_path))
         user_dir = config['user_dir']
         path = os.path.join(user_dir, self.config_rel_path)
         with open(path, 'w') as f:
-            json.dump(config, f, indent=4)
+            json.dump(config, f, indent=2)
         if not self.isPathDefaultUserDir(user_dir):
             with open(self.config_rel_path, 'r') as f:
                 dconfig = json.load(f)
                 dconfig['user_dir'] = user_dir
             with open(self.config_rel_path, 'w') as f:
-                json.dump(dconfig, f, indent=4)
+                json.dump(dconfig, f, indent=2)
 
         # Repopulate library if paths changed
         if config['library_paths'] != self.library.library_paths:
