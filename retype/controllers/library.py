@@ -94,7 +94,11 @@ class BookWrapper(object):
         self.chapter_lookup = {}
         for i, chapter in enumerate(chapters):
             raw = chapter.content
-            tree = fromstring(raw)
+            # FIXME: This ugly workaround is the only way I found to make lxml
+            #  use the correct encoding when an lxml declaration is absent from
+            #  the document
+            declaration = """<?xml version="1.0" encoding="utf-8"?>"""
+            tree = fromstring(bytes(declaration, 'utf-8') + raw)
 
             # Replace xml svg elements with valid html
             svg_elements = tree.xpath('//svg')
@@ -112,7 +116,7 @@ class BookWrapper(object):
                     svg.getparent().replace(svg, proper_img)
 
             xhtml_to_html(tree)
-            raw = tostring(tree, method='xml')
+            html = tostring(tree, method='xml', encoding='unicode')
 
             links = tree.xpath('//a/@href')
             image_links = tree.xpath('//img/@src')
@@ -127,10 +131,10 @@ class BookWrapper(object):
             # We to store the length of the plain text of all chapters for
             #  progress-calculation purposes
             dummy_display = QTextBrowser()
-            dummy_display.setHtml(str(raw, 'utf-8'))
+            dummy_display.setHtml(html)
             plain = dummy_display.toPlainText()
 
-            parsed_chapters.append({'raw': raw,
+            parsed_chapters.append({'html': html,
                                     'plain': plain,
                                     'len': len(plain),
                                     'links': links,

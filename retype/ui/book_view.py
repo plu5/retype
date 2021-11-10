@@ -189,7 +189,7 @@ class BookView(QWidget):
 
     def setSource(self, chapter):
         document = QTextDocument()
-        document.setHtml(str(chapter['raw'], 'utf-8'))
+        document.setHtml(chapter['html'])
 
         for image in chapter['images']:
             pixmap = QPixmap()
