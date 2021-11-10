@@ -82,6 +82,7 @@ class BookView(QWidget):
         self.rdict = rdict
 
         self.book = None
+        self.cursor = None
         self.chapter_pos = None
         self.line_pos = None
         self.persistent_pos = None
@@ -165,10 +166,6 @@ class BookView(QWidget):
         if not self.progress:
             self.progress = 0
 
-        self.tobetyped = self.book.chapters[self.chapter_pos]['plain']
-        self.tobetyped_list = self.tobetyped.splitlines()
-        self._setLine(self.line_pos)
-
         self.highlight_format = QTextCharFormat()
         self.highlight_format.setBackground(QColor('yellow'))
         self.unhighlight_format = QTextCharFormat()
@@ -177,6 +174,10 @@ class BookView(QWidget):
         self.mistake_format.setBackground(QColor('red'))
         self.mistake_format.setForeground(QColor('white'))
         self.setCursor()
+
+        self.tobetyped = self.book.chapters[self.chapter_pos]['plain']
+        self.tobetyped_list = self.tobetyped.splitlines()
+        self._setLine(self.line_pos)
 
     def setCursor(self):
         self.cursor = QTextCursor(self.display.document())
