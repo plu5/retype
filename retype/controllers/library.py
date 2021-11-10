@@ -120,7 +120,7 @@ class BookWrapper(object):
             images = []
             for image_link in image_links:
                 for image in self.images:
-                    if image_link in image.file_name:
+                    if image_link.lstrip('./') in image.file_name:
                         images.append({'link': image_link,
                                        'raw': image.content})
 
@@ -135,7 +135,7 @@ class BookWrapper(object):
                                     'len': len(plain),
                                     'links': links,
                                     'images': images})
-            self.chapter_lookup[chapter.file_name] = i
+            self.chapter_lookup[chapter.file_name.split('/')[-1]] = i
 
         return parsed_chapters
 

@@ -200,8 +200,12 @@ class BookView(QWidget):
         self.display.setDocument(document)
 
     def anchorClicked(self, link):
-        pos = self.book.chapter_lookup[link.fileName()]
-        self.setChapter(pos)
+        f = link.fileName()
+        if f in self.book.chapter_lookup:
+            pos = self.book.chapter_lookup[f]
+            self.setChapter(pos)
+        else:
+            logger.error("{} not found".format(f))
 
     def setBook(self, book, save_data=None):
         self.book = book
