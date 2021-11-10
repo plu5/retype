@@ -73,6 +73,7 @@ class BookView(QWidget):
     def __init__(self, main_win, main_controller, rdict, parent=None):
         super().__init__(parent)
         self._main_win = main_win
+        main_win.closing.connect(self.maybeSave)
         self._controller = main_controller
         self._library = self._controller.library
         self._console = self._controller.console
@@ -80,6 +81,7 @@ class BookView(QWidget):
 
         self.rdict = rdict
 
+        self.book = None
         self.chapter_pos = None
         self.line_pos = None
         self.persistent_pos = None
@@ -272,14 +274,17 @@ class BookView(QWidget):
     def advanceLine(self):
         self._controller.console.command_service.advanceLine()
 
-    def switchToShelves(self):
-        key = self.book.path
-        data = {'persistent_pos': self.persistent_pos,
-                'line_pos': self.line_pos,
-                'chapter_pos': self.chapter_pos,
-                'progress': self.progress}
-        self._library.save(self.book, key, data)
+    def maybeSave(self):
+        if self.book:
+            key = self.book.path
+            data = {'persistent_pos': self.persistent_pos,
+                    'line_pos': self.line_pos,
+                    'chapter_pos': self.chapter_pos,
+                    'progress': self.progress}
+            self._library.save(self.book, key, data)
 
+    def switchToShelves(self):
+        self.maybeSave()
         self._controller.console.command_service.switch('shelves')
 
     def gotoCursorPosition(self, move=False):
