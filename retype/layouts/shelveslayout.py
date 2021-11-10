@@ -166,5 +166,11 @@ class ShelvesWidget(QWidget):
     def addWidget(self, widget):
         self.layout.addWidget(widget)
 
+    def clearWidgets(self):
+        while self.layout.count():
+            child = self.layout.takeAt(0)
+            if child.widget():
+                child.widget().deleteLater()
+
     def setContentsMargins(self, left, top, right, bottom):
         self.layout.setContentsMargins(left, top, right, bottom)

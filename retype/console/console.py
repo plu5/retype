@@ -6,15 +6,27 @@ from retype.console import CommandService, HighlightingService
 class Console(QLineEdit):
     submitted = pyqtSignal(str)
 
-    def __init__(self, parent=None):
+    def __init__(self, prompt, parent=None):
         super().__init__(parent)
         self.setAccessibleName("console")
         self.returnPressed.connect(self._handleReturnPressed)
         self.setMaximumHeight(200)
 
+        self._prompt = prompt
+
+    @property
+    def prompt(self):
+        return self._prompt
+
+    @prompt.setter
+    def prompt(self, value):
+        self._prompt = value
+        self.command_service.prompt = value
+
     def initServices(self, book_view, switchView, loadBook):
         self.command_service = CommandService(self, book_view,
-                                              switchView, loadBook)
+                                              switchView, loadBook,
+                                              self._prompt)
         self.highlighting_service = HighlightingService(self, book_view)
 
     def _handleReturnPressed(self):

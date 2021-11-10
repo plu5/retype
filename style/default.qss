@@ -14,10 +14,28 @@ QTextBrowser {
 }
 
 QScrollArea {
-    background: transparent;
-    border: 0px;
+  background: transparent;
+  border: 0px;
 }
 
 QSplitter::handle {
   background: url(style/stripe.png) repeat;
+}
+
+QToolBox::tab {
+  background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
+                              stop: 0 #E1E1E1, stop: 0.4 #DDDDDD,
+                              stop: 0.5 #D8D8D8, stop: 1.0 #D3D3D3);
+  border-radius: 5px;
+  color: black;
+  font-weight: bold;
+}
+
+QToolBox::tab:selected {
+  font-style: italic;
+}
+
+QToolBox::tab:hover {
+  color: red;
+  font-style: italic;
 }

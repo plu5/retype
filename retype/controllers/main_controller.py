@@ -2,11 +2,13 @@ import os
 import json
 import logging
 from enum import Enum
+from copy import deepcopy
 from PyQt5.Qt import QObject, qApp, pyqtSignal
 
-from retype.ui import MainWin, ShelfView, BookView
+from retype.ui import MainWin, ShelfView, BookView, ConfigurationView
 from retype.controllers import MenuController, LibraryController
 from retype.console import Console
+from retype.constants import default_config
 
 logger = logging.getLogger(__name__)
 
@@ -14,28 +16,37 @@ logger = logging.getLogger(__name__)
 class View(Enum):
     shelf_view = 1
     book_view = 2
+    configuration_view = 3
 
 
 class MainController(QObject):
     views = {}
     switchViewRequested = pyqtSignal(int)
+    prevViewRequested = pyqtSignal()
     loadBookRequested = pyqtSignal(int)
+    saveConfigRequested = pyqtSignal(dict)
 
     def __init__(self):
         super().__init__()
-        self.console = Console()
-        self._window = MainWin(self.console)
+
+        self.config_rel_path = 'config.json'
+        self.config = self.loadConfig(self.config_rel_path)
+
+        self.console = Console(self.config['prompt'])
+        self._window = MainWin(self.console, self.getGeometry(self.config))
+
+        self._view = None
+        self._prev_view = None
 
         self.switchViewRequested.connect(self.switchView)
+        self.prevViewRequested.connect(self.prevView)
         self.loadBookRequested.connect(self.loadBook)
-
-        self.config_file = 'config.json'
-        self.config = self.loadConfig()
+        self.saveConfigRequested.connect(self.saveConfig)
 
         self._initLibrary()
         self._initMenuBar()
         self._instantiateViews()
-        self.setView()
+        self.setViewByEnum(View.shelf_view)
         self._connectConsole()
         self._populateLibrary()
 
@@ -46,6 +57,10 @@ class MainController(QObject):
         self.views[View.book_view] = BookView(self._window, self,
                                               rdict)
 
+        self.views[View.configuration_view] = ConfigurationView(
+            self.config, self._window,
+            self.saveConfigRequested, self.prevViewRequested)
+
     def _viewFromEnumOrInt(self, view):
         if isinstance(view, View):
             return self.views[view]
@@ -54,11 +69,20 @@ class MainController(QObject):
         else:
             logger.error("Improper view identifier {}".format(view))
 
-    def setView(self, view=View.shelf_view):
-        """Gets the view instance and and brings it to fore"""
-        self._view = self._viewFromEnumOrInt(view)
-        self._window.stacker.addWidget(self._view)
-        self._window.stacker.setCurrentWidget(self._view)
+    def _setView(self, view):
+        """Brings the view instance to the fore"""
+        self._window.stacker.addWidget(view)
+        self._window.stacker.setCurrentWidget(view)
+
+    def setView(self, view):
+        if view is self._view:
+            return
+        self._prev_view = self._view
+        self._setView(view)
+        self._view = view
+
+    def setViewByEnum(self, view_e=View.shelf_view):
+        self.setView(self._viewFromEnumOrInt(view_e))
 
     def view(self):
         return self._view
@@ -72,7 +96,13 @@ class MainController(QObject):
         if not view:
             view = View.shelf_view if not self.isVisible(View.shelf_view)\
                 else View.book_view
-        self.setView(view)
+        self.setViewByEnum(view)
+
+    def showConfigurationView(self):
+        self.setViewByEnum(View.configuration_view)
+
+    def prevView(self):
+        self.setView(self._prev_view)
 
     def show(self):
         self._window.show()
@@ -85,7 +115,8 @@ class MainController(QObject):
         qApp.quit()
 
     def _initLibrary(self):
-        self.library = LibraryController(self)
+        self.library = LibraryController(self.config['user_dir'],
+                                         self.config['library_paths'])
 
     def _populateLibrary(self):
         """Instantiate all the book wrappers and shelf items"""
@@ -93,19 +124,69 @@ class MainController(QObject):
         self.library.instantiateBooks()
         shelf_view._populate()
 
+    def _repopulateLibrary(self, user_dir, library_paths):
+        self.library.__init__(user_dir, library_paths)
+        shelf_view = self.views[View.shelf_view]
+        self.library.instantiateBooks()
+        shelf_view.repopulate()
+
     def loadBook(self, book_id=0):
         book_view = self.views[View.book_view]
         self.library.setBook(book_id, book_view, self.switchViewRequested)
 
     def _connectConsole(self):
         """Pass some signals console services need access to"""
-        console = self._window.console
-        console.initServices(self.views[View.book_view],
-                             self.switchViewRequested,
-                             self.loadBookRequested)
+        self.console.initServices(self.views[View.book_view],
+                                  self.switchViewRequested,
+                                  self.loadBookRequested)
 
-    def loadConfig(self):
-        if os.path.exists(self.config_file):
-            with open(self.config_file, 'r') as f:
+    def isPathDefaultUserDir(self, path):
+        return os.path.abspath(path) == \
+            os.path.abspath(default_config['user_dir'])
+
+    def loadConfig(self, path):
+        config = self._loadConfig(path)
+        user_dir = config['user_dir'] if config else None
+        if user_dir and not self.isPathDefaultUserDir(user_dir):
+            custom_path = os.path.join(user_dir, self.config_rel_path)
+            logger.debug("Non-default user_dir: {}\n\
+Attempting to load config from: {}".format(user_dir, custom_path))
+            config = self._loadConfig(custom_path)
+            if not config:
+                config = deepcopy(default_config)
+                config['user_dir'] = user_dir
+                return config
+        return config or default_config
+
+    def _loadConfig(self, path):
+        if os.path.exists(path):
+            with open(path, 'r') as f:
                 config = json.load(f)
                 return config
+
+    def saveConfig(self, config):
+        user_dir = config['user_dir']
+        path = os.path.join(user_dir, self.config_rel_path)
+        with open(path, 'w') as f:
+            json.dump(config, f, indent=4)
+        if not self.isPathDefaultUserDir(user_dir):
+            with open(self.config_rel_path, 'r') as f:
+                dconfig = json.load(f)
+                dconfig['user_dir'] = user_dir
+            with open(self.config_rel_path, 'w') as f:
+                json.dump(dconfig, f, indent=4)
+
+        # Repopulate library if paths changed
+        if config['library_paths'] != self.library.library_paths:
+            logger.debug("Repopulating library")
+            self._repopulateLibrary(user_dir, config['library_paths'])
+
+        # Update prompt if changed
+        if config['prompt'] != self.console.prompt:
+            self.console.prompt = config['prompt']
+
+        # Update rdict
+        self.views[View.book_view].rdict = config['rdict']
+
+    def getGeometry(self, config):
+        return config.get('window', default_config['window'])

@@ -5,26 +5,26 @@ from lxml.html import fromstring, builder, tostring, xhtml_to_html
 from ebooklib import epub
 from PyQt5.Qt import QTextBrowser
 
-from retype.resource_handler import getLibraryPath
-
 logger = logging.getLogger(__name__)
 
 
 class LibraryController(object):
-    def __init__(self, main_controller):
-        self._main_controller = main_controller
-        self._library_path = getLibraryPath()
-        self.save_file = 'save.json'
-        self._book_files = self.indexLibrary(self._library_path)
+    def __init__(self, user_dir, library_paths):
+        self.save_abs_path = os.path.join(user_dir, 'save.json')
+        self.library_paths = library_paths
+        self._book_files = self.indexLibrary(library_paths)
         self.books = None
 
-    def indexLibrary(self, library_path):
+    def indexLibrary(self, library_paths):
         book_path_list = []
         book_list = {}
-        for root, dirs, files in os.walk(library_path):
-            for f in files:
-                if f.lower().endswith(".epub"):
-                    book_path_list.append(os.path.join(root, f))
+        for library_path in library_paths:
+            for root, dirs, files in os.walk(library_path):
+                for f in files:
+                    if f.lower().endswith(".epub"):
+                        path = os.path.join(root, f)
+                        if path not in book_path_list:
+                            book_path_list.append(path)
         # internal name assignment
         for i in range(0, len(book_path_list)):
             book_list[i] = book_path_list[i]
@@ -52,20 +52,20 @@ class LibraryController(object):
         book_view.display.centreAroundCursor()
 
     def save(self, book, key, data):
-        if os.path.exists(self.save_file):
-            with open(self.save_file, 'r') as f:
+        if os.path.exists(self.save_abs_path):
+            with open(self.save_abs_path, 'r') as f:
                 save = json.load(f)
                 save[key] = data
         else:
             save = {key: data}
-        with open(self.save_file, 'w', encoding='utf-8') as f:
+        with open(self.save_abs_path, 'w', encoding='utf-8') as f:
             json.dump(save, f, ensure_ascii=False, indent=2)
 
         book.save_data = {key: data}
 
     def load(self, key):
-        if os.path.exists(self.save_file):
-            with open(self.save_file, 'r') as f:
+        if os.path.exists(self.save_abs_path):
+            with open(self.save_abs_path, 'r') as f:
                 save = json.load(f)
                 if key in save:
                     return save[key]

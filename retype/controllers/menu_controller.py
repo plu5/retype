@@ -36,4 +36,5 @@ class MenuController(QObject):
 
     def _customiseAction(self):
         action = QAction('&customise retype', self)
+        action.triggered.connect(self._main_controller.showConfigurationView)
         return action
