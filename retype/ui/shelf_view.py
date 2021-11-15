@@ -78,10 +78,10 @@ class ShelfView(QWidget):
                 # Front outline
                 draw(12, 0, rectPixmap(w - 25, 2, line_colour, Qt.white))
                 draw(inset, deepness + 3,
-                     linePixmap(0, 0, w - 7, 0, highlight_colour, 4))
+                     linePixmap(w - 7, 0, highlight_colour, 4))
                 draw(inset, deepness + 3 + front_h,
-                     linePixmap(0, 0, w - 7, 0, line_colour, 4))
-                sideline = linePixmap(0, 0, 0, 11, line_colour, 4)
+                     linePixmap(w - 7, 0, line_colour, 4))
+                sideline = linePixmap(0, 11, line_colour, 4)
                 draw(3, deepness + 3, sideline)
                 draw(w - 5, deepness + 3, sideline)
                 return pixmap

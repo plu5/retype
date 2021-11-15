@@ -22,8 +22,10 @@ def textPixmap(text, w, h, font, fg=Qt.white,
     return pixmap
 
 
-def linePixmap(x1, y1, x2, y2, colour=Qt.white, thickness=2):
+def linePixmap(x2, y2, colour=Qt.white, thickness=2, style=Qt.SolidLine):
+    """Line from origin (0, 0) to (x2, y2)"""
     rect = QRectF()
+    x1 = y1 = 0
     rect.adjust(x1, y1, x2, y2)
     (w, h) = (rect.width(), rect.height())
     if not h:
@@ -33,6 +35,6 @@ def linePixmap(x1, y1, x2, y2, colour=Qt.white, thickness=2):
     pixmap = QPixmap(w, h)
     pixmap.fill(Qt.transparent)
     qp = QPainter(pixmap)
-    qp.setPen(QPen(colour, thickness))
+    qp.setPen(QPen(colour, thickness, style=style))
     qp.drawLine(x1, y1, x2, y2)
     return pixmap
