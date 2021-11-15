@@ -298,6 +298,7 @@ class BookView(QWidget):
         else:
             self.setChapter(self.chapter_pos)
             self.setCursor()
+            self.display.centreAroundCursor()
 
     def updateToolbarActions(self):
         self.nchap_action.setDisabled(False)
