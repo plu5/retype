@@ -111,14 +111,6 @@ class HighlightingService(object):
 error: {}'.format(v.line_pos, len(v.tobetyped_list), e))
             return
 
-        # Skip empty lines
-        while v.current_line.isspace() or v.current_line == '':
-            try:
-                self.advanceLine()
-            except Exception as e:
-                logger.error('empty lines loop exit', e)
-                return
-
         self.updateHighlighting()
         self._console.clear()
         v.display.centreAroundCursor()
