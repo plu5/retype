@@ -2,10 +2,11 @@ import logging
 from PyQt5.Qt import (QWidget, QVBoxLayout, QTextBrowser, QTextDocument, QUrl,
                       QTextCursor, QTextCharFormat, QColor, QPainter, QPixmap,
                       QToolBar, QFont, QKeySequence, Qt, QApplication,
-                      pyqtSignal)
+                      pyqtSignal, QSplitter)
 
 from retype.ui.modeline import Modeline
 from retype.extras import ManifoldStr
+from retype.stats import StatsDock
 
 logger = logging.getLogger(__name__)
 
@@ -117,13 +118,22 @@ class BookView(QWidget):
         a = self.toolbar.addAction("Decrease font size", self.display.zoomOut)
         a.setShortcut(QKeySequence(QKeySequence.StandardKey.ZoomOut))
 
+        self.stats_dock = None
+
         self._initModeline()
 
         self.layout_ = QVBoxLayout()
         self.layout_.setContentsMargins(0, 0, 0, 0)
         self.layout_.setSpacing(0)
+
+        self.splitter = QSplitter()
+        self.splitter.setHandleWidth(2)
+        self.splitter.setOrientation(Qt.Vertical)
+        self.splitter.setContentsMargins(0, 0, 0, 0)
+        self.splitter.addWidget(self.display)
+
         self.layout_.addWidget(self.toolbar)
-        self.layout_.addWidget(self.display)
+        self.layout_.addWidget(self.splitter)
         self.layout_.addWidget(self.modeline)
         self.setLayout(self.layout_)
 
@@ -142,6 +152,10 @@ class BookView(QWidget):
             chap_total=len(self.book.chapters) - 1,
             progress=int(self.progress),
         )
+
+    def _initStatsDock(self):
+        self.stats_dock = StatsDock(self._controller.console)
+        self.splitter.addWidget(self.stats_dock)
 
     def _initChapter(self, reset=True):
         if not self.chapter_pos:
@@ -217,6 +231,9 @@ class BookView(QWidget):
             reset = True
 
         self.setChapter(self.chapter_pos, True, reset)
+
+        if not self.stats_dock:
+            self._initStatsDock()
 
     def setChapter(self, pos, move_cursor=False, reset=True):
         self.setSource(self.book.chapters[pos])
