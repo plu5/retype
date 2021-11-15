@@ -71,7 +71,7 @@ class FakeBookView:
 def setup():
     console = FakeConsole()
     book_view = FakeBookView()
-    service = CommandService(console, book_view, console.switchView, None)
+    service = CommandService(console, book_view, console.switchView, None, '>')
     return (console, book_view, service)
 
 
@@ -87,7 +87,7 @@ class TestCommandService:
         assert switchView.emitted == (2,)
 
         console.submitText(">switch")
-        assert switchView.emitted == (1,)
+        assert switchView.emitted == (0,)
 
         # Non-supported argument
         console.submitText(">switch nothing")

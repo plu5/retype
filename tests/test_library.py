@@ -11,7 +11,7 @@ class FakeBookWrapper:
 
 
 def setup():
-    library = LibraryController(None)
+    library = LibraryController('', [''])
     book = FakeBookWrapper()
     key = "hey"
     data = {"test": "data"}
@@ -34,8 +34,7 @@ class TestLibraryControllerSaveFunction:
         library.save(book, key, data)
 
         m_jsonload.assert_called_once()
-        m_jsondump.assert_called_once_with({key: data}, ANY,
-                                           ensure_ascii=False, indent=2)
+        m_jsondump.assert_called_once_with({key: data}, ANY, indent=2)
         assert book.save_data == {key: data}
 
     def test_save_file_exists_and_does_not_have_key(
@@ -50,8 +49,7 @@ class TestLibraryControllerSaveFunction:
         m_jsonload.assert_called_once()
         new_save = save
         new_save[key] = data
-        m_jsondump.assert_called_once_with(new_save, ANY,
-                                           ensure_ascii=False, indent=2)
+        m_jsondump.assert_called_once_with(new_save, ANY, indent=2)
         assert book.save_data == {key: data}
 
     def test_save_file_does_not_exist(
@@ -63,8 +61,7 @@ class TestLibraryControllerSaveFunction:
         library.save(book, key, data)
 
         m_jsonload.assert_not_called()
-        m_jsondump.assert_called_once_with({key: data}, ANY,
-                                           ensure_ascii=False, indent=2)
+        m_jsondump.assert_called_once_with({key: data}, ANY, indent=2)
         assert book.save_data == {key: data}
 
 
@@ -110,11 +107,11 @@ class TestLibraryControllerLoadFunction:
         assert loaded is None
 
 
-SAMPLE_CONTENT = b'<html><body>\
+SAMPLE_CONTENT = b'<span>\
 Hello. <a href="another-chapter">Here is a link to another chapter.</a>\
-</body></html>'
+</span>'
 
-SAMPLE_CONTENT2 = b'<html><body>\
+SAMPLE_CONTENT2 = b'<span>\
 Hello again.<br/>\
 <img src="inline-image"/>\
 <svg blah="blah">\
@@ -122,14 +119,14 @@ Hello again.<br/>\
 <image width="100" xlink:href="cover.jpg"/>\
 </svg>\
 <img src="image-we-dont-know-about"/>\
-</body></html>'
+</span>'
 
-SAMPLE_CONTENT2_EXPECTED_REPLACEMENT = b'<html><body>\
+SAMPLE_CONTENT2_EXPECTED_REPLACEMENT = '<span>\
 Hello again.<br/>\
 <img src="inline-image"/>\
 <img width="100" src="cover.jpg"/>\
 <img src="image-we-dont-know-about"/>\
-</body></html>'
+</span>'
 
 
 class FakeChapter:
@@ -160,14 +157,14 @@ class TestBookWrapper:
                         FakeImage('cover.jpg')]
 
         parsed_chapters = book._parseChaptersContent(chapters)
-        assert parsed_chapters[0]['raw'] == SAMPLE_CONTENT
+        assert parsed_chapters[0]['html'] == str(SAMPLE_CONTENT, 'utf-8')
         plain = 'Hello. Here is a link to another chapter.'
         assert parsed_chapters[0]['plain'] == plain
         assert parsed_chapters[0]['len'] == len(plain)
         assert parsed_chapters[0]['links'] == ['another-chapter']
         assert parsed_chapters[0]['images'] == []
 
-        assert parsed_chapters[1]['raw'] == \
+        assert parsed_chapters[1]['html'] == \
             SAMPLE_CONTENT2_EXPECTED_REPLACEMENT
         plain = 'Hello again.\n\ufffc\ufffc\ufffc'
         assert parsed_chapters[1]['plain'] == plain

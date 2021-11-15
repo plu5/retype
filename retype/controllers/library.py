@@ -105,7 +105,8 @@ class BookWrapper(object):
             raw = chapter.content
             # FIXME: This ugly workaround is the only way I found to make lxml
             #  use the correct encoding when an lxml declaration is absent from
-            #  the document
+            #  the document. Also note this causes lxml to get rid of html and
+            #  body tags for some reason, which may be a problem in future.
             declaration = """<?xml version="1.0" encoding="utf-8"?>"""
             tree = fromstring(bytes(declaration, 'utf-8') + raw)
 

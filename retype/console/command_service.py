@@ -88,12 +88,15 @@ class CommandService(object):
     def onBookView(self):
         return self.book_view.isVisible()
 
-    def switch(self, view=None):
+    def switch(self, view_name=None):
         v = 0
-        if view in ['shelf', 'shelves', 'main']:
+        if view_name in ['shelf', 'shelves', 'main']:
             v = 1
-        elif view == 'book':
+        elif view_name == 'book':
             v = 2
+        elif view_name is not None:
+            return logger.error("Unrecognised view name '{}'"
+                                .format(view_name))
         self.switchView.emit(v)
 
     def switchtoConfiguration(self):
