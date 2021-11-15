@@ -4,6 +4,7 @@ from PyQt5.Qt import (QWidget, QVBoxLayout, QTextBrowser, QTextDocument, QUrl,
                       QToolBar, QFont, QKeySequence, Qt, QApplication,
                       pyqtSignal, QSplitter)
 
+from retype.extras.utils import isspaceorempty
 from retype.ui.modeline import Modeline
 from retype.extras import ManifoldStr
 from retype.stats import StatsDock
@@ -241,7 +242,7 @@ class BookView(QWidget):
         if move_cursor:
             self.chapter_pos = pos
             self._initChapter(reset)
-            if self.tobetyped.isspace() or self.tobetyped == '':
+            if isspaceorempty(self.tobetyped):
                 logger.info("Skipping empty chapter")
                 self.setChapter(pos + 1, move_cursor)
             self.updateProgress()
@@ -285,7 +286,7 @@ class BookView(QWidget):
             else:
                 self.current_line = self.tobetyped_list[pos]
 
-            if self.current_line.isspace() or self.current_line == '':
+            if isspaceorempty(self.current_line):
                 logger.info("Skipping empty line")
                 self.advanceLine()
         else:

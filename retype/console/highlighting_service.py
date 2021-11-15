@@ -1,5 +1,7 @@
 import logging
 
+from retype.extras.utils import spacerstrip
+
 logger = logging.getLogger(__name__)
 
 
@@ -53,7 +55,7 @@ class HighlightingService(object):
             self.advanceLine()
 
         # Skip trailing spaces
-        if text == v.current_line.rstrip():
+        if text == spacerstrip(v.current_line):
             self.advanceLine()
 
     def _handleMistakes(self, v, text, end_correctness_index):
