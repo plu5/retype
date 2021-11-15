@@ -42,13 +42,11 @@ class BookDisplay(QTextBrowser):
     def centreAroundCursor(self):
         viewport_height = self.viewport().rect().height()
         cursor_height = self.cursorRect(self.cursor).height()
-        block = self.document().findBlock(self.cursor.position())
-        cursor_absolute_y = self.document().documentLayout()\
-                                           .blockBoundingRect(block).y()
-
-        calculated_value = cursor_absolute_y - (viewport_height / 2) +\
-            (cursor_height / 2)
-        self.verticalScrollBar().setValue(calculated_value)
+        cursor_relative_y = self.cursorRect(self.cursor).y()
+        scrollbar = self.verticalScrollBar()
+        scrollbar.setValue(
+            scrollbar.value() + cursor_relative_y -
+            viewport_height/2 + cursor_height/2)
 
     def zoomIn(self, range_=1):
         self.font_size += range_
