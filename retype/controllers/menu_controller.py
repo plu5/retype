@@ -1,5 +1,7 @@
 from PyQt5.Qt import QAction, QObject
 
+from retype.constants import issue_tracker
+
 
 class MenuController(QObject):
     def __init__(self, main_controller, menu):
@@ -10,31 +12,40 @@ class MenuController(QObject):
 
     def _initMenuBar(self):
         self._fileMenu()
-        self._switchMenu()
+        self._viewMenu()
         self._optionsMenu()
         self._helpMenu()
 
-    def _fileMenu(self):
-        fileMenu = self._menu.addMenu('&file')
-        fileMenu.addAction(self._exitAction())
+    def _makeAction(self, name, connect_to, shortcuts=None):
+        action = QAction(name, self)
+        action.triggered.connect(connect_to)
+        if shortcuts:
+            action.setShortcuts(shortcuts)
+        return action
 
-    def _switchMenu(self):
-        switchMenu = self._menu.addMenu('&view')
+    def _addAction(self, menu, action_name, connect_to, shortcuts=None):
+        action = self._makeAction(action_name, connect_to, shortcuts)
+        menu.addAction(action)
+
+    def _fileMenu(self):
+        fileMenu = self._menu.addMenu('&File')
+        self._addAction(fileMenu, '&Quit', self._main_controller.quit,
+                        ['Alt+F4'])
+
+    def _viewMenu(self):
+        viewMenu = self._menu.addMenu('&View')
+        self._addAction(viewMenu, '&Shelf View',
+                        lambda: self._main_controller.setViewByEnum(1))
+        self._addAction(viewMenu, '&Book View',
+                        lambda: self._main_controller.setViewByEnum(2))
 
     def _optionsMenu(self):
-        optionsMenu = self._menu.addMenu('&options')
-        optionsMenu.addAction(self._customiseAction())
+        optionsMenu = self._menu.addMenu('&Options')
+        self._addAction(optionsMenu, '&Customise retype',
+                        self._main_controller.showConfigurationView)
 
     def _helpMenu(self):
-        helpMenu = self._menu.addMenu('&help')
-
-    def _exitAction(self):
-        action = QAction('&quit', self)
-        action.setShortcuts(["Alt+F4"])
-        action.triggered.connect(self._main_controller.quit)
-        return action
-
-    def _customiseAction(self):
-        action = QAction('&customise retype', self)
-        action.triggered.connect(self._main_controller.showConfigurationView)
-        return action
+        helpMenu = self._menu.addMenu('&Help')
+        self._addAction(helpMenu,
+                        '&Report issue (opens in browser)',
+                        lambda: self._main_controller.openUrl(issue_tracker))

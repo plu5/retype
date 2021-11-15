@@ -22,3 +22,6 @@ default_config = {
         "save_on_quit": True
     }
 }
+
+
+issue_tracker = "https://www.github.com/plu5/retype/issues"

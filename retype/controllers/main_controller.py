@@ -3,7 +3,7 @@ import json
 import logging
 from enum import Enum
 from copy import deepcopy
-from PyQt5.Qt import QObject, qApp, pyqtSignal
+from PyQt5.Qt import QObject, qApp, pyqtSignal, QUrl, QDesktopServices
 
 from retype.ui import MainWin, ShelfView, BookView, ConfigurationView
 from retype.controllers import MenuController, LibraryController
@@ -193,3 +193,7 @@ Attempting to load config from: {}".format(user_dir, custom_path))
 
     def getGeometry(self, config):
         return config.get('window', default_config['window'])
+
+    def openUrl(self, url_str):
+        url = QUrl(url_str)
+        QDesktopServices.openUrl(url)
