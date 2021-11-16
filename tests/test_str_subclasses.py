@@ -10,48 +10,73 @@ logger.setLevel(logging.DEBUG)
 class TestAnyStr:
     def test_construction(self):
         s = AnyStr('1', '2', '3', '4', '5')
-        assert s.possibilities == ('1', '2', '3', '4', '5')
+        assert s.possibilities == ['1', '2', '3', '4', '5']
 
     def test_eq(self):
         s = AnyStr('1', '2', '3', '4', '5')
         for p in s.possibilities:
             assert s == p
 
-    def test_add_str(self):
+    def test_add_str_to_anystr(self):
         s = AnyStr('1', '2')
         new = s + " more"
-        assert new.possibilities == ('1 more', '2 more')
+        assert new == "1 more"
+        assert new == "2 more"
 
-        # But if you add in the opposite order it doesn’t work, because our
-        #  method doesn’t even get called
+    def test_add_anystr_to_str(self):
+        s = AnyStr('1', '2')
+        new = "additional " + s
+        assert new == "additional 1"
+        assert new == "additional 2"
 
-    def test_add_anystr(self):
+    def test_add_anystr_to_anystr(self):
         s = AnyStr('1', '2')
         s2 = AnyStr('3', '4')
         new = s + s2
-        assert new.possibilities == ('13', '24')
+        assert new == "13"
+        assert new == "24"
+        assert new == "14"
+        assert new == "23"
+
+    def test_getitem_full(self):
+        s = AnyStr('some', 'poss', 'reps')
+        assert s[0:4] == 'some'
+        assert s[0:4] == 'poss'
 
     def test_getitem_int(self):
         s = AnyStr('some', 'poss', 'reps')
-        for p in s.possibilities:
-            assert s[0] == p[0]
-            assert s[2] == p[2]
-            assert s[-1] == p[-1]
+        assert s[0] == s.possibilities[0][0]
+        assert s[0] != s.possibilities[0][1]
 
     def test_getitem_slice(self):
         s = AnyStr('some', 'poss', 'reps')
-        assert s[:3].possibilities == ('som', 'pos', 'rep')
+        assert s[0:3] == 'som'
+        assert s[0:3] != 'pos'
 
     def test_getitem_slice_negative(self):
         s = AnyStr('some', 'poss', 'reps')
-        assert s[:-1].possibilities == ('som', 'pos', 'rep')
+        assert s[:-1] == 'som'
+        assert s[:-1] != 'rep'
 
     def test_rstrip(self):
         s = AnyStr('1   ', '2   ')
         new = s.rstrip()
-        assert new.possibilities == ('1', '2')
+        assert new == '1'
+        assert new != '2'
         # Assert original has not been mutated
-        assert s.possibilities == ('1   ', '2   ')
+        assert s.possibilities == ['1   ', '2   ']
+
+    def test_isspace_first_possibility(self):
+        s = AnyStr("      ", "anystr")
+        assert s.isspace() is True
+
+    def test_isspace_second_possibility(self):
+        s = AnyStr("anystr", "      ")
+        assert s.isspace() is True
+
+    def test_isspace_not_space(self):
+        s = AnyStr("      1.1 Algorithms", "      1.2 Algorithms")
+        assert s.isspace() is False
 
 
 def getMS(string, rdict):
@@ -119,14 +144,28 @@ class TestManifoldStr:
         assert ms != "thou art an eternal babbler; and, though void of cat,\
  your smartness often accasions smarting"
 
-    def test_add_str(self):
-        ms = ManifoldStr("hello", {"e": "a"})
+    def test_add_str_to_manifoldstr(self):
+        ms, anystrs = getMS("hello", {"e": "a"})
         result = ms + " friend"
         assert result == "hello friend"
         assert result == "hallo friend"
         assert result == "hallo friand"
 
-    def test_add_anystr(self):
+        # Assert original has not been mutated
+        assert ms == "hello"
+        assert ms == "hallo"
+        assert ms.manifold == {0: 'h', 1: anystrs['e'], 2: 'llo'}
+
+    def test_add_manifoldstr_to_str(self):
+        ms, anystrs = getMS("hello", {"e": "a"})
+        result = "hi and " + ms
+        assert result == "hi and hallo"
+
+        # Assert original has not been mutated
+        assert ms == "hallo"
+        assert ms.manifold == {0: 'h', 1: anystrs['e'], 2: 'llo'}
+
+    def test_add_anystr_to_manifoldstr(self):
         ms = ManifoldStr("hello", {"e": "a"})
         anystr = AnyStr(" friend", " birdie")
         assert ms + anystr == "hallo friend"
@@ -134,7 +173,12 @@ class TestManifoldStr:
         # doesn’t work because the e -> a replacement is already made so it
         #  doesn’t find friend
 
-    def test_add_manifoldstr(self):
+    def test_add_manifoldstr_to_anystr(self):
+        anystr = AnyStr("hi and ", "yo and ")
+        ms = ManifoldStr("hello", {"e": "a"})
+        assert anystr + ms == "yo and hallo"
+
+    def test_add_manifoldstr_to_manifoldstr(self):
         ms = ManifoldStr("hello", {"e": "a"})
         ms2 = ManifoldStr(" people", {"o": "i"})
         assert ms + ms2 == "halli paopla"
@@ -151,6 +195,11 @@ class TestManifoldStr:
     def test_getitem_slice(self):
         ms = ManifoldStr("some text", {'t': ['a', 'b'], 's': ['d']})
         assert ms[:4] == "dome"
+
+    def test_getitem_negative_slice(self):
+        ms = ManifoldStr("some text", {'t': ['a', 'b'], 's': ['d']})
+        assert ms[:-1] == "dome tex"
+        assert ms[-4:-1] == "bex"
 
     def test_with_compareStrings(self):
         string = "thou art an eternal babbler; and, though void of wit,\
@@ -184,12 +233,22 @@ class TestManifoldStr:
         ms = ManifoldStr("a", {'a': [' ']})
         assert ms.strip() == ""
 
+    def test_rstrip_multiple_replacements(self):
+        ms, anystrs = getMS("some text with multiple replacements  ",
+                            {'tex': ['yoo', 'nop'],
+                             'rep': ['ded', 'led', 'red']})
+        assert ms.rstrip() == "some yoot with multiple replacements"
+
     def test_isspace(self):
         ms = ManifoldStr("a", {'a': [' ']})
         assert ms.isspace() is True
 
     def test_isspace_not_space(self):
         ms = ManifoldStr("hey  ", {'hey': ['bye']})
+        assert ms.isspace() is False
+
+    def test_isspace_not_space2(self):
+        ms = ManifoldStr("      1.1 Algorithms", {'\ufffc': ' '})
         assert ms.isspace() is False
 
     def test_discworld(self):

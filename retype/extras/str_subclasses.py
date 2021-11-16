@@ -15,28 +15,42 @@ class AnyStr(UserString):
     def __init__(self, *possibilities):
         super().__init__(possibilities[0])
         self.base = possibilities[0]
-        self.possibilities = possibilities
+        self.possibilities = []
+
+        # Get rid of duplicate possibilities
+        for possibility in possibilities:
+            if possibility not in self.possibilities:
+                self.possibilities.append(possibility)
 
     def __eq__(self, s):
         if s in self.possibilities:
             return True
         return False
 
-    def __add__(self, s):
-        if isinstance(s, str):
-            return AnyStr(*[possibility + s for possibility
-                            in self.possibilities])
-        if isinstance(s, AnyStr):
-            if len(s.possibilities) != len(self.possibilities):
-                raise ValueError("can only concatenate AnyStr to AnyStr if they\
- have the same number of possibilities (not {} and {})"
-                                 .format(len(self.possibilities),
-                                         len(s.possibilities)))
-            return AnyStr(*[self.possibilities[i] + s.possibilities[i]
-                            for i in range(len(self.possibilities))])
+    def _add(self, s, order=1):
+        args = None
+        if order == 1:
+            args = (self, s)
+        elif order == -1:
+            args = (s, self)
         else:
-            raise TypeError('can only concatenate str or AnyStr (not "{}")\
- to AnyStr'.format(type(s)))
+            raise ValueError("order is expected to be 1 or -1, not {}"
+                             .format(order))
+
+        if isinstance(s, str):
+            return ManifoldStr.from_str_and_anystr(s, self, -order)
+        if isinstance(s, AnyStr):
+            return ManifoldStr.from_anystr_and_anystr(*args)
+        else:
+            return NotImplemented
+            # raise TypeError('can only concatenate str or AnyStr (not "{}")\
+# to AnyStr'.format(type(s)))
+
+    def __add__(self, s):
+        return self._add(s, 1)
+
+    def __radd__(self, s):
+        return self._add(s, -1)
 
     def join(self, iterable):
         """Not like the str method because we don’t put anything in between"""
@@ -56,7 +70,13 @@ class AnyStr(UserString):
                             in self.possibilities])
         elif isinstance(i, slice):
             start, stop, step = i.indices(len(self))
-            return self.join([self[j] for j in range(start, stop, step)])
+            if step == 1 and start == 0 and stop == len(self):
+                return self
+            # Breaking up AnyStrs is unsupported, revert to str
+            else:
+                logger.debug("__getitem__ call that breaks up an AnyStr")
+                return ''.join([self.base[j] for j
+                                in range(start, stop, step)])
         else:
             raise TypeError("AnyStr indices must be integers or slices, not {}"
                             .format(type(i)))
@@ -70,14 +90,18 @@ class AnyStr(UserString):
         else:
             return str(self.base)
 
+    def __repr__(self):
+        return (f'{self.__class__.__name__}'
+                f'{*self.possibilities,}')
+
     def strip(self, chars=" ", directions=[1, -1]):
         new = AnyStr(*self.possibilities)
         for i in directions:
             if i == 1:
-                sl = slice(i, 0)
+                sl = slice(1, len(self))
                 k = 0
             elif i == -1:
-                sl = slice(0, i)
+                sl = slice(0, -1)
                 k = -1
             else:
                 raise ValueError("each direction is expected to be 1 or -1, \
@@ -97,8 +121,9 @@ not {}".format(i))
         return self.strip(chars, directions=[-1])
 
     def isspace(self):
-        if self.strip() == '':
-            return True
+        for possibility in self.possibilities:
+            if possibility.strip() == '':
+                return True
         return False
 
 
@@ -181,21 +206,31 @@ class ManifoldStr(UserString):
             return True
         return False
 
-    def __add__(self, s):
+    def _add(self, s, order=1):
+        args = None
+        if order == 1:
+            args = (self, s)
+        elif order == -1:
+            args = (s, self)
+        else:
+            raise ValueError("order is expected to be 1 or -1, not {}"
+                             .format(order))
+
         if isinstance(s, str):
-            return ManifoldStr(self.base + s, self.rdict)
+            return ManifoldStr.from_ms_and_str(self, s, order)
         if isinstance(s, AnyStr):
-            new_rdict = deepcopy(self.rdict)
-            new_rdict[s.base] = s.possibilities[1:]
-            return ManifoldStr(self.base + s.base, new_rdict)
+            return ManifoldStr.from_ms_and_anystr(self, s, order)
         if isinstance(s, ManifoldStr):
-            new_rdict = deepcopy(self.rdict)
-            for k, v in s.rdict.items():
-                new_rdict[k] = v
-            return ManifoldStr(self.base + s.base, new_rdict)
+            return ManifoldStr.from_ms_and_ms(*args)
         else:
             raise TypeError('can only concatenate str, AnyStr, or ManifoldStr\
  (not "{}") to ManifoldStr'.format(type(s)))
+
+    def __add__(self, s):
+        return self._add(s, 1)
+
+    def __radd__(self, s):
+        return self._add(s, -1)
 
     def join(self, iterable):
         result = None
@@ -211,11 +246,14 @@ class ManifoldStr(UserString):
             if i < 0:
                 return self.__getitem__(len(self.data) + i)
             elif i in self.manifold:
-                return self.manifold[i][0]
+                if len(self.manifold[i]) > 1:
+                    return self.manifold[i][0]
+                else:
+                    return self.manifold[i]
             else:
                 # Find substring before i, and extract just the index required
                 descending_keys = sorted([*self.manifold], reverse=True)
-                substring = None
+                substring = k = None
                 for k in descending_keys:
                     if k < i:
                         substring, k = (self.manifold[k], k)
@@ -225,19 +263,43 @@ class ManifoldStr(UserString):
                 return substring[i - k]
         elif isinstance(i, slice):
             start, stop, step = i.indices(len(self))
-            return self.join([self[j] for j in range(start, stop, step)])
+            if step == 1:
+                descending_keys = sorted([*self.manifold], reverse=True)
+                substring_by_start = substring_by_stop = None
+                new_manifold = {}
+                for k in descending_keys:
+                    index = 0 if k == 0 else k-start
+                    if start <= k < stop:
+                        new_manifold[index] = self.manifold[k]
+                    if not substring_by_stop:
+                        if k < stop:
+                            substring_by_stop = self.manifold[k]
+                            new_manifold[index] = substring_by_stop[:stop-k]
+                    if k < start:
+                        substring_by_start = self.manifold[k]
+                        new_manifold[index] = substring_by_start[start-k:]
+                        break
+                return ManifoldStr.by_parts(self.data[start:stop],
+                                            self.rdict,
+                                            new_manifold)
+            else:
+                return self.join([self[j] for j in range(start, stop, step)])
         else:
             raise TypeError("ManifoldStr indices must be integers or slices,\
  not {}".format(type(i)))
+
+    def __repr__(self):
+        return (f'{self.__class__.__name__}'
+                f'(\'{self.base}\', {self.rdict})')
 
     def strip(self, chars=" ", directions=[1, -1]):
         new = deepcopy(self)
         for i in directions:
             if i == 1:
-                sl = slice(i, 0)
+                sl = slice(1, len(self))
                 k = 0
             elif i == -1:
-                sl = slice(0, i)
+                sl = slice(0, -1)
                 k = -1
             else:
                 raise ValueError("each direction is expected to be 1 or -1, \
@@ -260,3 +322,96 @@ not {}".format(i))
         if self.strip() == '':
             return True
         return False
+
+    @classmethod
+    def by_parts(cls, data, rdict, manifold):
+        new = cls.__new__(cls)
+        super().__init__(cls, data)
+        new.base = data
+        new.rdict = rdict
+        new.manifold = manifold
+        return new
+
+    @classmethod
+    def from_anystr_and_anystr(cls, anystr1, anystr2):
+        data = anystr1.base + anystr2.base
+        rdict = {anystr1.base: anystr1.possibilities[1:],
+                 anystr2.base: anystr2.possibilities[1:]}
+        manifold = {0: anystr1, len(anystr1): anystr2}
+        new = cls.by_parts(data, rdict, manifold)
+        logger.debug("New ManifoldStr from AnyStr '{}' and AnyStr '{}':\
+ '{}'".format(anystr1, anystr2, new))
+        return new
+
+    @classmethod
+    def from_str_and_anystr(cls, str_, anystr, order=1):
+        data = manifold = None
+        if order == 1:
+            data = str_ + anystr.base
+            manifold = {0: str_, len(str_): anystr}
+        elif order == -1:
+            data = anystr.base + str_
+            manifold = {0: anystr, len(anystr): str_}
+        else:
+            raise ValueError("order is expected to be 1 or -1, not {}"
+                             .format(order))
+
+        rdict = {anystr.base: anystr.possibilities[1:]}
+
+        new = cls.by_parts(data, rdict, manifold)
+        logger.debug("New ManifoldStr from str '{}' and AnyStr '{}'\
+ (order {}): '{}'".format(str_, anystr, order, new))
+        return new
+
+    @classmethod
+    def from_anystr_and_str(cls, anystr, str_):
+        return cls.from_str_and_anystr(str_, anystr, -1)
+
+    @classmethod
+    def from_ms_and_anystr(cls, ms, anystr, order=1):
+        data = manifold = None
+        if order == 1:
+            data = ms.base + anystr.base
+            manifold = {**ms.manifold, len(ms): anystr}
+        elif order == -1:
+            data = anystr.base + ms.base
+            manifold = {0: anystr}
+            for key, value in ms.manifold.items():
+                manifold[key + len(anystr)] = value
+        else:
+            raise ValueError("order is expected to be 1 or -1, not {}"
+                             .format(order))
+
+        rdict = {**deepcopy(ms.rdict), anystr.base: anystr.possibilities[1:]}
+
+        new = cls.by_parts(data, rdict, manifold)
+        logger.debug("New ManifoldStr from ManifoldStr '{}' and AnyStr '{}':\
+ '{}'".format(ms, anystr, new))
+        return new
+
+    @classmethod
+    def from_anystr_and_ms(cls, anystr, ms):
+        cls.from_ms_and_anystr(ms, anystr, -1)
+
+    @classmethod
+    def from_ms_and_str(cls, ms, str_, order=1):
+        rdict = deepcopy(ms.rdict)
+        if order == 1:
+            return ms + ManifoldStr(str_, rdict)
+        elif order == -1:
+            return ManifoldStr(str_, rdict) + ms
+        else:
+            raise ValueError("order is expected to be 1 or -1, not {}"
+                             .format(order))
+
+    @classmethod
+    def from_str_and_ms(cls, str_, ms):
+        cls.from_ms_and_str(ms, str_, -1)
+
+    @classmethod
+    def from_ms_and_ms(cls, ms1, ms2):
+        data = ms1.base + ms2.base
+        rdict = deepcopy(ms1.rdict)
+        for k, v in ms2.rdict.items():
+            rdict[k] = v
+        return ManifoldStr(data, rdict)
