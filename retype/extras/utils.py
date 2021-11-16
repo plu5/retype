@@ -42,6 +42,7 @@ def isspaceorempty(s):
 def spacerstrip(s):
     def _spacerstrip(s):
         return s.rstrip().rstrip(''.join(effectively_space))
+    s = _spacerstrip(s)
     while s != _spacerstrip(s):
         s = _spacerstrip(s)
     return s
