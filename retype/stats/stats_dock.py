@@ -100,6 +100,15 @@ class StatsDock(QWidget):
                             self.background_colour, self.foreground_colour))
             i += self.rect_w
 
+        # Gridlines
+        i = 50
+        while i < self.wpm_pb:
+            y = h - (i * factor)
+            qp.drawPixmap(0, y,
+                          linePixmap(w, 0, self.grid_colour, 1,
+                                     style=Qt.DashLine))
+            i += 50
+
         # Text
         font = QFont('Times', 9, 0)
         fm = QFontMetricsF(font)
@@ -112,15 +121,6 @@ class StatsDock(QWidget):
         cur_w = fm.horizontalAdvance(cur_txt)
         draw(w - cur_w - 2, 2,
              textPixmap(cur_txt, cur_w, font_h, font, self.text_colour))
-
-        # Gridlines
-        i = 50
-        while i < self.wpm_pb:
-            y = h - (i * factor)
-            qp.drawPixmap(0, y,
-                          linePixmap(w, 0, self.grid_colour, 1,
-                                     style=Qt.DashLine))
-            i += 50
 
         qp.end()
 
