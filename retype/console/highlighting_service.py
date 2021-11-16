@@ -50,12 +50,8 @@ class HighlightingService(object):
 
         self.updateHighlighting()
 
-        # Next line / chapter
-        if text == v.current_line:
-            self.advanceLine()
-
-        # Skip trailing spaces
-        if text == spacerstrip(v.current_line):
+        # Next line / chapter, skipping trailing spaces if present
+        if text == v.current_line or text == spacerstrip(v.current_line):
             self.advanceLine()
 
     def _handleMistakes(self, v, text, end_correctness_index):
