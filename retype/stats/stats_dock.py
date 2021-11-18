@@ -39,7 +39,7 @@ class StatsDock(QWidget):
         seconds = (ts - self.prev_ts) or 1
 
         # Reset if been inactive
-        if seconds - self.prev_seconds > 3:
+        if seconds - self.prev_seconds > 2:
             self.prev_ts = ts
             self.c = 0
 
