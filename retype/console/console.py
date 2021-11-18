@@ -23,10 +23,9 @@ class Console(QLineEdit):
         self._prompt = value
         self.command_service.prompt = value
 
-    def initServices(self, book_view, switchView, loadBook):
-        self.command_service = CommandService(self, book_view,
-                                              switchView, loadBook,
-                                              self._prompt)
+    def initServices(self, book_view, switchView, loadBook, customise):
+        self.command_service = CommandService(
+            self, book_view, switchView, loadBook, self._prompt, customise)
         self.highlighting_service = HighlightingService(self, book_view)
 
     def _handleReturnPressed(self):

@@ -8,7 +8,7 @@ from PyQt5.Qt import (QWidget, QFormLayout, QVBoxLayout, QLabel, QLineEdit,
                       QAbstractListModel, Qt, QStyledItemDelegate, QStyle,
                       QApplication, QRectF, QTextDocument, QFileDialog,
                       pyqtSignal, QModelIndex, QItemSelectionModel,
-                      QMessageBox)
+                      QMessageBox, QDialog, QSize)
 
 from retype.extras.utils import update
 from retype.constants import default_config
@@ -46,10 +46,10 @@ def descl(text):
     return desc
 
 
-class ConfigurationView(QWidget):
+class CustomisationDialog(QDialog):
     def __init__(self, config, window, saveConfig, prevView,
                  getBookViewFontSize, parent=None):
-        QWidget.__init__(self, parent)
+        QDialog.__init__(self, parent, Qt.WindowCloseButtonHint)
         # The base config (no uncommitted modifications)
         self.config = deepcopy(DEFAULTS)
         update(self.config, config)
@@ -63,6 +63,11 @@ class ConfigurationView(QWidget):
         self.getBookViewFontSize = getBookViewFontSize
 
         self._initUI()
+        self.setModal(True)
+        self.setWindowTitle("retype customisation dialog")
+
+    def sizeHint(self):
+        return QSize(400, 500)
 
     def _initUI(self):
         self.selectors = {}
@@ -74,13 +79,7 @@ class ConfigurationView(QWidget):
         tbox.addItem(self._rdictSettings(), "Replacements")
         tbox.addItem(self._windowSettings(), "Window geometry")
 
-        back_btn = QPushButton(" ←")
-        back_btn.setStyleSheet("text-align: left")
-        back_btn.clicked.connect(self.reject)
-
         lyt = QVBoxLayout(self)
-        lyt.addWidget(back_btn)
-        lyt.addWidget(hline())
         lyt.addWidget(tbox)
         lyt.addWidget(hline())
         self.revert_btn = QPushButton("Revert")
@@ -206,9 +205,6 @@ class ConfigurationView(QWidget):
         self.config = deepcopy(self.config_edited)
 
         self.revert_btn.setEnabled(False)
-
-    def reject(self):
-        self.prevView.emit()
 
     def setSelectors(self, config):
         for key, selector in self.selectors.items():
@@ -648,16 +644,22 @@ class WindowGeometrySelector(QWidget):
         self.dims = dims
 
         lyt = QFormLayout(self)
-        save_splitters_checkbox = QCheckBox("Save state of splitters on quit")
-        save_splitters_checkbox.stateChanged.connect(
-            lambda state: self.updateDim('save_splitters_on_quit', state))
-        save_checkbox = QCheckBox("Save window size and position on quit")
-        save_checkbox.stateChanged.connect(self.setSaveOnQuit)
-        lyt.addRow(save_splitters_checkbox)
-        lyt.addRow(save_checkbox)
-        lyt.addRow(hline())
 
         self.selectors = {}
+
+        self.selectors['save_splitters_on_quit'] = QCheckBox(
+            "Save state of splitters on quit")
+        self.selectors['save_splitters_on_quit'].stateChanged.connect(
+            lambda state: self.updateDim('save_splitters_on_quit', state))
+
+        self.selectors['save_on_quit'] = QCheckBox(
+            "Save window size and position on quit")
+        self.selectors['save_on_quit'].stateChanged.connect(self.setSaveOnQuit)
+
+        lyt.addRow(self.selectors['save_splitters_on_quit'])
+        lyt.addRow(self.selectors['save_on_quit'])
+        lyt.addRow(hline())
+
         # when save on quit is checked, the following is greyed out
         self.selectors['x'] = npxspinbox(dims['x'] or 0)
         self.selectors['y'] = npxspinbox(dims['y'] or 0)
@@ -666,18 +668,22 @@ class WindowGeometrySelector(QWidget):
         self.cur_btn = QPushButton("Set values according to current window")
         self.cur_btn.clicked.connect(self.setSelectorsValuesByWindow)
 
-        for name, selector in self.selectors.items():
+        self.dim_selectors = {k: v for k, v in self.selectors.items()
+                              if k in 'xywh'}
+
+        for name, selector in self.dim_selectors.items():
             label = name.title() + ':'
             lyt.addRow(label, selector)
             self.connectSelector(name, selector.valueChanged)
 
         lyt.addRow(self.cur_btn)
 
-        save_splitters_checkbox.setChecked(dims['save_splitters_on_quit'])
-        save_checkbox.setChecked(dims['save_on_quit'])
+        self.selectors['save_splitters_on_quit'].setChecked(
+            dims['save_splitters_on_quit'])
+        self.selectors['save_on_quit'].setChecked(dims['save_on_quit'])
 
     def setSaveOnQuit(self, state):
-        controls_to_toggle = [*list(self.selectors.values()), self.cur_btn]
+        controls_to_toggle = [*list(self.dim_selectors.values()), self.cur_btn]
         for control in controls_to_toggle:
             disabled_bool = True if state else False
             control.setDisabled(disabled_bool)
@@ -709,8 +715,8 @@ class WindowGeometrySelector(QWidget):
 
     def set_(self, dims):
         for key, selector in self.selectors.items():
-            if key == 'save_on_quit':
-                self.setSaveOnQuit(self, dims[key])
+            if key in ['save_splitters_on_quit', 'save_on_quit']:
+                selector.setChecked(dims[key])
                 continue
             value = dims[key] if dims[key] is not None else 0
             selector.setValue(value)
@@ -723,14 +729,17 @@ class BookViewSettingsWidget(QWidget):
         QWidget.__init__(self, parent)
 
         self.settings = bookview_settings
+        self.selectors = {}
 
         save_font_size_checkbox = QCheckBox("Save font size on quit")
         save_font_size_checkbox.stateChanged.connect(
             self.setSaveFontSizeOnQuit)
+        self.selectors['save_font_size_on_quit'] = save_font_size_checkbox
 
         self.font_size_selector = pxspinbox(self.settings['font_size'], " pt")
         self.font_size_selector.valueChanged.connect(
             lambda val: self.updateSetting('font_size', val))
+        self.selectors['font_size'] = self.font_size_selector
 
         lyt = QFormLayout(self)
         lyt.addRow(save_font_size_checkbox)
@@ -747,3 +756,12 @@ class BookViewSettingsWidget(QWidget):
     def setSaveFontSizeOnQuit(self, state):
         self.font_size_selector.setDisabled(True if state else False)
         self.updateSetting('save_font_size_on_quit', state)
+
+    def set_(self, settings):
+        for key, selector in self.selectors.items():
+            if key == 'save_font_size_on_quit':
+                state = settings[key]
+                selector.setChecked(state)
+                continue
+            value = settings[key]
+            selector.setValue(value)

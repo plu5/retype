@@ -5,7 +5,7 @@ from enum import Enum
 from copy import deepcopy
 from PyQt5.Qt import QObject, qApp, pyqtSignal, QUrl, QDesktopServices
 
-from retype.ui import MainWin, ShelfView, BookView, ConfigurationView
+from retype.ui import MainWin, ShelfView, BookView, CustomisationDialog
 from retype.controllers import MenuController, LibraryController
 from retype.console import Console
 from retype.constants import default_config
@@ -16,7 +16,6 @@ logger = logging.getLogger(__name__)
 class View(Enum):
     shelf_view = 1
     book_view = 2
-    configuration_view = 3
 
 
 class MainController(QObject):
@@ -25,6 +24,7 @@ class MainController(QObject):
     prevViewRequested = pyqtSignal()
     loadBookRequested = pyqtSignal(int)
     saveConfigRequested = pyqtSignal(dict)
+    customisationDialogRequested = pyqtSignal()
 
     def __init__(self):
         super().__init__()
@@ -42,6 +42,7 @@ class MainController(QObject):
         self.prevViewRequested.connect(self.prevView)
         self.loadBookRequested.connect(self.loadBook)
         self.saveConfigRequested.connect(self.saveConfig)
+        self.customisationDialogRequested.connect(self.showCustomisationDialog)
 
         self._initLibrary()
         self._initMenuBar()
@@ -58,10 +59,10 @@ class MainController(QObject):
         self.views[View.book_view] = BookView(self._window, self, rdict,
                                               bookview_settings)
 
-        self.views[View.configuration_view] = ConfigurationView(
+        self.customisation_dialog = CustomisationDialog(
             self.config, self._window,
             self.saveConfigRequested, self.prevViewRequested,
-            self.views[View.book_view].getFontSize)
+            self.views[View.book_view].getFontSize, self._window)
 
     def _viewFromEnumOrInt(self, view):
         if isinstance(view, View):
@@ -103,8 +104,8 @@ class MainController(QObject):
                 else View.book_view
         self.setViewByEnum(view)
 
-    def showConfigurationView(self):
-        self.setViewByEnum(View.configuration_view)
+    def showCustomisationDialog(self):
+        self.customisation_dialog.show()
 
     def prevView(self):
         self.setView(self._prev_view)
@@ -143,7 +144,8 @@ class MainController(QObject):
         """Pass some signals console services need access to"""
         self.console.initServices(self.views[View.book_view],
                                   self.switchViewRequested,
-                                  self.loadBookRequested)
+                                  self.loadBookRequested,
+                                  self.customisationDialogRequested)
 
     def isPathDefaultUserDir(self, path):
         return os.path.abspath(path) == \

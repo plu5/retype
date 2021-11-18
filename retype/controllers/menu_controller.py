@@ -42,7 +42,7 @@ class MenuController(QObject):
     def _optionsMenu(self):
         optionsMenu = self._menu.addMenu('&Options')
         self._addAction(optionsMenu, '&Customise retype',
-                        self._main_controller.showConfigurationView)
+                        self._main_controller.showCustomisationDialog)
 
     def _helpMenu(self):
         helpMenu = self._menu.addMenu('&Help')

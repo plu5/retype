@@ -4,13 +4,15 @@ logger = logging.getLogger(__name__)
 
 
 class CommandService(object):
-    def __init__(self, console, book_view, switchView, loadBook, prompt):
+    def __init__(self, console, book_view, switchView, loadBook, prompt,
+                 customise):
         self._console = console
         self.book_view = book_view
         self.switchView = switchView
         self.loadBook = loadBook
         self.prompt = prompt
         self._console.submitted.connect(self._handleCommands)
+        self.customise_signal = customise
         self._initCommands()
         self._initCommandHistory()
 
@@ -26,8 +28,8 @@ class CommandService(object):
         add(['cursor'], self.gotoCursorPosition)
         add(['line', 'advanceline', 'skipline', 'l'], self.advanceLine)
         add(['chapter'], self.setChapter)
-        add(['config', 'configuration', 'configure', 'settings', 'customise'],
-            self.switchtoConfiguration)
+        add(['config', 'configuration', 'configure', 'settings', 'customise',
+             'customisation'], self.customise)
 
     def _handleCommands(self, text):
         e = text[len(self.prompt):].lower()
@@ -99,8 +101,8 @@ class CommandService(object):
                                 .format(view_name))
         self.switchView.emit(v)
 
-    def switchtoConfiguration(self):
-        self.switchView.emit(3)
+    def customise(self):
+        self.customise_signal.emit()
 
     def load(self, book_id=0):
         try:
