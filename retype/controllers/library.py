@@ -179,7 +179,7 @@ class BookWrapper(object):
             if type(item) is epub.EpubCover:
                 self._cover = item
             if type(item) is epub.EpubImage:
-                if item.id == 'cover':
+                if 'cover' in item.id and not self._cover:
                     self._cover = item
                 self._images.append(item)
             if type(item) is epub.EpubHtml:
