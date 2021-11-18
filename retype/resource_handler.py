@@ -20,16 +20,21 @@ def __getRoot():
         root = os.path.dirname(os.path.abspath(file))
     return os.path.abspath((os.path.join(root, '..')))
 
+
 root_path = __getRoot()
+
 
 def getLibraryPath():
     return os.path.join(root_path, 'library')
 
+
 def getStylePath():
     return os.path.join(root_path, 'style')
+
 
 def getIconsPath():
     return os.path.join(root_path, 'retype/icons')
 
-def getIcon(icon_name):  # this is blatant 3david plagiarism
-    return QIcon(getIconsPath(icon_name))
+
+def getIcon(icon_name):
+    return QIcon(os.path.join(getIconsPath(), icon_name + '.png'))

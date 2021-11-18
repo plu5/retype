@@ -39,3 +39,11 @@ QToolBox::tab:hover {
   color: red;
   font-style: italic;
 }
+
+QToolBar {
+  padding: 0;
+}
+
+QToolButton {
+  padding: 2px;
+}

@@ -2,12 +2,13 @@ import logging
 from PyQt5.Qt import (QWidget, QVBoxLayout, QTextBrowser, QTextDocument, QUrl,
                       QTextCursor, QTextCharFormat, QColor, QPainter, QPixmap,
                       QToolBar, QFont, QKeySequence, Qt, QApplication,
-                      pyqtSignal, QSplitter)
+                      pyqtSignal, QSplitter, QSize)
 
 from retype.extras.utils import isspaceorempty
 from retype.ui.modeline import Modeline
 from retype.extras import ManifoldStr
 from retype.stats import StatsDock
+from retype.resource_handler import getIcon
 
 logger = logging.getLogger(__name__)
 
@@ -89,38 +90,13 @@ class BookView(QWidget):
         self.progress = None
 
     def _initUI(self):
-        self.toolbar = QToolBar(self)
-        self.toolbar.addAction("Back to shelves",
-                               self.switchToShelves)
-        a = self.toolbar.addAction("Cursor position",
-                                   self.gotoCursorPosition)
-        a.setToolTip("Go to the cursor position. Hold Ctrl to move cursor\
- to your current position")
-        a = self.toolbar.addAction("Previous chapter",
-                                   self.previousChapterAction)
-        a.setToolTip("Go to the previous chapter. Hold Ctrl to move cursor\
- with you as well")
-        self.pchap_action = a
-        a = self.toolbar.addAction("Next chapter",
-                                   self.nextChapterAction)
-        a.setToolTip("Go to the next chapter. Hold Ctrl to move cursor\
- with you as well")
-        self.nchap_action = a
-
-        a = self.toolbar.addAction("Skip line", self.advanceLine)
-        a.setToolTip("Move cursor to next line")
-
         self.display = BookDisplay(self)
         self.display.anchorClicked.connect(self.anchorClicked)
         self.display.keyPressed.connect(self._controller.console.transferFocus)
 
-        a = self.toolbar.addAction("Increase font size", self.display.zoomIn)
-        a.setShortcut(QKeySequence(QKeySequence.StandardKey.ZoomIn))
-        a = self.toolbar.addAction("Decrease font size", self.display.zoomOut)
-        a.setShortcut(QKeySequence(QKeySequence.StandardKey.ZoomOut))
-
         self.stats_dock = None
 
+        self._initToolbar()
         self._initModeline()
 
         self.layout_ = QVBoxLayout()
@@ -137,6 +113,82 @@ class BookView(QWidget):
         self.layout_.addWidget(self.splitter)
         self.layout_.addWidget(self.modeline)
         self.setLayout(self.layout_)
+
+    def _initToolbar(self):
+        self.toolbar = QToolBar(self)
+        self.toolbar.setIconSize(QSize(16, 16))
+
+        actions = {
+            'back':
+            {
+                'name': 'Back to shelves',
+                'func': self.switchToShelves
+            },
+            'pos':
+            {
+                'name': 'Cursor position',
+                'func': self.gotoCursorPosition,
+                'tooltip': 'Go to the cursor position. Hold Ctrl to move cursor\
+ to your current position',
+                'icon': 'cursor'
+            },
+            'pchap':
+            {
+                'name': 'Previous chapter',
+                'func': self.previousChapterAction,
+                'tooltip': 'Go to the previous chapter. Hold Ctrl to move\
+ cursor with you as well',
+                'icon': 'arrow-left'
+            },
+            'nchap':
+            {
+                'name': 'Next chapter',
+                'func': self.nextChapterAction,
+                'tooltip': 'Go to the next chapter. Hold Ctrl to move cursor\
+ with you as well',
+                'icon': 'arrow-right'
+            },
+            'skip':
+            {
+                'name': 'Skip line',
+                'func': self.advanceLine,
+                'tooltip': 'Move cursor to next line',
+                'icon': 'skip'
+            },
+            'zoomin':
+            {
+                'name': 'Increase font size',
+                'func': self.display.zoomIn,
+                'shortcut': QKeySequence(QKeySequence.StandardKey.ZoomIn),
+                'icon': 't-up'
+            },
+            'zoomout':
+            {
+                'name': 'Decrease font size',
+                'func': self.display.zoomOut,
+                'shortcut': QKeySequence(QKeySequence.StandardKey.ZoomOut),
+                'icon': 't-down'
+            }
+        }
+
+        def addAction(name, func, tooltip=None, shortcut=None, icon=None):
+            a = self.toolbar.addAction(name, func)
+            if tooltip:
+                a.setToolTip(tooltip)
+            if shortcut:
+                a.setShortcut(shortcut)
+            if icon:
+                a.setIcon(getIcon(icon))
+            return a
+
+        for k, v in actions.items():
+            action = addAction(**v)
+            actions[k]['action'] = action
+
+        self.pchap_action = actions['pchap']['action']
+        self.nchap_action = actions['nchap']['action']
+
+        self.toolbar.insertSeparator(actions['pos']['action'])
 
     def _initModeline(self):
         self.modeline = Modeline(self)
