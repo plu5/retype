@@ -18,7 +18,7 @@ class ShelfView(QWidget):
         self._initUI()
 
     def _initUI(self):
-        self.cell_dimensions = (130, 200, 232)  # min width, max width, height
+        self.cell_dimensions = (150, 200, 232)  # min width, max width, height
         self.shelf_height = self.cell_dimensions[2]
 
         self.shelves = ShelvesWidget(self, *self.cell_dimensions)
