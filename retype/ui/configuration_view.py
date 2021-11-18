@@ -120,7 +120,13 @@ class ConfigurationView(QWidget):
         tbox.addItem(prep, "Replacements")
         tbox.addItem(self.selectors['window'], "Window geometry")
 
+        back_btn = QPushButton(" ←")
+        back_btn.setStyleSheet("text-align: left")
+        back_btn.clicked.connect(self.reject)
+
         lyt = QVBoxLayout(self)
+        lyt.addWidget(back_btn)
+        lyt.addWidget(hline())
         lyt.addWidget(tbox)
         lyt.addWidget(hline())
         self.revert_btn = QPushButton("Revert")
