@@ -81,6 +81,9 @@ class MainController(QObject):
         self._setView(view)
         self._view = view
 
+        # Clear console after view change
+        self.console.clear()
+
     def setViewByEnum(self, view_e=View.shelf_view):
         self.setView(self._viewFromEnumOrInt(view_e))
 
