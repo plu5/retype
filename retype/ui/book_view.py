@@ -109,6 +109,8 @@ class BookView(QWidget):
         self.splitter.setContentsMargins(0, 0, 0, 0)
         self.splitter.addWidget(self.display)
 
+        self._main_win.denoteSplitter('bookview', self.splitter)
+
         self.layout_.addWidget(self.toolbar)
         self.layout_.addWidget(self.splitter)
         self.layout_.addWidget(self.modeline)
@@ -209,6 +211,7 @@ class BookView(QWidget):
     def _initStatsDock(self):
         self.stats_dock = StatsDock(self._controller.console)
         self.splitter.addWidget(self.stats_dock)
+        self._main_win.maybeRestoreSplitterState('bookview')
 
     def _initChapter(self, reset=True):
         if not self.chapter_pos:

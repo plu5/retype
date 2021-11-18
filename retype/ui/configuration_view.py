@@ -1,6 +1,7 @@
 import os
 import logging
 from copy import deepcopy
+from base64 import b64encode
 from PyQt5.Qt import (QWidget, QFormLayout, QVBoxLayout, QLabel, QLineEdit,
                       QHBoxLayout, QFrame, QPushButton, QToolBox, QCheckBox,
                       QSpinBox, QListView, QToolButton, QDialogButtonBox,
@@ -206,6 +207,12 @@ class ConfigurationView(QWidget):
             logger.debug("Saving window geometry")
             values = self.selectors['window'].valuesByWindow()
             self.config['window'].update(values)
+
+            if self.config['window'].get('save_splitters_on_quit', True):
+                for name, splitter in self.window.splitters.items():
+                    self.config['window'][f'{name}_splitter_state'] =\
+                        b64encode(splitter.saveState()).decode('ascii')
+
             self.saveConfig.emit(self.config)
 
 
@@ -576,11 +583,6 @@ class RDictWidget(QWidget):
 
     def addEntry(self):
         self.model.insertRows()
-        # row = self.model.rowCount(QModelIndex())-1
-        # index = self.model.index(row, 0)
-        # self.view.selectionModel().setCurrentIndex(
-        #     index, QItemSelectionModel.ClearAndSelect)
-        # self.view.edit(index)
 
     def selectedRowIndex(self):
         selectionModel = self.view.selectionModel()
@@ -613,8 +615,12 @@ class WindowGeometrySelector(QWidget):
         self.dims = dims
 
         lyt = QFormLayout(self)
+        save_splitters_checkbox = QCheckBox("Save state of splitters on quit")
+        save_splitters_checkbox.stateChanged.connect(
+            lambda state: self.updateDim('save_splitters_on_quit', state))
         save_checkbox = QCheckBox("Save window size and position on quit")
         save_checkbox.stateChanged.connect(self.setSaveOnQuit)
+        lyt.addRow(save_splitters_checkbox)
         lyt.addRow(save_checkbox)
         lyt.addRow(hline())
 
@@ -634,6 +640,7 @@ class WindowGeometrySelector(QWidget):
 
         lyt.addRow(self.cur_btn)
 
+        save_splitters_checkbox.setChecked(dims['save_splitters_on_quit'])
         save_checkbox.setChecked(dims['save_on_quit'])
 
     def setSaveOnQuit(self, state):

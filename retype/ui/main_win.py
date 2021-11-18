@@ -1,4 +1,5 @@
 from os import path
+from base64 import b64decode
 from PyQt5.Qt import QMainWindow, QStackedWidget, QSplitter, Qt, pyqtSignal
 
 from retype.resource_handler import getStylePath
@@ -31,6 +32,9 @@ class MainWin(QMainWindow):
 
         self.setWindowTitle('retype')
 
+        self.splitters = {'main': self.consistent_layout}
+        self.maybeRestoreSplitterState('main')
+
     def _initQss(self):
         qss_file = open(path.join(getStylePath(), 'default.qss')).read()
         self.setStyleSheet(qss_file)
@@ -41,3 +45,13 @@ class MainWin(QMainWindow):
     def closeEvent(self, event):
         self.closing.emit()
         event.accept()
+
+    def denoteSplitter(self, name, splitter):
+        self.splitters[name] = splitter
+
+    def maybeRestoreSplitterState(self, name):
+        splitter = self.splitters.get(name)
+        if splitter and self.geometry.get('save_splitters_on_quit', True):
+            encoded_state = self.geometry.get(f'{name}_splitter_state', None)
+            if encoded_state is not None:
+                splitter.restoreState(b64decode(encoded_state))

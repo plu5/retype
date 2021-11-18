@@ -21,7 +21,8 @@ default_config = {
         "y": None,
         "w": 600,
         "h": 600,
-        "save_on_quit": True
+        "save_on_quit": True,
+        "save_splitters_on_quit": True
     }
 }
 
