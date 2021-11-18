@@ -54,12 +54,14 @@ class MainController(QObject):
         self.views[View.shelf_view] = ShelfView(self._window, self)
 
         rdict = self.config.get('rdict', None)
-        self.views[View.book_view] = BookView(self._window, self,
-                                              rdict)
+        bookview_settings = self.config.get('bookview', None)
+        self.views[View.book_view] = BookView(self._window, self, rdict,
+                                              bookview_settings)
 
         self.views[View.configuration_view] = ConfigurationView(
             self.config, self._window,
-            self.saveConfigRequested, self.prevViewRequested)
+            self.saveConfigRequested, self.prevViewRequested,
+            self.views[View.book_view].getFontSize)
 
     def _viewFromEnumOrInt(self, view):
         if isinstance(view, View):

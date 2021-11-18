@@ -16,11 +16,11 @@ logger = logging.getLogger(__name__)
 class BookDisplay(QTextBrowser):
     keyPressed = pyqtSignal(object)
 
-    def __init__(self, parent=None):
+    def __init__(self, font_size=12, parent=None):
         super().__init__(parent)
         self.cursor = QTextCursor(self.document())
         self.setOpenLinks(False)
-        self.font_size = 12
+        self.font_size = font_size
         self.updateFont()
 
     def setCursor(self, cursor):
@@ -30,6 +30,10 @@ class BookDisplay(QTextBrowser):
         font = QFont("Times New Roman", self.font_size)
         self.setFont(font)
         self.document().setDefaultFont(font)
+
+    def setFontSize(self, val):
+        self.font_size = val
+        self.updateFont()
 
     def paintEvent(self, e):
         QTextBrowser.paintEvent(self, e)
@@ -71,13 +75,15 @@ class BookDisplay(QTextBrowser):
 
 
 class BookView(QWidget):
-    def __init__(self, main_win, main_controller, rdict, parent=None):
+    def __init__(self, main_win, main_controller, rdict,
+                 bookview_settings=None, parent=None):
         super().__init__(parent)
         self._main_win = main_win
         main_win.closing.connect(self.maybeSave)
         self._controller = main_controller
         self._library = self._controller.library
         self._console = self._controller.console
+        self.font_size = bookview_settings.get('font_size')
         self._initUI()
 
         self.rdict = rdict
@@ -90,7 +96,7 @@ class BookView(QWidget):
         self.progress = None
 
     def _initUI(self):
-        self.display = BookDisplay(self)
+        self.display = BookDisplay(self.font_size, self)
         self.display.anchorClicked.connect(self.anchorClicked)
         self.display.keyPressed.connect(self._controller.console.transferFocus)
 
@@ -390,3 +396,10 @@ class BookView(QWidget):
 
         self.progress = (typed / total) * 100
         self.book.updateProgress(self.progress)
+
+    def setFontSize(self, val):
+        self.font_size = val
+        self.display.setFontSize(val)
+
+    def getFontSize(self):
+        return self.display.font_size

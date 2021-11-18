@@ -16,6 +16,10 @@ default_config = {
         "\u2013": ["-"],
         "\u2014": ["-"]
     },
+    "bookview": {
+        "save_font_size_on_quit": True,
+        "font_size": 12
+    },
     "window": {
         "x": None,
         "y": None,

@@ -25,9 +25,9 @@ def hline():
     return line
 
 
-def pxspinbox(value=0):
+def pxspinbox(value=0, suffix=" px"):
     sb = QSpinBox()
-    sb.setSuffix(" px")
+    sb.setSuffix(suffix)
     sb.setMaximum(10000)
     sb.setValue(value)
     return sb
@@ -47,7 +47,8 @@ def descl(text):
 
 
 class ConfigurationView(QWidget):
-    def __init__(self, config, window, saveConfig, prevView, parent=None):
+    def __init__(self, config, window, saveConfig, prevView,
+                 getBookViewFontSize, parent=None):
         QWidget.__init__(self, parent)
         # The base config (no uncommitted modifications)
         self.config = deepcopy(DEFAULTS)
@@ -59,67 +60,19 @@ class ConfigurationView(QWidget):
         self.saveConfig = saveConfig
         self.prevView = prevView
         self.window = window
+        self.getBookViewFontSize = getBookViewFontSize
 
         self._initUI()
 
     def _initUI(self):
-        plib = QWidget()
-        lyt = QFormLayout(plib)
-
         self.selectors = {}
 
-        # 1. user_dir
-        lyt.addRow(QLabel("Location for the save and config files."))
-        self.selectors['user_dir'] = PathSelector(
-            self.config_edited['user_dir'])
-        self.selectors['user_dir'].changed.connect(
-            lambda t: self.update("user_dir", t))
-        lyt.addRow("User dir:", self.selectors['user_dir'])
-        lyt.addRow(hline())
-        # 2. library_paths
-        lyt.addRow(QLabel("Library search paths:"))
-        self.selectors['library_paths'] = LibraryPathsWidget(
-            self.config_edited['library_paths'])
-        self.selectors['library_paths'].changed.connect(
-            lambda paths: self.update("library_paths", paths))
-        lyt.addRow(self.selectors['library_paths'])
-
-        pcon = QWidget()
-        lyt = QFormLayout(pcon)
-        # 3. prompt
-        lyt.addRow(descl("Prompt console commands must be prefixed by. Can be\
- any length, including empty if you do not want to prefix them with anything."
-                         ))
-        self.selectors['prompt'] = PromptEdit(self.config_edited['prompt'])
-        self.selectors['prompt'].textChanged.connect(
-            lambda t: self.update("prompt", t))
-        lyt.addRow("Prompt:", self.selectors['prompt'])
-
-        prep = QWidget()
-        lyt = QFormLayout(prep)
-        # 4. rdict
-        lyt.addRow(descl("Configure substrings that can be typeable\
- by any one of the set comma-separated list of replacements. This is useful\
- for unicode characters that you don’t have an easy way to input. Each\
- replacement should be of equal length to the original substring."))
-        self.selectors['rdict'] = RDictWidget(
-            deepcopy(self.config_edited['rdict']))
-        self.selectors['rdict'].changed.connect(
-            lambda rdict: self.update("rdict", rdict))
-        lyt.addRow(self.selectors['rdict'])
-
-        # 5. window
-        self.selectors['window'] = WindowGeometrySelector(
-            self.window, self.config_edited['window'])
-        self.selectors['window'].changed.connect(
-            lambda dims: self.update("window", dims))
-        self.window.closing.connect(self.maybeSaveGeometry)
-
         tbox = QToolBox()
-        tbox.addItem(plib, "Paths")
-        tbox.addItem(pcon, "Console")
-        tbox.addItem(prep, "Replacements")
-        tbox.addItem(self.selectors['window'], "Window geometry")
+        tbox.addItem(self._pathSettings(), "Paths")
+        tbox.addItem(self._consoleSettings(), "Console")
+        tbox.addItem(self._bookviewSettings(), "Book View")
+        tbox.addItem(self._rdictSettings(), "Replacements")
+        tbox.addItem(self._windowSettings(), "Window geometry")
 
         back_btn = QPushButton(" ←")
         back_btn.setStyleSheet("text-align: left")
@@ -143,6 +96,75 @@ class ConfigurationView(QWidget):
         self.revert_btn.clicked.connect(self.revert)
         btnbox.button(QDialogButtonBox.RestoreDefaults)\
               .clicked.connect(self.restoreDefaults)
+
+    def _pathSettings(self):
+        plib = QWidget()
+        lyt = QFormLayout(plib)
+
+        # user_dir
+        lyt.addRow(QLabel("Location for the save and config files."))
+        self.selectors['user_dir'] = PathSelector(
+            self.config_edited['user_dir'])
+        self.selectors['user_dir'].changed.connect(
+            lambda t: self.update("user_dir", t))
+        lyt.addRow("User dir:", self.selectors['user_dir'])
+        lyt.addRow(hline())
+        # library_paths
+        lyt.addRow(QLabel("Library search paths:"))
+        self.selectors['library_paths'] = LibraryPathsWidget(
+            self.config_edited['library_paths'])
+        self.selectors['library_paths'].changed.connect(
+            lambda paths: self.update("library_paths", paths))
+        lyt.addRow(self.selectors['library_paths'])
+
+        return plib
+
+    def _consoleSettings(self):
+        pcon = QWidget()
+        lyt = QFormLayout(pcon)
+
+        # prompt
+        lyt.addRow(descl("Prompt console commands must be prefixed by. Can be\
+ any length, including empty if you do not want to prefix them with anything."
+                         ))
+        self.selectors['prompt'] = PromptEdit(self.config_edited['prompt'])
+        self.selectors['prompt'].textChanged.connect(
+            lambda t: self.update("prompt", t))
+        lyt.addRow("Prompt:", self.selectors['prompt'])
+
+        return pcon
+
+    def _rdictSettings(self):
+        prep = QWidget()
+        lyt = QFormLayout(prep)
+        lyt.addRow(descl("Configure substrings that can be typeable\
+ by any one of the set comma-separated list of replacements. This is useful\
+ for unicode characters that you don’t have an easy way to input. Each\
+ replacement should be of equal length to the original substring."))
+        self.selectors['rdict'] = RDictWidget(
+            deepcopy(self.config_edited['rdict']))
+        self.selectors['rdict'].changed.connect(
+            lambda rdict: self.update("rdict", rdict))
+        lyt.addRow(self.selectors['rdict'])
+
+        return prep
+
+    def _windowSettings(self):
+        self.selectors['window'] = WindowGeometrySelector(
+            self.window, self.config_edited['window'])
+        self.selectors['window'].changed.connect(
+            lambda dims: self.update("window", dims))
+        self.window.closing.connect(self.maybeSaveCertainThings)
+
+        return self.selectors['window']
+
+    def _bookviewSettings(self):
+        self.selectors['bookview'] = BookViewSettingsWidget(
+            self.config_edited['bookview'])
+        self.selectors['bookview'].changed.connect(
+            lambda x: self.update("bookview", x))
+
+        return self.selectors['bookview']
 
     def update(self, name, new_value):
         self.config_edited[name] = new_value
@@ -202,17 +224,28 @@ class ConfigurationView(QWidget):
 
         self.revert_btn.setEnabled(False)
 
-    def maybeSaveGeometry(self):
+    def maybeSaveCertainThings(self):
+        shouldSave = False
+
         if self.config['window']['save_on_quit']:
             logger.debug("Saving window geometry")
             values = self.selectors['window'].valuesByWindow()
             self.config['window'].update(values)
+            shouldSave = True
 
-            if self.config['window'].get('save_splitters_on_quit', True):
-                for name, splitter in self.window.splitters.items():
-                    self.config['window'][f'{name}_splitter_state'] =\
-                        b64encode(splitter.saveState()).decode('ascii')
+        if self.config['window'].get('save_splitters_on_quit', True):
+            logger.debug("Saving splitters states")
+            for name, splitter in self.window.splitters.items():
+                self.config['window'][f'{name}_splitter_state'] =\
+                    b64encode(splitter.saveState()).decode('ascii')
+            shouldSave = True
 
+        if self.config['bookview']['save_font_size_on_quit']:
+            logger.debug("Saving BookView’s font size")
+            self.config['bookview']['font_size'] = self.getBookViewFontSize()
+            shouldSave = True
+
+        if shouldSave:
             self.saveConfig.emit(self.config)
 
 
@@ -681,3 +714,36 @@ class WindowGeometrySelector(QWidget):
                 continue
             value = dims[key] if dims[key] is not None else 0
             selector.setValue(value)
+
+
+class BookViewSettingsWidget(QWidget):
+    changed = pyqtSignal(dict)
+
+    def __init__(self, bookview_settings, parent=None):
+        QWidget.__init__(self, parent)
+
+        self.settings = bookview_settings
+
+        save_font_size_checkbox = QCheckBox("Save font size on quit")
+        save_font_size_checkbox.stateChanged.connect(
+            self.setSaveFontSizeOnQuit)
+
+        self.font_size_selector = pxspinbox(self.settings['font_size'], " pt")
+        self.font_size_selector.valueChanged.connect(
+            lambda val: self.updateSetting('font_size', val))
+
+        lyt = QFormLayout(self)
+        lyt.addRow(save_font_size_checkbox)
+        lyt.addRow(hline())
+        lyt.addRow("Default font size:", self.font_size_selector)
+
+        save_font_size_checkbox.setChecked(
+            self.settings['save_font_size_on_quit'])
+
+    def updateSetting(self, name, val):
+        self.settings[name] = val
+        self.changed.emit(self.settings)
+
+    def setSaveFontSizeOnQuit(self, state):
+        self.font_size_selector.setDisabled(True if state else False)
+        self.updateSetting('save_font_size_on_quit', state)
