@@ -36,5 +36,5 @@ def getIconsPath():
     return os.path.join(root_path, 'retype/icons')
 
 
-def getIcon(icon_name):
-    return QIcon(os.path.join(getIconsPath(), icon_name + '.png'))
+def getIcon(icon_name, extension='png'):
+    return QIcon(os.path.join(getIconsPath(), icon_name + f'.{extension}'))

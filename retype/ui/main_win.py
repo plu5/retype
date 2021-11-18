@@ -2,7 +2,7 @@ from os import path
 from base64 import b64decode
 from PyQt5.Qt import QMainWindow, QStackedWidget, QSplitter, Qt, pyqtSignal
 
-from retype.resource_handler import getStylePath
+from retype.resource_handler import getStylePath, getIcon
 
 
 class MainWin(QMainWindow):
@@ -31,6 +31,7 @@ class MainWin(QMainWindow):
             self.move(self.geometry['x'], self.geometry['y'])
 
         self.setWindowTitle('retype')
+        self.setWindowIcon(getIcon('retype', 'ico'))
 
         self.splitters = {'main': self.consistent_layout}
         self.maybeRestoreSplitterState('main')
