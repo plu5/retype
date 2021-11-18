@@ -96,8 +96,11 @@ If dry_run, only do the calculations and return the resulting grid’s height.""
                       len(self.item_list)) or 1
         # Calculate what the width of each cell is going to be,
         #  based on the number of columns. No more than max_cell_width.
-        cell_effective_width = min(rect.width() / columns,
-                                   self.max_cell_width)
+        cell_effective_width = rect.width() / columns
+        if cell_effective_width > self.max_cell_width:
+            cell_effective_width = self.max_cell_width
+            columns = min(floor(rect.width() / cell_effective_width),
+                          len(self.item_list)) or 1
         # Calculate number of rows
         rows = ceil(len(self.item_list) / columns)
 
