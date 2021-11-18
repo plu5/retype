@@ -612,6 +612,11 @@ class RDictWidget(QWidget):
 
     def addEntry(self):
         self.model.insertRows()
+        row = self.model.rowCount(QModelIndex())-1
+        index = self.model.index(row, 0)
+        self.view.selectionModel().setCurrentIndex(
+            index, QItemSelectionModel.ClearAndSelect)
+        self.view.edit(index)
 
     def selectedRowIndex(self):
         selectionModel = self.view.selectionModel()
