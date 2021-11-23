@@ -94,6 +94,8 @@ class BookView(QWidget):
         self.line_pos = None
         self.persistent_pos = None
         self.progress = None
+        self.chapter_lens = None
+        self.total_len = None
 
     def _initUI(self):
         self.display = BookDisplay(self.font_size, self)
@@ -294,8 +296,14 @@ class BookView(QWidget):
 
         self.setChapter(self.chapter_pos, True, reset)
 
+        self.chapter_lens = [chapter['len'] for chapter in self.book.chapters]
+        self.total_len = sum(self.chapter_lens)
+
         if not self.stats_dock:
             self._initStatsDock()
+
+        if book.progress == 100:
+            self.markComplete()
 
     def setChapter(self, pos, move_cursor=False, reset=True):
         self.setSource(self.book.chapters[pos])
@@ -341,6 +349,8 @@ class BookView(QWidget):
 
     def _setLine(self, pos):
         if self.tobetyped_list:
+            if self.line_pos > len(self.tobetyped_list):
+                return logger.warning("line_pos out of range")
             if self.rdict:
                 self.current_line = ManifoldStr(self.tobetyped_list[pos],
                                                 self.rdict)
@@ -388,13 +398,14 @@ class BookView(QWidget):
             self.pchap_action.setDisabled(True)
 
     def updateProgress(self):
-        chapter_lens = [chapter['len'] for chapter in self.book.chapters]
-        typed = self.persistent_pos
-        for chapter_len in chapter_lens[0:self.chapter_pos]:
-            typed += chapter_len
-        total = sum(chapter_lens)
+        if not self.chapter_lens:
+            return
 
-        self.progress = (typed / total) * 100
+        typed = self.persistent_pos
+        for chapter_len in self.chapter_lens[0:self.chapter_pos]:
+            typed += chapter_len
+
+        self.progress = (typed / self.total_len) * 100
         self.book.updateProgress(self.progress)
 
     def setFontSize(self, val):
@@ -403,3 +414,13 @@ class BookView(QWidget):
 
     def getFontSize(self):
         return self.display.font_size
+
+    def onLastChapter(self):
+        return self.chapter_pos == len(self.book.chapters)-1
+
+    def markComplete(self):
+        self.cursor_pos = len(self.tobetyped)
+        self.setCursor()
+        self.progress = 100
+        self.book.updateProgress(self.progress)
+        self.updateModeline()

@@ -31,7 +31,7 @@ class HighlightingService(object):
     def _handleHighlighting(self, text):
         v = self.book_view
 
-        if not v.isVisible():
+        if not v.isVisible() or v.progress == 100:
             return
         # In case there is no book loaded / variables not been initialised
         if any([getattr(v, 'persistent_pos', False) is False,
@@ -88,6 +88,16 @@ class HighlightingService(object):
 
     def advanceLine(self):
         v = self.book_view
+
+        # Get out of here if there is no line to advance to
+        if v.onLastChapter():
+            if len(v.tobetyped_list)-1 == v.line_pos:
+                v.markComplete()
+                return logger.debug("On last line, marking complete")
+            elif len(v.tobetyped_list)-1 < v.line_pos:
+                return logger.error("line_pos ({}) larger than the list ({})\
+ for some reason  ".format(len(v.tobetyped_list), v.line_pos))
+
         v.line_pos += 1
 
         # Compensate
