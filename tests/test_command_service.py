@@ -71,7 +71,8 @@ class FakeBookView:
 def setup():
     console = FakeConsole()
     book_view = FakeBookView()
-    service = CommandService(console, book_view, console.switchView, None, '>')
+    service = CommandService(console, book_view, console.switchView, None, '>',
+                             None)
     return (console, book_view, service)
 
 
