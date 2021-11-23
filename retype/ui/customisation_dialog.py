@@ -64,7 +64,7 @@ class CustomisationDialog(QDialog):
 
         self._initUI()
         self.setModal(True)
-        self.setWindowTitle("retype customisation dialog")
+        self.setWindowTitle("Customise retype")
 
     def sizeHint(self):
         return QSize(400, 500)
