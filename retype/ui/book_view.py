@@ -102,8 +102,6 @@ class BookView(QWidget):
         self.display.anchorClicked.connect(self.anchorClicked)
         self.display.keyPressed.connect(self._controller.console.transferFocus)
 
-        self.stats_dock = None
-
         self._initToolbar()
         self._initModeline()
 
@@ -118,6 +116,10 @@ class BookView(QWidget):
         self.splitter.addWidget(self.display)
 
         self._main_win.denoteSplitter('bookview', self.splitter)
+
+        self.stats_dock = StatsDock()
+        self.splitter.addWidget(self.stats_dock)
+        self._main_win.maybeRestoreSplitterState('bookview')
 
         self.layout_.addWidget(self.toolbar)
         self.layout_.addWidget(self.splitter)
@@ -216,11 +218,6 @@ class BookView(QWidget):
             progress=int(self.progress),
         )
 
-    def _initStatsDock(self):
-        self.stats_dock = StatsDock(self._controller.console)
-        self.splitter.addWidget(self.stats_dock)
-        self._main_win.maybeRestoreSplitterState('bookview')
-
     def _initChapter(self, reset=True):
         if not self.chapter_pos:
             self.chapter_pos = 0
@@ -299,8 +296,8 @@ class BookView(QWidget):
         self.chapter_lens = [chapter['len'] for chapter in self.book.chapters]
         self.total_len = sum(self.chapter_lens)
 
-        if not self.stats_dock:
-            self._initStatsDock()
+        if not self.stats_dock.connected:
+            self.stats_dock.connectConsole(self._controller.console)
 
         if book.progress == 100:
             self.markComplete()

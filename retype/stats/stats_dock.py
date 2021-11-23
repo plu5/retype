@@ -6,11 +6,10 @@ from retype.ui.painting import rectPixmap, textPixmap, linePixmap
 
 
 class StatsDock(QWidget):
-    def __init__(self, console, parent=None):
+    def __init__(self, parent=None):
         super().__init__(parent)
 
-        self._hs = console.highlighting_service
-        console.textEdited.connect(self.onUpdate)
+        self.connected = False
 
         self.prev_cursor_pos = 0
         self.prev_seconds = 0
@@ -25,6 +24,11 @@ class StatsDock(QWidget):
         self.foreground_colour = Qt.white
         self.text_colour = Qt.black
         self.grid_colour = Qt.gray
+
+    def connectConsole(self, console):
+        self._hs = console.highlighting_service
+        console.textEdited.connect(self.onUpdate)
+        self.connected = True
 
     def onUpdate(self, text):
         v = self._hs.book_view
