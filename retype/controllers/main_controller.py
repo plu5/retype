@@ -5,7 +5,8 @@ from enum import Enum
 from copy import deepcopy
 from PyQt5.Qt import QObject, qApp, pyqtSignal, QUrl, QDesktopServices
 
-from retype.ui import MainWin, ShelfView, BookView, CustomisationDialog
+from retype.ui import (MainWin, ShelfView, BookView, CustomisationDialog,
+                       AboutDialog)
 from retype.controllers import MenuController, LibraryController
 from retype.console import Console
 from retype.constants import default_config
@@ -37,6 +38,7 @@ class MainController(QObject):
 
         self._view = None
         self._prev_view = None
+        self.about_dialog = None
 
         self.switchViewRequested.connect(self.switchView)
         self.prevViewRequested.connect(self.prevView)
@@ -204,3 +206,9 @@ Attempting to load config from: {}".format(user_dir, custom_path))
     def openUrl(self, url_str):
         url = QUrl(url_str)
         QDesktopServices.openUrl(url)
+
+    def showAboutDialog(self):
+        if self.about_dialog is None:
+            self.about_dialog = AboutDialog(
+                self.console.command_service.commands_info, self.config['prompt'], self.library.books, self._window)
+        self.about_dialog.show()

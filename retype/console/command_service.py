@@ -17,19 +17,44 @@ class CommandService(object):
         self._initCommandHistory()
 
     def _initCommands(self):
+        self.commands_info = {
+            'Switch view':
+            {
+                'aliases': ['switch', 'view'],
+                'func': self.switch
+            },
+            'Load book with a given numerical id. 0 if none passed':
+            {
+                'aliases': ['load', 'book'],
+                'func': self.load
+            },
+            'Go to cursor position':
+            {
+                'aliases': ['cursor'],
+                'func': self.gotoCursorPosition
+            },
+            'Skip line':
+            {
+                'aliases': ['line', 'advanceline', 'skipline', 'l'],
+                'func': self.advanceLine
+            },
+            'Set chapter to the chapter of the given numerical index.\
+ Ignored if none passed':
+            {
+                'aliases': ['setchapter', 'chapter'],
+                'func': self.setChapter
+            },
+            'Open customisation dialog':
+            {
+                'aliases': ['config', 'customise', 'customisation'],
+                'func': self.customise
+            }
+        }
+
         self.commands = {}
-
-        def add(commands_list, func):
-            for command in commands_list:
-                self.commands[command] = func
-
-        add(['switch', 'view'], self.switch)
-        add(['load', 'book'], self.load)
-        add(['cursor'], self.gotoCursorPosition)
-        add(['line', 'advanceline', 'skipline', 'l'], self.advanceLine)
-        add(['chapter'], self.setChapter)
-        add(['config', 'configuration', 'configure', 'settings', 'customise',
-             'customisation'], self.customise)
+        for cmd in self.commands_info.values():
+            for alias in cmd['aliases']:
+                self.commands[alias] = cmd['func']
 
     def _handleCommands(self, text):
         e = text[len(self.prompt):].lower()

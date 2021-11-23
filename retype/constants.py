@@ -1,3 +1,9 @@
+from sys import version as PYTHON_VERSION_STR
+from PyQt5.QtCore import QT_VERSION_STR
+from PyQt5.Qt import PYQT_VERSION_STR
+from sip import SIP_VERSION_STR
+from ebooklib import VERSION as EBOOKLIB_VERSION
+
 from retype.resource_handler import root_path, getLibraryPath
 
 
@@ -31,4 +37,47 @@ default_config = {
 }
 
 
-issue_tracker = "https://www.github.com/plu5/retype/issues"
+RETYPE_VERSION_STR = "1.0.0"
+
+
+RETYPE_REPOSITORY_URL = "https://www.github.com/plu5/retype"
+
+
+RETYPE_ISSUE_TRACKER_URL = "https://www.github.com/plu5/retype/issues"
+
+
+RETYPE_DOCUMENTATION_URL = "https://www.github.com/plu5/retype/wiki"
+
+
+ACKNOWLEDGEMENTS = {
+    'Python':
+    {
+        'Version': PYTHON_VERSION_STR,
+        'Organisation': 'Python Software Foundation',
+        'Web': 'https://www.python.org/'
+    },
+    'Qt':
+    {
+        'Version': QT_VERSION_STR,
+        'Company': 'Qt Group',
+        'Web': 'https://www.qt.io/'
+    },
+    'PyQt5':
+    {
+        'Version': PYQT_VERSION_STR,
+        'Company': 'Riverbank Computing',
+        'Web': 'https://riverbankcomputing.com/software/pyqt'
+    },
+    'SIP':
+    {
+        'Version': SIP_VERSION_STR,
+        'Company': 'Riverbank Computing',
+        'Web': 'https://riverbankcomputing.com/software/sip'
+    },
+    'ebooklib':
+    {
+        'Version': '.'.join(str(i) for i in EBOOKLIB_VERSION),
+        'Author': 'Aleksandar Erkalovic',
+        'Web': 'https://github.com/aerkalov/ebooklib'
+    }
+}
