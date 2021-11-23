@@ -97,6 +97,14 @@ class BookView(QWidget):
         self.chapter_lens = None
         self.total_len = None
 
+        self.highlight_format = QTextCharFormat()
+        self.highlight_format.setBackground(QColor('yellow'))
+        self.unhighlight_format = QTextCharFormat()
+        self.unhighlight_format.setBackground(QColor('white'))
+        self.mistake_format = QTextCharFormat()
+        self.mistake_format.setBackground(QColor('red'))
+        self.mistake_format.setForeground(QColor('white'))
+
     def _initUI(self):
         self.display = BookDisplay(self.font_size, self)
         self.display.anchorClicked.connect(self.anchorClicked)
@@ -239,13 +247,6 @@ class BookView(QWidget):
         if not self.progress:
             self.progress = 0
 
-        self.highlight_format = QTextCharFormat()
-        self.highlight_format.setBackground(QColor('yellow'))
-        self.unhighlight_format = QTextCharFormat()
-        self.unhighlight_format.setBackground(QColor('white'))
-        self.mistake_format = QTextCharFormat()
-        self.mistake_format.setBackground(QColor('red'))
-        self.mistake_format.setForeground(QColor('white'))
         self.setCursor()
 
         self.tobetyped = self.book.chapters[self.chapter_pos]['plain']
@@ -291,15 +292,17 @@ class BookView(QWidget):
             self.chapter_pos = 0
             reset = True
 
-        self.setChapter(self.chapter_pos, True, reset)
-
         self.chapter_lens = [chapter['len'] for chapter in self.book.chapters]
         self.total_len = sum(self.chapter_lens)
 
         if not self.stats_dock.connected:
             self.stats_dock.connectConsole(self._controller.console)
 
-        if book.progress == 100:
+        complete = book.progress == 100
+
+        self.setChapter(self.chapter_pos, True, reset)
+
+        if complete:
             self.markComplete()
 
     def setChapter(self, pos, move_cursor=False, reset=True):
@@ -416,7 +419,7 @@ class BookView(QWidget):
         return self.chapter_pos == len(self.book.chapters)-1
 
     def markComplete(self):
-        self.cursor_pos = len(self.tobetyped)
+        self.cursor_pos = self.persistent_pos = len(self.tobetyped)
         self.setCursor()
         self.progress = 100
         self.book.updateProgress(self.progress)
