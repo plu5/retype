@@ -2,7 +2,7 @@ import logging
 from PyQt5.Qt import (QWidget, QPixmap, QPainter, QFont, QColor, Qt,
                       QSize, QPoint, QPolygon)
 
-from retype.ui.painting import rectPixmap, textPixmap
+from retype.ui.painting import rectPixmap, textPixmap, ellipsePixmap, arcPixmap
 
 logger = logging.getLogger(__name__)
 
@@ -71,6 +71,44 @@ class HoverCover:
         return pixmap
 
 
+class CompleteIndicator:
+    def __init__(self, w, h):
+        self.w = w
+        self.h = h
+        self.fg = Qt.green
+        self.circle_diameter = 44
+        self.bottom_margin = 10
+        self.thickness = 3
+
+    def pixmap(self):
+        (w, h, fg, r, t) = (self.w, self.h, self.fg, self.circle_diameter,
+                            self.thickness)
+        (circle_x, circle_y) = (w/2 - r/2, h - r - self.bottom_margin)
+        (smile_r, eye_r) = (r/2, 5)
+        (smile_x, smile_y) = (circle_x + smile_r/2,
+                              circle_y + smile_r/2 + 1)
+        circle_middle_x = circle_x + r/2
+        eye_spacing = r/5.5
+        (eye_l_x, eye_r_x, eye_y) = (circle_middle_x - eye_r - eye_spacing/2,
+                                     circle_middle_x + eye_spacing/2,
+                                     circle_y + r/3)
+
+        pixmap = QPixmap(w, h)
+        pixmap.fill(Qt.transparent)
+        qp = QPainter(pixmap)
+        draw = qp.drawPixmap
+
+        draw(circle_x, circle_y, ellipsePixmap(r, r, fg, thickness=t))
+        draw(smile_x, smile_y, arcPixmap(
+            smile_r, smile_r, fg, start_angle=-20*16, span_angle=-140*16,
+            thickness=t, cap=Qt.RoundCap))
+        eye = ellipsePixmap(eye_r, eye_r, fg, bg=fg)
+        draw(eye_l_x, eye_y, eye)
+        draw(eye_r_x, eye_y, eye)
+
+        return pixmap
+
+
 class Cover(QWidget):
     def __init__(self, book, parent=None):
         super().__init__(parent)
@@ -106,6 +144,7 @@ class Cover(QWidget):
         if self.pregenerated:
             self.image = PregeneratedCover(*info).pixmap()
         self.hover_image = HoverCover(*info).pixmap()
+        self.complete_indicator = CompleteIndicator(*info[0:2]).pixmap()
 
     def sizeHint(self):
         size = QSize(self.width, self.height)
@@ -119,6 +158,8 @@ class Cover(QWidget):
         if self.hovered:
             self.setCursor(Qt.PointingHandCursor)
             qp.drawPixmap(0, 0, self.hover_image)
+            if self.book.progress == 100:
+                qp.drawPixmap(0, 0, self.complete_indicator)
 
     def enterEvent(self, e):
         self.hovered = True

@@ -159,11 +159,15 @@ class ProgressBar(QWidget):
         self.h = 2
         self.progress = progress
         self.progress_colour = Qt.yellow
+        self.complete_colour = Qt.green
         self.background_colour = Qt.black
 
     def pixmap(self):
         (w, h) = (self.w, self.h)
         (pc, bc) = (self.progress_colour, self.background_colour)
+        if self.progress == 100:
+            pc = self.complete_colour
+
         progress = self.progress / 100
         pixmap = QPixmap(self.w, h)
         pixmap.fill(Qt.transparent)

@@ -38,3 +38,30 @@ def linePixmap(x2, y2, colour=Qt.white, thickness=2, style=Qt.SolidLine):
     qp.setPen(QPen(colour, thickness, style=style))
     qp.drawLine(x1, y1, x2, y2)
     return pixmap
+
+
+def ellipsePixmap(w, h, fg=Qt.white, bg=Qt.transparent, thickness=2,
+                  style=Qt.SolidLine):
+    bounding_rect = QRectF(thickness/2, thickness/2, w-thickness, h-thickness)
+    pixmap = QPixmap(w, h)
+    pixmap.fill(Qt.transparent)
+    qp = QPainter(pixmap)
+    qp.setRenderHint(QPainter.Antialiasing)
+    qp.setPen(QPen(fg, thickness, style))
+    qp.setBrush(bg)
+    qp.drawEllipse(bounding_rect)
+    return pixmap
+
+
+def arcPixmap(w, h, fg=Qt.white, thickness=2, style=Qt.SolidLine,
+              start_angle=0, span_angle=16*180, antialiasing=True,
+              cap=Qt.SquareCap):
+    bounding_rect = QRectF(thickness/2, thickness/2, w-thickness, h-thickness)
+    pixmap = QPixmap(w, h)
+    pixmap.fill(Qt.transparent)
+    qp = QPainter(pixmap)
+    if antialiasing:
+        qp.setRenderHint(QPainter.Antialiasing)
+    qp.setPen(QPen(fg, thickness, style, cap))
+    qp.drawArc(bounding_rect, start_angle, span_angle)
+    return pixmap
