@@ -49,6 +49,7 @@ class FakeBookView(QObject):
         self.persistent_pos = 0
         self.tobetyped_list = self.display.toPlainText().splitlines()
         self._setLine(self.line_pos)
+        self.progress = 0
 
         self.highlight_format = QTextCharFormat()
         self.unhighlight_format = QTextCharFormat()
@@ -76,6 +77,9 @@ class FakeBookView(QObject):
 
     def updateProgress(self):
         pass
+
+    def onLastChapter(self):
+        return False
 
 
 # This is here just to be able to use QTextBrowser, as without a
