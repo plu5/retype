@@ -29,7 +29,8 @@ class CommandService(object):
                 'aliases': ['load', 'book'],
                 'func': self.load
             },
-            'Go to cursor position':
+            'Go to cursor position. If followed by \'move\', move cursor to\
+ your current position':
             {
                 'aliases': ['cursor'],
                 'func': self.gotoCursorPosition
