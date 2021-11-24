@@ -5,7 +5,7 @@ logger = logging.getLogger(__name__)
 
 class CommandService(object):
     def __init__(self, console, book_view, switchView, loadBook, prompt,
-                 customise):
+                 customise, about):
         self._console = console
         self.book_view = book_view
         self.switchView = switchView
@@ -13,6 +13,7 @@ class CommandService(object):
         self.prompt = prompt
         self._console.submitted.connect(self._handleCommands)
         self.customise_signal = customise
+        self.about_signal = about
         self._initCommands()
         self._initCommandHistory()
 
@@ -48,6 +49,11 @@ class CommandService(object):
             {
                 'aliases': ['config', 'customise', 'customisation'],
                 'func': self.customise
+            },
+            'Show dialog with available console commands':
+            {
+                'aliases': ['?', 'help'],
+                'func': self.help_
             }
         }
 
@@ -156,3 +162,6 @@ class CommandService(object):
         if self.onBookView():
             m = True if move == 'move' else False
             self.book_view.gotoCursorPosition(m)
+
+    def help_(self):
+        self.about_signal.emit('Console commands')

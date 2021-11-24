@@ -18,18 +18,18 @@ class AboutDialog(QDialog):
         self.setWindowTitle("About retype")
         self.setModal(True)
 
-        pages = {}
-        pages['About'] = AboutPage()
-        pages['Acknowledgements'] = self.acknowledgementsPage()
-        pages['Console commands'] = self.consoleCommandsPage()
-        pages['You'] = self.youPage()
+        self.pages = {}
+        self.pages['About'] = AboutPage()
+        self.pages['Acknowledgements'] = self.acknowledgementsPage()
+        self.pages['Console commands'] = self.consoleCommandsPage()
+        self.pages['You'] = self.youPage()
 
-        tabw = QTabWidget()
-        for label, page in pages.items():
-            tabw.addTab(page, label)
+        self.tab_widget = QTabWidget()
+        for label, page in self.pages.items():
+            self.tab_widget.addTab(page, label)
 
         lyt = QVBoxLayout(self)
-        lyt.addWidget(tabw)
+        lyt.addWidget(self.tab_widget)
 
     def acknowledgementsPage(self):
         return ReadOnlyTextWidget(format_page_details(ACKNOWLEDGEMENTS))
@@ -59,6 +59,11 @@ class AboutDialog(QDialog):
                '# of books completed': str(books_completed)}
 
         return ReadOnlyTextWidget(format_page_details(you))
+
+    def setActivePage(self, title):
+        page = self.pages.get(title)
+        if page:
+            self.tab_widget.setCurrentWidget(page)
 
 
 class AboutPage(QWidget):

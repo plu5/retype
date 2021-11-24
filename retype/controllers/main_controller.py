@@ -26,6 +26,7 @@ class MainController(QObject):
     loadBookRequested = pyqtSignal(int)
     saveConfigRequested = pyqtSignal(dict)
     customisationDialogRequested = pyqtSignal()
+    aboutDialogRequested = pyqtSignal(str)
 
     def __init__(self):
         super().__init__()
@@ -45,6 +46,7 @@ class MainController(QObject):
         self.loadBookRequested.connect(self.loadBook)
         self.saveConfigRequested.connect(self.saveConfig)
         self.customisationDialogRequested.connect(self.showCustomisationDialog)
+        self.aboutDialogRequested.connect(self.showAboutDialog)
 
         self._initLibrary()
         self._initMenuBar()
@@ -147,7 +149,8 @@ class MainController(QObject):
         self.console.initServices(self.views[View.book_view],
                                   self.switchViewRequested,
                                   self.loadBookRequested,
-                                  self.customisationDialogRequested)
+                                  self.customisationDialogRequested,
+                                  self.aboutDialogRequested)
 
     def isPathDefaultUserDir(self, path):
         return os.path.abspath(path) == \
@@ -207,8 +210,9 @@ Attempting to load config from: {}".format(user_dir, custom_path))
         url = QUrl(url_str)
         QDesktopServices.openUrl(url)
 
-    def showAboutDialog(self):
+    def showAboutDialog(self, page_title=None):
         if self.about_dialog is None:
             self.about_dialog = AboutDialog(
                 self.console.command_service.commands_info, self.config['prompt'], self.library.books, self._window)
         self.about_dialog.show()
+        self.about_dialog.setActivePage(page_title)
