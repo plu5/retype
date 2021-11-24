@@ -5,6 +5,8 @@ from lxml.html import fromstring, builder, tostring, xhtml_to_html
 from ebooklib import epub
 from PyQt5.Qt import QTextBrowser
 
+from retype.extras.utils import isspaceorempty
+
 logger = logging.getLogger(__name__)
 
 
@@ -102,56 +104,59 @@ class BookWrapper(object):
         parsed_chapters = []
         self.chapter_lookup = {}
         for i, chapter in enumerate(chapters):
-            raw = chapter.content
-            # FIXME: This ugly workaround is the only way I found to make lxml
-            #  use the correct encoding when an lxml declaration is absent from
-            #  the document. Also note this causes lxml to get rid of html and
-            #  body tags for some reason, which may be a problem in future.
-            declaration = """<?xml version="1.0" encoding="utf-8"?>"""
-            tree = fromstring(bytes(declaration, 'utf-8') + raw)
-
-            # Replace xml svg elements with valid html
-            svg_elements = tree.xpath('//svg')
-            if svg_elements:
-                for svg in svg_elements:
-                    image = svg.xpath('//image')[0]
-                    attrs = {item[0]: item[1] for item in image.items()}
-                    try:
-                        href = attrs['xlink:href']
-                        del attrs['xlink:href']
-                        attrs['src'] = href
-                    except AttributeError:
-                        pass
-                    proper_img = builder.IMG(**attrs)
-                    svg.getparent().replace(svg, proper_img)
-
-            xhtml_to_html(tree)
-            html = tostring(tree, method='xml', encoding='unicode')
-
-            links = tree.xpath('//a/@href')
-            image_links = tree.xpath('//img/@src')
-
-            images = []
-            for image_link in image_links:
-                for image in self.images:
-                    if image_link.lstrip('./') in image.file_name:
-                        images.append({'link': image_link,
-                                       'raw': image.content})
-
-            # We to store the length of the plain text of all chapters for
-            #  progress-calculation purposes
-            dummy_display = QTextBrowser()
-            dummy_display.setHtml(html)
-            plain = dummy_display.toPlainText()
-
-            parsed_chapters.append({'html': html,
-                                    'plain': plain,
-                                    'len': len(plain),
-                                    'links': links,
-                                    'images': images})
+            parsed_chapters.append(self.__parseChapterContent(chapter))
             self.chapter_lookup[chapter.file_name.split('/')[-1]] = i
 
         return parsed_chapters
+
+    def __parseChapterContent(self, chapter):
+        raw = chapter.content
+        # FIXME: This ugly workaround is the only way I found to make lxml
+        #  use the correct encoding when an lxml declaration is absent from
+        #  the document. Also note this causes lxml to get rid of html and
+        #  body tags for some reason, which may be a problem in future.
+        declaration = """<?xml version="1.0" encoding="utf-8"?>"""
+        tree = fromstring(bytes(declaration, 'utf-8') + raw)
+
+        # Replace xml svg elements with valid html
+        svg_elements = tree.xpath('//svg')
+        if svg_elements:
+            for svg in svg_elements:
+                if not svg.xpath('//image'):
+                    continue
+                image = svg.xpath('//image')[0]
+                attrs = {item[0]: item[1] for item in image.items()}
+                try:
+                    href = attrs['xlink:href']
+                    del attrs['xlink:href']
+                    attrs['src'] = href
+                except AttributeError:
+                    pass
+                proper_img = builder.IMG(**attrs)
+                svg.getparent().replace(svg, proper_img)
+
+        xhtml_to_html(tree)
+        html = tostring(tree, method='xml', encoding='unicode')
+
+        links = tree.xpath('//a/@href')
+        image_links = tree.xpath('//img/@src')
+
+        images = []
+        for image_link in image_links:
+            for image in self.images:
+                if image_link.lstrip('./') in image.file_name:
+                    images.append({'item': image,
+                                   'link': image_link,
+                                   'raw': image.content})
+
+        # We to store the length of the plain text of all chapters for
+        #  progress-calculation purposes
+        dummy_display = QTextBrowser()
+        dummy_display.setHtml(html)
+        plain = dummy_display.toPlainText()
+
+        return {'html': html, 'plain': plain, 'len': len(plain),
+                'links': links, 'images': images}
 
     @property
     def chapters(self):
@@ -189,6 +194,14 @@ class BookWrapper(object):
             uid = item[0]
             if uid in self.documents.keys():
                 self._unparsed_chapters.append(self.documents[uid])
+
+        # Workaround to catch some edge cases where the cover is not marked but
+        #  is present on the first page
+        if not self._cover:
+            first_page = self.__parseChapterContent(self._unparsed_chapters[0])
+            if len(first_page['images']) == 1 and \
+               isspaceorempty(first_page['plain'], True):
+                self._cover = first_page['images'][0]['item']
 
     @property
     def author(self):

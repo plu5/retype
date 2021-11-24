@@ -20,21 +20,27 @@ def update(source, overrides):
 effectively_space = ['\ufeff', '\u180e', '\u200b', '\u000a']
 
 
-def isspace(s):
+# Characters I hate and want to ignore even though they are not really space
+garbage_characters = ['\ufffc']
+
+
+def isspace(s, orgarbage=False):
     """
     Extension of str.isspace that also checks for other unicode characters that
     are effectively space.
     """
     if s.isspace():
         return True
+    extra_characters = effectively_space + garbage_characters if orgarbage\
+        else effectively_space
     for char in s:
-        if not char.isspace() and char not in effectively_space:
+        if not char.isspace() and char not in extra_characters:
             return False
     return True
 
 
-def isspaceorempty(s):
-    if isspace(s) or s == '':
+def isspaceorempty(s, orgarbage=False):
+    if isspace(s, orgarbage) or s == '':
         return True
     return False
 

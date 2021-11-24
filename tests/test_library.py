@@ -171,8 +171,8 @@ class TestBookWrapper:
         assert parsed_chapters[1]['len'] == len(plain)
         assert parsed_chapters[1]['links'] == []
         assert parsed_chapters[1]['images'] == [
-            {'link': 'inline-image', 'raw': None},
-            {'link': 'cover.jpg', 'raw': None},
+            {'item': book._images[1], 'link': 'inline-image', 'raw': None},
+            {'item': book._images[2], 'link': 'cover.jpg', 'raw': None},
         ]
 
         assert book.chapter_lookup["one"] == 0
