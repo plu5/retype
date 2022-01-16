@@ -1,5 +1,5 @@
-from PyQt5.Qt import (QWidget, QPainter, QColor, Qt, QPixmap, QPoint, QPolygon,
-                      QLabel, pyqtSignal, QFrame)
+from qt import (QWidget, QPainter, QColor, Qt, QPixmap, QPoint, QPolygon,
+                QLabel, pyqtSignal, QFrame)
 
 from retype.layouts import RowLayout
 
@@ -11,7 +11,7 @@ class Separator(QWidget):
         self.start = padding
         width = 8 + padding * 2
         self._pixmap = QPixmap(width, 16)
-        self._pixmap.fill(Qt.transparent)
+        self._pixmap.fill(QColor('transparent'))
         self.setMinimumSize(width, 16)
         self.facing_right = facing_right
 
@@ -136,7 +136,7 @@ class Modeline(QWidget):
 
         def makeGroup(*widgets, tooltip):
             return WidgetsGroup(*widgets, css_="hover", tooltip=tooltip,
-                                cursor=Qt.WhatsThisCursor)
+                                cursor=Qt.CursorShape.WhatsThisCursor)
 
         l_group = makeGroup(self.line_pos, self.pos_sep, self.cursor_pos,
                             tooltip="Line and character position of cursor")

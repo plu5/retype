@@ -2,13 +2,12 @@ import os
 import logging
 from copy import deepcopy
 from base64 import b64encode
-from PyQt5.Qt import (QWidget, QFormLayout, QVBoxLayout, QLabel, QLineEdit,
-                      QHBoxLayout, QFrame, QPushButton, QToolBox, QCheckBox,
-                      QSpinBox, QListView, QToolButton, QDialogButtonBox,
-                      QAbstractListModel, Qt, QStyledItemDelegate, QStyle,
-                      QApplication, QRectF, QTextDocument, QFileDialog,
-                      pyqtSignal, QModelIndex, QItemSelectionModel,
-                      QMessageBox, QDialog, QSize)
+from qt import (QWidget, QFormLayout, QVBoxLayout, QLabel, QLineEdit,
+                QHBoxLayout, QFrame, QPushButton, QToolBox, QCheckBox,
+                QSpinBox, QListView, QToolButton, QDialogButtonBox,
+                QAbstractListModel, Qt, QStyledItemDelegate, QStyle,
+                QApplication, QRectF, QTextDocument, QFileDialog, pyqtSignal,
+                QModelIndex, QItemSelectionModel, QMessageBox, QDialog, QSize)
 
 from retype.extras.utils import update
 from retype.constants import default_config
@@ -20,8 +19,8 @@ DEFAULTS = default_config
 
 def hline():
     line = QFrame()
-    line.setFrameShape(QFrame.HLine)
-    line.setFrameShadow(QFrame.Sunken)
+    line.setFrameShape(QFrame.Shape.HLine)
+    line.setFrameShadow(QFrame.Shadow.Sunken)
     return line
 
 
@@ -49,7 +48,7 @@ def descl(text):
 class CustomisationDialog(QDialog):
     def __init__(self, config, window, saveConfig, prevView,
                  getBookViewFontSize, parent=None):
-        QDialog.__init__(self, parent, Qt.WindowCloseButtonHint)
+        QDialog.__init__(self, parent, Qt.WindowType.WindowCloseButtonHint)
         # The base config (no uncommitted modifications)
         self.config = deepcopy(DEFAULTS)
         update(self.config, config)
@@ -85,15 +84,17 @@ class CustomisationDialog(QDialog):
         self.revert_btn = QPushButton("Revert")
         self.revert_btn.setToolTip("Revert changes")
         self.revert_btn.setEnabled(False)
-        btnbox = QDialogButtonBox(QDialogButtonBox.Close |
-                                  QDialogButtonBox.Save |
-                                  QDialogButtonBox.RestoreDefaults)
-        btnbox.addButton(self.revert_btn, QDialogButtonBox.DestructiveRole)
+        StandardButton = QDialogButtonBox.StandardButton
+        btnbox = QDialogButtonBox(StandardButton.Close |
+                                  StandardButton.Save |
+                                  StandardButton.RestoreDefaults)
+        btnbox.addButton(self.revert_btn,
+                         QDialogButtonBox.ButtonRole.DestructiveRole)
         lyt.addWidget(btnbox)
         btnbox.accepted.connect(self.accept)
         btnbox.rejected.connect(self.reject)
         self.revert_btn.clicked.connect(self.revert)
-        btnbox.button(QDialogButtonBox.RestoreDefaults)\
+        btnbox.button(StandardButton.RestoreDefaults)\
               .clicked.connect(self.restoreDefaults)
 
     def _pathSettings(self):
@@ -358,7 +359,7 @@ class LibraryPathsModel(QAbstractListModel):
         return None
 
     def setData(self, index, data, role):
-        if index.isValid() and role == Qt.EditRole:
+        if index.isValid() and role == Qt.ItemDataRole.EditRole:
             self.paths[index.row()] = str(data)
             self.dataChanged.emit(index, index, [role])
             self.changed.emit(self.paths)
@@ -521,7 +522,7 @@ Replacements list: <code><b>{2}</b></code></p>'''
                 Qt.ItemFlag.ItemIsEditable)
 
     def setData(self, index, data, role):
-        if index.isValid() and role == Qt.EditRole:
+        if index.isValid() and role == Qt.ItemDataRole.EditRole:
             del self.rdict[self.order[index.row()]]
             self.order[index.row()] = data[0]
             self.rdict[data[0]] = data[1]
@@ -575,7 +576,7 @@ class RDictDelegate(Delegate):
             if len(rep) != len(substr):
                 del reps[i]
 
-        model.setData(index, [substr, reps], Qt.EditRole)
+        model.setData(index, [substr, reps], Qt.ItemDataRole.EditRole)
 
 
 class RDictWidget(QWidget):

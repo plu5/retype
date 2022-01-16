@@ -1,6 +1,6 @@
 from math import floor
 from time import time
-from PyQt5.Qt import QWidget, QPainter, QFont, Qt, QSize, QColor, QFontMetricsF
+from qt import QWidget, QPainter, QFont, Qt, QSize, QColor, QFontMetricsF
 
 from retype.ui.painting import rectPixmap, textPixmap, linePixmap
 
@@ -21,9 +21,9 @@ class StatsDock(QWidget):
         self.wpms = []
 
         self.background_colour = QColor('#CDCDC1')
-        self.foreground_colour = Qt.white
-        self.text_colour = Qt.black
-        self.grid_colour = Qt.gray
+        self.foreground_colour = QColor('white')
+        self.text_colour = QColor('black')
+        self.grid_colour = QColor('gray')
 
     def connectConsole(self, console):
         self._hs = console.highlighting_service
@@ -110,7 +110,7 @@ class StatsDock(QWidget):
             y = h - (i * factor)
             qp.drawPixmap(0, y,
                           linePixmap(w, 0, self.grid_colour, 1,
-                                     style=Qt.DashLine))
+                                     style=Qt.PenStyle.DashLine))
             i += 50
 
         # Text

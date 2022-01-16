@@ -1,6 +1,6 @@
 import sys
 import logging
-from PyQt5.Qt import QApplication
+from qt import QApplication
 
 from retype.controllers import MainController
 
@@ -10,7 +10,7 @@ def run():
     _configLog(0)
     controller = MainController()
     controller.show()
-    sys.exit(app.exec_())
+    sys.exit(app.exec())
 
 
 def _configLog(level):

@@ -1,8 +1,8 @@
 import logging
-from PyQt5.Qt import (QWidget, QVBoxLayout, QTextBrowser, QTextDocument, QUrl,
-                      QTextCursor, QTextCharFormat, QColor, QPainter, QPixmap,
-                      QToolBar, QFont, QKeySequence, Qt, QApplication,
-                      pyqtSignal, QSplitter, QSize)
+from qt import (QWidget, QVBoxLayout, QTextBrowser, QTextDocument, QUrl,
+                QTextCursor, QTextCharFormat, QColor, QPainter, QPixmap,
+                QToolBar, QFont, QKeySequence, Qt, QApplication, pyqtSignal,
+                QSplitter, QSize)
 
 from retype.extras.utils import isspaceorempty
 from retype.ui.modeline import Modeline
@@ -66,7 +66,7 @@ class BookDisplay(QTextBrowser):
         self.updateFont()
 
     def wheelEvent(self, e):
-        if e.modifiers() == Qt.ControlModifier:
+        if e.modifiers() == Qt.KeyboardModifier.ControlModifier:
             if e.angleDelta().y() > 0:
                 self.zoomIn()
             else:
@@ -119,7 +119,7 @@ class BookView(QWidget):
 
         self.splitter = QSplitter()
         self.splitter.setHandleWidth(2)
-        self.splitter.setOrientation(Qt.Vertical)
+        self.splitter.setOrientation(Qt.Orientation.Vertical)
         self.splitter.setContentsMargins(0, 0, 0, 0)
         self.splitter.addWidget(self.display)
 
@@ -348,13 +348,15 @@ class BookView(QWidget):
         self.setChapter(pos, move_cursor)
 
     def nextChapterAction(self):
-        if (QApplication.instance().keyboardModifiers() == Qt.ControlModifier):
+        if QApplication.instance().keyboardModifiers() == \
+           Qt.KeyboardModifier.ControlModifier:
             self.nextChapter(True)
         else:
             self.nextChapter(False)
 
     def previousChapterAction(self):
-        if (QApplication.instance().keyboardModifiers() == Qt.ControlModifier):
+        if QApplication.instance().keyboardModifiers() == \
+           Qt.KeyboardModifier.ControlModifier:
             self.previousChapter(True)
         else:
             self.previousChapter(False)

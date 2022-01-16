@@ -3,7 +3,7 @@ import json
 import logging
 from lxml.html import fromstring, builder, tostring, xhtml_to_html
 from ebooklib import epub
-from PyQt5.Qt import QTextBrowser
+from qt import QTextBrowser
 
 from retype.extras.utils import isspaceorempty
 

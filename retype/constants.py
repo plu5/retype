@@ -1,8 +1,7 @@
 from sys import version as PYTHON_VERSION_STR
-from PyQt5.QtCore import QT_VERSION_STR
-from PyQt5.Qt import PYQT_VERSION_STR
-from sip import SIP_VERSION_STR
+from PyQt6.sip import SIP_VERSION_STR
 from ebooklib import VERSION as EBOOKLIB_VERSION
+from qt import QT_VERSION_STR, PYQT_VERSION_STR, QT_WRAPPER
 
 from retype.resource_handler import root_path, getLibraryPath
 
@@ -62,7 +61,7 @@ ACKNOWLEDGEMENTS = {
         'Company': 'Qt Group',
         'Web': 'https://www.qt.io/'
     },
-    'PyQt5':
+    f'{QT_WRAPPER}':
     {
         'Version': PYQT_VERSION_STR,
         'Company': 'Riverbank Computing',

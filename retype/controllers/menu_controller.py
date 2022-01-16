@@ -1,4 +1,4 @@
-from PyQt5.Qt import QAction, QObject
+from qt import QAction, QObject
 
 from retype.constants import RETYPE_ISSUE_TRACKER_URL, RETYPE_DOCUMENTATION_URL
 from retype.resource_handler import getIcon

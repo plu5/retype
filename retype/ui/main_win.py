@@ -1,6 +1,6 @@
 from os import path
 from base64 import b64decode
-from PyQt5.Qt import QMainWindow, QStackedWidget, QSplitter, Qt, pyqtSignal
+from qt import QMainWindow, QStackedWidget, QSplitter, Qt, pyqtSignal
 
 from retype.resource_handler import getStylePath, getIcon
 
@@ -19,7 +19,7 @@ class MainWin(QMainWindow):
         self.stacker = QStackedWidget()
         self.consistent_layout = QSplitter()
         self.consistent_layout.setHandleWidth(2)
-        self.consistent_layout.setOrientation(Qt.Vertical)
+        self.consistent_layout.setOrientation(Qt.Orientation.Vertical)
         self.consistent_layout.setContentsMargins(0, 0, 0, 0)
         self.consistent_layout.addWidget(self.stacker)
         self.consistent_layout.addWidget(self.console)

@@ -1,4 +1,4 @@
-from PyQt5.Qt import QLineEdit, pyqtSignal, Qt, QSize
+from qt import QLineEdit, pyqtSignal, Qt, QSize
 
 from retype.console import CommandService, HighlightingService
 
@@ -36,9 +36,9 @@ class Console(QLineEdit):
         self.setText('')
 
     def keyPressEvent(self, e):
-        if e.key() == Qt.Key_Up:
+        if e.key() == Qt.Key.Key_Up:
             self.command_service.commandHistoryUp()
-        if e.key() == Qt.Key_Down:
+        if e.key() == Qt.Key.Key_Down:
             self.command_service.commandHistoryDown()
         QLineEdit.keyPressEvent(self, e)
 

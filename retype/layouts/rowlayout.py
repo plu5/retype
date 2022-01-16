@@ -1,8 +1,8 @@
-"""PyQt5 horizontal layout that simply lays out items from left to right based
+"""PyQt horizontal layout that simply lays out items from left to right based
  on their size, accounting for spacing and contents margins. Similar to the way
  items on a menu or toolbar are positioned."""
 
-from PyQt5.Qt import QRect, QPoint, QSize, QLayout, Qt
+from qt import QRect, QPoint, QSize, QLayout, Qt
 
 
 class RowLayout(QLayout):
@@ -37,7 +37,7 @@ class RowLayout(QLayout):
         return None
 
     def expandingDirections(self):
-        return Qt.Horizontal
+        return Qt.Orientation.Horizontal
 
     def setGeometry(self, rect):
         super().setGeometry(rect)

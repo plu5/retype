@@ -2,7 +2,7 @@
 
 import os
 import sys
-from PyQt5.QtGui import QIcon
+from qt import QIcon
 
 
 def __getRoot():

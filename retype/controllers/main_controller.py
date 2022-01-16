@@ -3,7 +3,7 @@ import json
 import logging
 from enum import Enum
 from copy import deepcopy
-from PyQt5.Qt import QObject, qApp, pyqtSignal, QUrl, QDesktopServices
+from qt import QObject, QApplication, pyqtSignal, QUrl, QDesktopServices
 
 from retype.ui import (MainWin, ShelfView, BookView, CustomisationDialog,
                        AboutDialog)
@@ -122,7 +122,7 @@ class MainController(QObject):
         self._menu_controller = MenuController(self, menu)
 
     def quit(self):
-        qApp.quit()
+        QApplication().quit()
 
     def _initLibrary(self):
         self.library = LibraryController(self.config['user_dir'],

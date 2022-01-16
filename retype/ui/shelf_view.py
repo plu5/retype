@@ -1,6 +1,6 @@
 import logging
-from PyQt5.Qt import (QWidget, QVBoxLayout, QPainter, Qt, QColor, QEvent,
-                      QPixmap, QFont, QSize)
+from qt import (QWidget, QVBoxLayout, QPainter, Qt, QColor, QEvent, QPixmap,
+                QFont, QSize)
 
 from retype.layouts import ShelvesWidget
 from retype.ui import Cover
@@ -44,14 +44,15 @@ class ShelfView(QWidget):
         QWidget.keyPressEvent(self, e)
 
     def eventFilter(self, watched, event):
-        if watched == self.shelves.container and event.type() == QEvent.Paint:
+        if watched == self.shelves.container and\
+           event.type() == QEvent.Type.Paint:
             o = (0, 0)
             (w, h) = (watched.size().width(), watched.size().height())
             top_shelf_y = self.shelf_height + 5
             deepness = 10
             inset = 4
             front_h = 10
-            shadow_colour = Qt.darkGray
+            shadow_colour = QColor('darkGray')
             line_colour = QColor('#555')
             light_colour = QColor('#B5B5B5')
             highlight_colour = QColor('#CACACA')
@@ -66,7 +67,7 @@ class ShelfView(QWidget):
 
             def shelf():
                 pixmap = QPixmap(w, h)
-                pixmap.fill(Qt.transparent)
+                pixmap.fill(QColor('transparent'))
                 qp = QPainter(pixmap)
                 draw = qp.drawPixmap
                 # Top
@@ -76,7 +77,7 @@ class ShelfView(QWidget):
                 draw(inset, deepness + 3, rectPixmap(w - 10, 10, light_colour,
                                                      light_colour))
                 # Front outline
-                draw(12, 0, rectPixmap(w - 25, 2, line_colour, Qt.white))
+                draw(12, 0, rectPixmap(w - 25, 2, line_colour, QColor('white')))
                 draw(inset, deepness + 3,
                      linePixmap(w - 7, 0, highlight_colour, 4))
                 draw(inset, deepness + 3 + front_h,
@@ -136,12 +137,12 @@ class IDNDisplay(QWidget):
     def pixmap(self, idn):
         (w, h) = (self.w, 10)
         pixmap = QPixmap(w, h)
-        pixmap.fill(Qt.transparent)
+        pixmap.fill(QColor('transparent'))
         qp = QPainter(pixmap)
         font = QFont('Times', 8)
         qp.drawPixmap(0, -3,
-                      textPixmap(str(idn), w, 20, font, Qt.gray,
-                                 Qt.AlignHCenter))
+                      textPixmap(str(idn), w, 20, font, QColor('gray'),
+                                 Qt.AlignmentFlag.AlignHCenter))
         return pixmap
 
     def paintEvent(self, e):
@@ -158,9 +159,9 @@ class ProgressBar(QWidget):
         self.w = w
         self.h = 2
         self.progress = progress
-        self.progress_colour = Qt.yellow
-        self.complete_colour = Qt.green
-        self.background_colour = Qt.black
+        self.progress_colour = QColor('yellow')
+        self.complete_colour = QColor('green')
+        self.background_colour = QColor('black')
 
     def pixmap(self):
         (w, h) = (self.w, self.h)
@@ -170,7 +171,7 @@ class ProgressBar(QWidget):
 
         progress = self.progress / 100
         pixmap = QPixmap(self.w, h)
-        pixmap.fill(Qt.transparent)
+        pixmap.fill(QColor('transparent'))
         qp = QPainter(pixmap)
         qp.drawPixmap(0, 0,
                       rectPixmap(w, h, bc, bc))

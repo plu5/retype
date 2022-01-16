@@ -1,5 +1,5 @@
-from PyQt5.Qt import (QDialog, Qt, QTabWidget, QWidget, QVBoxLayout,
-                      QHBoxLayout, QLabel, QTextBrowser)
+from qt import (QDialog, Qt, QTabWidget, QWidget, QVBoxLayout, QHBoxLayout,
+                QLabel, QTextBrowser)
 
 from retype.resource_handler import getIcon
 from retype.constants import (RETYPE_VERSION_STR, RETYPE_REPOSITORY_URL,
@@ -9,7 +9,7 @@ from retype.constants import (RETYPE_VERSION_STR, RETYPE_REPOSITORY_URL,
 class AboutDialog(QDialog):
     def __init__(self, commands_info, prompt, books,
                  parent=None):
-        QDialog.__init__(self, parent, Qt.WindowCloseButtonHint)
+        QDialog.__init__(self, parent, Qt.WindowType.WindowCloseButtonHint)
 
         self.commands_info = commands_info
         self.prompt = prompt
@@ -74,7 +74,7 @@ class AboutPage(QWidget):
 
         def makel(text=""):
             label = QLabel(text)
-            label.setAlignment(Qt.AlignCenter)
+            label.setAlignment(Qt.AlignmentFlag.AlignCenter)
             lyt.addWidget(label)
             return label
 

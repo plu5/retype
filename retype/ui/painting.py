@@ -1,9 +1,17 @@
-from PyQt5.Qt import Qt, QPainter, QPixmap, QRectF, QPen
+from qt import Qt, QPainter, QPixmap, QRectF, QPen, QColor
 
 
-def rectPixmap(w, h, fg=Qt.white, bg=Qt.transparent):
+white = QColor('white')
+transparent = QColor('transparent')
+center = Qt.AlignmentFlag.AlignCenter
+wordwrap = Qt.TextFlag.TextWordWrap
+solid = Qt.PenStyle.SolidLine
+squarecap = Qt.PenCapStyle.SquareCap
+
+
+def rectPixmap(w, h, fg=white, bg=transparent):
     pixmap = QPixmap(w + 1, h + 1)
-    pixmap.fill(Qt.transparent)
+    pixmap.fill(transparent)
     qp = QPainter(pixmap)
     qp.setPen(fg)
     qp.setBrush(bg)
@@ -11,10 +19,10 @@ def rectPixmap(w, h, fg=Qt.white, bg=Qt.transparent):
     return pixmap
 
 
-def textPixmap(text, w, h, font, fg=Qt.white,
-               alignment=Qt.AlignCenter | Qt.TextWordWrap):
+def textPixmap(text, w, h, font, fg=white,
+               alignment=center | wordwrap):
     pixmap = QPixmap(w, h)
-    pixmap.fill(Qt.transparent)
+    pixmap.fill(transparent)
     qp = QPainter(pixmap)
     qp.setFont(font)
     qp.setPen(fg)
@@ -22,7 +30,7 @@ def textPixmap(text, w, h, font, fg=Qt.white,
     return pixmap
 
 
-def linePixmap(x2, y2, colour=Qt.white, thickness=2, style=Qt.SolidLine):
+def linePixmap(x2, y2, colour=white, thickness=2, style=solid):
     """Line from origin (0, 0) to (x2, y2)"""
     rect = QRectF()
     x1 = y1 = 0
@@ -33,35 +41,35 @@ def linePixmap(x2, y2, colour=Qt.white, thickness=2, style=Qt.SolidLine):
     elif not w:
         w = thickness
     pixmap = QPixmap(w, h)
-    pixmap.fill(Qt.transparent)
+    pixmap.fill(transparent)
     qp = QPainter(pixmap)
     qp.setPen(QPen(colour, thickness, style=style))
     qp.drawLine(x1, y1, x2, y2)
     return pixmap
 
 
-def ellipsePixmap(w, h, fg=Qt.white, bg=Qt.transparent, thickness=2,
-                  style=Qt.SolidLine):
+def ellipsePixmap(w, h, fg=white, bg=transparent, thickness=2,
+                  style=solid):
     bounding_rect = QRectF(thickness/2, thickness/2, w-thickness, h-thickness)
     pixmap = QPixmap(w, h)
-    pixmap.fill(Qt.transparent)
+    pixmap.fill(transparent)
     qp = QPainter(pixmap)
-    qp.setRenderHint(QPainter.Antialiasing)
+    qp.setRenderHint(QPainter.RenderHint.Antialiasing)
     qp.setPen(QPen(fg, thickness, style))
     qp.setBrush(bg)
     qp.drawEllipse(bounding_rect)
     return pixmap
 
 
-def arcPixmap(w, h, fg=Qt.white, thickness=2, style=Qt.SolidLine,
+def arcPixmap(w, h, fg=white, thickness=2, style=solid,
               start_angle=0, span_angle=16*180, antialiasing=True,
-              cap=Qt.SquareCap):
+              cap=squarecap):
     bounding_rect = QRectF(thickness/2, thickness/2, w-thickness, h-thickness)
     pixmap = QPixmap(w, h)
-    pixmap.fill(Qt.transparent)
+    pixmap.fill(transparent)
     qp = QPainter(pixmap)
     if antialiasing:
-        qp.setRenderHint(QPainter.Antialiasing)
+        qp.setRenderHint(QPainter.RenderHint.Antialiasing)
     qp.setPen(QPen(fg, thickness, style, cap))
     qp.drawArc(bounding_rect, start_angle, span_angle)
     return pixmap

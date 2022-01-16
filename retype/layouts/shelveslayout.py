@@ -1,4 +1,4 @@
-"""PyQt5 grid layout that is like bookshelves; places each item at the bottom
+"""PyQt grid layout that is like bookshelves; places each item at the bottom
 centre of its cell, like a book resting on a shelf. Changes dynamically as
 the window resizes to fit as many items as it can, accounting for
 contentsMargins."""
@@ -8,8 +8,7 @@ contentsMargins."""
 #  layout then is only based on the given cell width and height, plus
 #  contentsMargins at the edges.
 
-from PyQt5.Qt import (QSize, QRect, QPoint, QWidget, QGridLayout, QScrollArea,
-                      QLayout)
+from qt import QSize, QRect, QPoint, QWidget, QGridLayout, QScrollArea, QLayout
 from math import floor, ceil
 
 

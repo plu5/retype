@@ -1,6 +1,6 @@
 import logging
-from PyQt5.Qt import (QWidget, QPixmap, QPainter, QFont, QColor, Qt,
-                      QSize, QPoint, QPolygon)
+from qt import (QWidget, QPixmap, QPainter, QFont, QColor, Qt, QSize, QPoint,
+                QPolygon)
 
 from retype.ui.painting import rectPixmap, textPixmap, ellipsePixmap, arcPixmap
 
@@ -63,8 +63,8 @@ class HoverCover:
         qp.drawPixmap(inner_xy[0], 0,
                       textPixmap(self.title, *inner_size, font))
 
-        qp.setPen(Qt.white)
-        qp.setBrush(Qt.red)
+        qp.setPen(QColor('white'))
+        qp.setBrush(QColor('red'))
         points = [QPoint(0, 0), QPoint(13, 0), QPoint(0, 0 + 13)]
         qp.drawPolygon(QPolygon(points))
 
@@ -75,7 +75,7 @@ class CompleteIndicator:
     def __init__(self, w, h):
         self.w = w
         self.h = h
-        self.fg = Qt.green
+        self.fg = QColor('green')
         self.circle_diameter = 44
         self.bottom_margin = 10
         self.thickness = 3
@@ -94,14 +94,14 @@ class CompleteIndicator:
                                      circle_y + r/3)
 
         pixmap = QPixmap(w, h)
-        pixmap.fill(Qt.transparent)
+        pixmap.fill(QColor('transparent'))
         qp = QPainter(pixmap)
         draw = qp.drawPixmap
 
         draw(circle_x, circle_y, ellipsePixmap(r, r, fg, thickness=t))
         draw(smile_x, smile_y, arcPixmap(
             smile_r, smile_r, fg, start_angle=-20*16, span_angle=-140*16,
-            thickness=t, cap=Qt.RoundCap))
+            thickness=t, cap=Qt.PenCapStyle.RoundCap))
         eye = ellipsePixmap(eye_r, eye_r, fg, bg=fg)
         draw(eye_l_x, eye_y, eye)
         draw(eye_r_x, eye_y, eye)
@@ -131,10 +131,11 @@ class Cover(QWidget):
 
             # Scaling
             (w, h) = (self.image.width(), self.image.height())
+            mode = Qt.TransformationMode.SmoothTransformation
             if h > w:
-                self.image = self.image.scaledToHeight(self.max_height, 1)
+                self.image = self.image.scaledToHeight(self.max_height, mode)
             elif w >= h:
-                self.image = self.image.scaledToWidth(self.max_width, 1)
+                self.image = self.image.scaledToWidth(self.max_width, mode)
 
         self.height = self.image.size().height()
         self.width = self.image.size().width()
@@ -156,7 +157,7 @@ class Cover(QWidget):
         qp.drawPixmap(0, 0, self.image)
 
         if self.hovered:
-            self.setCursor(Qt.PointingHandCursor)
+            self.setCursor(Qt.CursorShape.PointingHandCursor)
             qp.drawPixmap(0, 0, self.hover_image)
             if self.book.progress == 100:
                 qp.drawPixmap(0, 0, self.complete_indicator)
