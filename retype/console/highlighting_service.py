@@ -40,7 +40,7 @@ class HighlightingService(object):
 
         # Remove highlighting if things were deleted
         if len(text) + v.persistent_pos < v.cursor_pos:
-            v.cursor.mergeCharFormat(v.unhighlight_format)
+            v.highlight_cursor.mergeCharFormat(v.unhighlight_format)
 
         # Cursor position in the line
         end_correctness_index = compareStrings(text, v.current_line)
@@ -126,10 +126,11 @@ error: {}'.format(v.line_pos, len(v.tobetyped_list), e))
 
     def updateHighlighting(self):
         v = self.book_view
-        v.cursor.setPosition(v.cursor_pos, v.cursor.KeepAnchor)
+        v.updateCursorPosition()
+        v.updateHighlightCursor()
+
         if self.wrong:
             v.mistake_cursor.mergeCharFormat(v.mistake_format)
             return
-        v.cursor.mergeCharFormat(v.unhighlight_format)
-        v.cursor.mergeCharFormat(v.highlight_format)
+
         v.updateModeline()

@@ -255,11 +255,23 @@ class BookView(QWidget):
 
     def setCursor(self):
         self.cursor = QTextCursor(self.display.document())
-        self.cursor.setPosition(self.cursor_pos, self.cursor.KeepAnchor)
+        self.updateCursorPosition()
         self.display.setCursor(self.cursor)
-        self.cursor.mergeCharFormat(self.highlight_format)
+
+        self.highlight_cursor = QTextCursor(self.display.document())
+        self.updateHighlightCursor()
+
         self.mistake_cursor = QTextCursor(self.display.document())
         self.mistake_cursor.setPosition(self.cursor_pos)
+
+    def updateCursorPosition(self):
+        self.cursor.setPosition(self.cursor_pos)
+
+    def updateHighlightCursor(self):
+        self.highlight_cursor.setPosition(self.cursor_pos,
+                                          self.cursor.KeepAnchor)
+        self.highlight_cursor.mergeCharFormat(self.unhighlight_format)
+        self.highlight_cursor.mergeCharFormat(self.highlight_format)
 
     def setSource(self, chapter):
         document = QTextDocument()
