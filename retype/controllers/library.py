@@ -72,7 +72,7 @@ class LibraryController(object):
         with open(self.save_abs_path, 'w', encoding='utf-8') as f:
             json.dump(save, f, indent=2)
 
-        book.save_data = {key: data}
+        book.save_data = data
 
     def load(self, key):
         if os.path.exists(self.save_abs_path):

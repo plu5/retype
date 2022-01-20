@@ -35,7 +35,7 @@ class TestLibraryControllerSaveFunction:
 
         m_jsonload.assert_called_once()
         m_jsondump.assert_called_once_with({key: data}, ANY, indent=2)
-        assert book.save_data == {key: data}
+        assert book.save_data == data
 
     def test_save_file_exists_and_does_not_have_key(
             self, m_jsondump, m_jsonload, m_open, m_exists):
@@ -50,7 +50,7 @@ class TestLibraryControllerSaveFunction:
         new_save = save
         new_save[key] = data
         m_jsondump.assert_called_once_with(new_save, ANY, indent=2)
-        assert book.save_data == {key: data}
+        assert book.save_data == data
 
     def test_save_file_does_not_exist(
             self, m_jsondump, m_jsonload, m_open, m_exists):
@@ -62,7 +62,7 @@ class TestLibraryControllerSaveFunction:
 
         m_jsonload.assert_not_called()
         m_jsondump.assert_called_once_with({key: data}, ANY, indent=2)
-        assert book.save_data == {key: data}
+        assert book.save_data == data
 
 
 @patch('os.path.exists')
