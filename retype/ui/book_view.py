@@ -20,6 +20,7 @@ class BookDisplay(QTextBrowser):
         super().__init__(parent)
         self.cursor = QTextCursor(self.document())
         self.setOpenLinks(False)
+        self.setOpenExternalLinks(True)
         self.font_size = font_size
         self.updateFont()
 
@@ -287,7 +288,9 @@ class BookView(QWidget):
 
     def anchorClicked(self, link):
         f = link.fileName()
-        if f in self.book.chapter_lookup:
+        if link.scheme() in ["http", "https"]:
+            self._controller.openUrl(link)
+        elif f in self.book.chapter_lookup:
             pos = self.book.chapter_lookup[f]
             self.setChapter(pos)
         else:
