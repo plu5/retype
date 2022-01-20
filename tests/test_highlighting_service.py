@@ -56,9 +56,10 @@ class FakeBookView(QObject):
         self.mistake_format = QTextCharFormat()
 
         self.cursor = QTextCursor(self.display.document())
+        self.updateCursorPosition()
         self.mistake_cursor = QTextCursor(self.display.document())
-        self.cursor.setPosition(self.cursor_pos, self.cursor.KeepAnchor)
         self.mistake_cursor.setPosition(self.cursor_pos)
+        self.highlight_cursor = QTextCursor(self.display.document())
 
     def isVisible(self):
         return True
@@ -80,6 +81,12 @@ class FakeBookView(QObject):
 
     def onLastChapter(self):
         return False
+
+    def updateCursorPosition(self):
+        self.cursor.setPosition(self.cursor_pos)
+
+    def updateHighlightCursor(self):
+        pass
 
 
 # This is here just to be able to use QTextBrowser, as without a
