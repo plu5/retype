@@ -138,6 +138,9 @@ class BookWrapper(object):
         xhtml_to_html(tree)
         html = tostring(tree, method='xml', encoding='unicode')
 
+        # Get rid of invisible garbage characters
+        html = html.replace('\ufeff', '')
+
         links = tree.xpath('//a/@href')
         image_links = tree.xpath('//img/@src')
 
