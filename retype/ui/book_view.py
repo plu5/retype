@@ -259,20 +259,31 @@ class BookView(QWidget):
         self.updateCursorPosition()
         self.display.setCursor(self.cursor)
 
+        self.setHighlightCursor()
+
+        self.setMistakeCursor()
+
+    def setHighlightCursor(self):
         self.highlight_cursor = QTextCursor(self.display.document())
         self.updateHighlightCursor()
 
+    def setMistakeCursor(self):
         self.mistake_cursor = QTextCursor(self.display.document())
         self.mistake_cursor.setPosition(self.cursor_pos)
 
-    def updateCursorPosition(self):
-        self.cursor.setPosition(self.cursor_pos)
+    def updateCursorPosition(self, to_pos=None):
+        pos = to_pos or self.cursor_pos
+        self.cursor.setPosition(pos)
 
-    def updateHighlightCursor(self):
-        self.highlight_cursor.setPosition(self.cursor_pos,
-                                          self.cursor.KeepAnchor)
+    def updateHighlightCursor(self, to_pos=None):
+        pos = to_pos or self.cursor_pos
+        self.highlight_cursor.setPosition(pos, self.cursor.KeepAnchor)
         self.highlight_cursor.mergeCharFormat(self.unhighlight_format)
         self.highlight_cursor.mergeCharFormat(self.highlight_format)
+
+    def fillHighlight(self):
+        self.setHighlightCursor()
+        self.updateHighlightCursor(self.chapter_lens[self.viewed_chapter_pos])
 
     def setSource(self, chapter):
         document = QTextDocument()
@@ -332,6 +343,8 @@ class BookView(QWidget):
             self.updateProgress()
         elif pos == self.chapter_pos:
             self.setCursor()
+        elif pos < self.chapter_pos:
+            self.fillHighlight()
         self.updateModeline()
         self.display.updateFont()
         self.updateToolbarActions()
