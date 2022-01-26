@@ -178,11 +178,18 @@ class BookWrapper(object):
 
     @property
     def cover(self):
-        if not self._images:
+        if not self._cover:
             self._getItems(self._book)
         return self._cover
 
     def _getItems(self, book):
+        logger.debug("_getItems called for '{}'".format(book.title))
+
+        # Reset lists
+        self._images = []
+        self._unparsed_chapters = []
+
+        # Get items
         for item in book.get_items():
             if type(item) is epub.EpubCover:
                 self._cover = item
@@ -193,6 +200,7 @@ class BookWrapper(object):
             if type(item) is epub.EpubHtml:
                 self.documents[item.id] = item
 
+        # Get chapters
         for item in book.spine:
             uid = item[0]
             if uid in self.documents.keys():
