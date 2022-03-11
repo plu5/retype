@@ -454,6 +454,7 @@ class LibraryPathsWidget(QWidget):
 class PromptEdit(QLineEdit):
     def __init__(self, prompt, parent=None):
         QLineEdit.__init__(self, parent)
+        self.set_(prompt)
 
     def set_(self, prompt):
         self.setText(prompt)
