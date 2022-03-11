@@ -29,7 +29,7 @@ def getStylePath():
 
 
 def getIconsPath():
-    return os.path.join(root_path, 'retype/icons')
+    return os.path.join(root_path, 'icons')
 
 
 def getIcon(icon_name, extension='png'):
