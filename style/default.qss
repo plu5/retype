@@ -19,7 +19,7 @@ QScrollArea {
 }
 
 QSplitter::handle {
-  background: url(style/stripe.png) repeat;
+  background: url(style:stripe.png) repeat;
 }
 
 QToolBox::tab {

@@ -1,6 +1,6 @@
-from os import path
 from base64 import b64decode
-from qt import QMainWindow, QStackedWidget, QSplitter, Qt, pyqtSignal
+from qt import (QMainWindow, QStackedWidget, QSplitter, Qt, pyqtSignal, QDir,
+                QFile)
 
 from retype.resource_handler import getStylePath, getIcon
 
@@ -37,8 +37,10 @@ class MainWin(QMainWindow):
         self.maybeRestoreSplitterState('main')
 
     def _initQss(self):
-        qss_file = open(path.join(getStylePath(), 'default.qss')).read()
-        self.setStyleSheet(qss_file)
+        QDir.addSearchPath('style', getStylePath())
+        qss_file = QFile('style:default.qss')
+        qss_file.open(QFile.ReadOnly | QFile.Text)
+        self.setStyleSheet(str(qss_file.readAll(), 'utf-8'))
 
     def currentView(self):
         return self.stacker.currentWidget()
