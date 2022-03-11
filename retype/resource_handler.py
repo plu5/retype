@@ -1,5 +1,3 @@
-# i think there may be problems with this implementation when it’s packaged
-
 import os
 import sys
 from qt import QIcon
@@ -9,16 +7,14 @@ def __getRoot():
     root = ''
     if sys.argv[0].lower().endswith('.exe'):
         root = os.path.dirname(sys.argv[0])
-    elif getattr(sys, 'frozen', False):
-        root = os.environ['RESOURCEPATH']
     else:
         file = None
         try:
             file = __file__
         except NameError:
             file = sys.argv[0]
-        root = os.path.dirname(os.path.abspath(file))
-    return os.path.abspath((os.path.join(root, '..')))
+        root = os.path.join(os.path.dirname(os.path.abspath(file)), '..')
+    return os.path.abspath(root)
 
 
 root_path = __getRoot()
