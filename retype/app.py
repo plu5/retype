@@ -4,6 +4,7 @@ import argparse
 from qt import QApplication
 
 from retype.controllers import MainController
+from retype.constants import RETYPE_VERSION_STR as version
 
 
 _logging_levels = logging._levelToName  # FIXME: bad
@@ -16,6 +17,8 @@ def run():
     args = _parseArgs()
     _configLog(args.loglevel[0])
 
+    logging.info(f'retype {version}')
+
     controller = MainController()
     controller.show()
     sys.exit(app.exec())
@@ -25,7 +28,7 @@ def _parseArgs():
     parser = argparse.ArgumentParser(description='retype')
     parser.add_argument(
         '-l', '--loglevel', type=str, nargs=1, metavar='LOGLEVEL',
-        default=['WARNING'], choices=_logging_levels_names,
+        default=['INFO'], choices=_logging_levels_names,
         help=f'Set logging output level to one of:\
  {", ".join(_logging_levels_names)}')
     return parser.parse_args()

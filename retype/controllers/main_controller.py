@@ -172,6 +172,7 @@ Attempting to load config from: {}".format(user_dir, custom_path))
 
     def _loadConfig(self, path):
         if os.path.exists(path):
+            logger.info(f'Read config: {path}')
             with open(path, 'r') as f:
                 config = json.load(f)
                 return config

@@ -338,7 +338,7 @@ class BookView(QWidget):
             self.chapter_pos = pos
             self._initChapter(reset)
             if isspaceorempty(self.tobetyped):
-                logger.info("Skipping empty chapter")
+                logger.debug("Skipping empty chapter")
                 self.setChapter(pos + 1, move_cursor)
             self.updateProgress()
         elif pos == self.chapter_pos:
@@ -388,7 +388,7 @@ class BookView(QWidget):
                 self.current_line = self.tobetyped_list[pos]
 
             if isspaceorempty(self.current_line):
-                logger.info("Skipping empty line")
+                logger.debug("Skipping empty line")
                 self.advanceLine()
         else:
             logger.error("Bad tobetyped_list; {}".format(self.tobetyped_list))
