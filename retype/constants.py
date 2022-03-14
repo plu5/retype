@@ -1,4 +1,5 @@
 from sys import version as PYTHON_VERSION_STR
+from sys import platform
 from PyQt6.sip import SIP_VERSION_STR
 from ebooklib import VERSION as EBOOKLIB_VERSION
 from qt import QT_VERSION_STR, PYQT_VERSION_STR, QT_WRAPPER
@@ -80,3 +81,5 @@ ACKNOWLEDGEMENTS = {
         'Web': 'https://github.com/aerkalov/ebooklib'
     }
 }
+
+iswindows = platform.lower() in ['win32', 'win64']

@@ -1,6 +1,7 @@
 from qt import QAction, QObject
 
-from retype.constants import RETYPE_ISSUE_TRACKER_URL, RETYPE_DOCUMENTATION_URL
+from retype.constants import (
+    RETYPE_ISSUE_TRACKER_URL, RETYPE_DOCUMENTATION_URL, iswindows)
 from retype.resource_handler import getIcon
 
 
@@ -45,6 +46,12 @@ class MenuController(QObject):
         self._addAction(viewMenu, '&Book View',
                         lambda: self.controller.setViewByEnum(2), ['Ctrl+2'],
                         'open_book')
+
+        if iswindows:
+            viewMenu.addSeparator()
+            self._addAction(viewMenu, 'Toggle System &Console',
+                            lambda: self.controller.toggleConsoleWindow(),
+                            icon_name='console')
 
     def _optionsMenu(self):
         optionsMenu = self._menu.addMenu('&Options')

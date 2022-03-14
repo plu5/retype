@@ -9,7 +9,7 @@ from retype.ui import (MainWin, ShelfView, BookView, CustomisationDialog,
                        AboutDialog)
 from retype.controllers import MenuController, LibraryController
 from retype.console import Console
-from retype.constants import default_config
+from retype.constants import default_config, iswindows
 
 logger = logging.getLogger(__name__)
 
@@ -36,6 +36,9 @@ class MainController(QObject):
 
         self.console = Console(self.config['prompt'])
         self._window = MainWin(self.console, self.getGeometry(self.config))
+        if iswindows:
+            # TODO: maybe there should be a setting whether to hide it or not
+            self._window.opened.connect(self.hideConsoleWindow)
 
         self._view = None
         self._prev_view = None
@@ -214,6 +217,19 @@ Attempting to load config from: {}".format(user_dir, custom_path))
     def showAboutDialog(self, page_title=None):
         if self.about_dialog is None:
             self.about_dialog = AboutDialog(
-                self.console.command_service.commands_info, self.config['prompt'], self.library.books, self._window)
+                self.console.command_service.commands_info,
+                self.config['prompt'], self.library.books, self._window)
         self.about_dialog.show()
         self.about_dialog.setActivePage(page_title)
+
+    if iswindows:
+        def hideConsoleWindow(self, show=False):
+            from win32gui import ShowWindow
+            from win32console import GetConsoleWindow
+            from win32con import SW_HIDE, SW_SHOW
+            action = SW_SHOW if show else SW_HIDE
+            ShowWindow(GetConsoleWindow(), action)
+            self.console_status = show
+
+        def toggleConsoleWindow(self):
+            self.hideConsoleWindow(not self.console_status)
