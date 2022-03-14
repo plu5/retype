@@ -16,6 +16,7 @@ class LibraryController(object):
         self.library_paths = library_paths
         self._book_files = self.indexLibrary(library_paths)
         self.books = None
+        self.save_file_contents = None
 
     @property
     def user_dir(self):
@@ -72,14 +73,21 @@ class LibraryController(object):
         with open(self.save_abs_path, 'w', encoding='utf-8') as f:
             json.dump(save, f, indent=2)
 
+        self.save_file_contents = save
         book.save_data = data
 
-    def load(self, key):
+    def loadSaveFile(self):
         if os.path.exists(self.save_abs_path):
+            logger.info(f'Read save: {self.save_abs_path}')
             with open(self.save_abs_path, 'r') as f:
                 save = json.load(f)
-                if key in save:
-                    return save[key]
+                self.save_file_contents = save
+                return save
+
+    def load(self, key):
+        save = self.save_file_contents or self.loadSaveFile()
+        if save and key in save:
+            return save[key]
         return None
 
 
