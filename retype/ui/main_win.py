@@ -1,3 +1,4 @@
+import logging
 from base64 import b64decode
 from qt import (QMainWindow, QStackedWidget, QSplitter, Qt, pyqtSignal, QDir,
                 QFile)
@@ -53,6 +54,7 @@ class MainWin(QMainWindow):
     def closeEvent(self, event):
         self.closing.emit()
         event.accept()
+        logging.info('retype quit')
 
     def denoteSplitter(self, name, splitter):
         self.splitters[name] = splitter
