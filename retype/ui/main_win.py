@@ -6,6 +6,7 @@ from retype.resource_handler import getStylePath, getIcon
 
 
 class MainWin(QMainWindow):
+    opened = pyqtSignal()
     closing = pyqtSignal()
 
     def __init__(self, console, geometry, parent=None):  # qss_file
@@ -44,6 +45,10 @@ class MainWin(QMainWindow):
 
     def currentView(self):
         return self.stacker.currentWidget()
+
+    def showEvent(self, event):
+        QMainWindow.showEvent(self, event)
+        self.opened.emit()
 
     def closeEvent(self, event):
         self.closing.emit()
