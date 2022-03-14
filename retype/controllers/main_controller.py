@@ -223,12 +223,15 @@ Attempting to load config from: {}".format(user_dir, custom_path))
 
     if iswindows:
         def hideConsoleWindow(self, show=False):
-            from win32gui import ShowWindow
-            from win32console import GetConsoleWindow
-            from win32con import SW_HIDE, SW_SHOW
-            action = SW_SHOW if show else SW_HIDE
-            ShowWindow(GetConsoleWindow(), action)
-            self.console_status = show
+            try:
+                from win32gui import ShowWindow
+                from win32console import GetConsoleWindow
+                from win32con import SW_HIDE, SW_SHOW
+                action = SW_SHOW if show else SW_HIDE
+                ShowWindow(GetConsoleWindow(), action)
+                self.console_status = show
+            except ImportError:
+                logger.info("No pywin32")
 
         def toggleConsoleWindow(self):
             self.hideConsoleWindow(not self.console_status)
