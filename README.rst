@@ -21,7 +21,7 @@ General Information
 Usage
 -----
 
-To run retype, you can `download the latest build for your operating system <https://github.com/plu5/retype/releases/latest>`_, `build it yourself <#titles-are>`_, or `run it from sources <#running-from-sources>`_.
+To run retype, you can `download the latest build for your operating system <https://github.com/plu5/retype/releases/latest>`_, `build it yourself <#build-instructions>`_, or `run it from sources <#running-from-sources>`_.
 
 Build instructions
 ^^^^^^^^^^^^^^^^^^
@@ -31,7 +31,7 @@ Build instructions
 #. Install ``pyinstaller``
 #. Run ``python setup.py`` (add ``-h`` to see options)
 
-The output will be in `/dist`.
+The output will be in ``/dist``.
 
 Running from sources
 ^^^^^^^^^^^^^^^^^^^^
