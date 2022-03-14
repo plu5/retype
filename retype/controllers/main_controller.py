@@ -37,8 +37,7 @@ class MainController(QObject):
         self.console = Console(self.config['prompt'])
         self._window = MainWin(self.console, self.getGeometry(self.config))
         if iswindows:
-            # TODO: maybe there should be a setting whether to hide it or not
-            self._window.opened.connect(self.hideConsoleWindow)
+            self._window.opened.connect(self.maybeHideConsoleWindow)
 
         self._view = None
         self._prev_view = None
@@ -233,3 +232,8 @@ Attempting to load config from: {}".format(user_dir, custom_path))
 
         def toggleConsoleWindow(self):
             self.hideConsoleWindow(not self.console_status)
+
+        def maybeHideConsoleWindow(self):
+            hide = self.config.get('hide_sysconsole', True)
+            if hide:
+                self.hideConsoleWindow()

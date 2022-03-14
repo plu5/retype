@@ -10,7 +10,7 @@ from qt import (QWidget, QFormLayout, QVBoxLayout, QLabel, QLineEdit,
                 QModelIndex, QItemSelectionModel, QMessageBox, QDialog, QSize)
 
 from retype.extras.utils import update
-from retype.constants import default_config
+from retype.constants import default_config, iswindows
 
 logger = logging.getLogger(__name__)
 
@@ -131,6 +131,18 @@ class CustomisationDialog(QDialog):
         self.selectors['prompt'].textChanged.connect(
             lambda t: self.update("prompt", t))
         lyt.addRow("Prompt:", self.selectors['prompt'])
+
+        # Windows-only: system console
+        if iswindows:
+            lyt.addRow(hline())
+            hide_sysconsole_checkbox = QCheckBox(
+                "Hide System Console window on UI load (Windows-only)")
+            hide_sysconsole_checkbox.setChecked(
+                self.config_edited.get('hide_sysconsole', True))
+            hide_sysconsole_checkbox.stateChanged.connect(
+                lambda t: self.update("hide_sysconsole", t))
+            self.selectors['hide_sysconsole'] = hide_sysconsole_checkbox
+            lyt.addRow(hide_sysconsole_checkbox)
 
         return pcon
 
