@@ -1,12 +1,14 @@
 # -*- mode: python ; coding: utf-8 -*-
 import os
-from setup.config import data, binaries, imports
+from setup.config import data, binaries, imports, builddate, util
 
+
+datas = builddate.saveDateToFile(os.path.abspath("."))
 
 a = Analysis(['../retype-target.py'],  # noqa: F821
              pathex=[],
              binaries=[],
-             datas=data.datas_tuples,
+             datas=datas,
              hiddenimports=imports.addn,
              hookspath=[],
              hooksconfig={},
@@ -24,7 +26,8 @@ pyz = PYZ(a.pure, a.zipped_data, cipher=None)  # noqa: F821
 unbundled_data = []
 bundled_data = []
 for (dest, source, kind) in a.datas:
-    if os.path.split(dest)[0] in data.folder_names:
+    root_subdir = util.getRoot(dest)
+    if (root_subdir in data.folder_names):
         unbundled_data.append((dest, source, kind))
     else:
         bundled_data.append((dest, source, kind))

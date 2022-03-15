@@ -5,6 +5,7 @@ from qt import QApplication
 
 from retype.controllers import MainController
 from retype.constants import RETYPE_VERSION_STR as version
+from retype.constants import builddate
 
 
 _logging_levels = logging._levelToName  # FIXME: bad
@@ -17,7 +18,8 @@ def run():
     args = _parseArgs()
     _configLog(args.loglevel[0])
 
-    logging.info(f'retype {version}')
+    builddate_str = f' built @ {builddate}' if builddate else ''
+    logging.info(f'retype {version}' + builddate_str)
 
     controller = MainController()
     controller.show()

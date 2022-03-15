@@ -18,6 +18,7 @@ def __getRoot():
 
 
 root_path = __getRoot()
+temp_path_or_none = sys._MEIPASS if hasattr(sys, '_MEIPASS') else None
 
 
 def getLibraryPath():
@@ -34,3 +35,10 @@ def getIconsPath():
 
 def getIcon(icon_name, extension='png'):
     return QIcon(os.path.join(getIconsPath(), icon_name + f'.{extension}'))
+
+
+def getIncludePath():
+    root = temp_path_or_none or root_path
+    if os.path.split(root)[1] == 'include':
+        root = os.path.abspath(os.path.join(root, '..'))
+    return os.path.join(root, 'include')

@@ -1,10 +1,12 @@
+import os
+import sys
 from sys import version as PYTHON_VERSION_STR
 from sys import platform
 from PyQt6.sip import SIP_VERSION_STR
 from ebooklib import VERSION as EBOOKLIB_VERSION
 from qt import QT_VERSION_STR, PYQT_VERSION_STR, QT_WRAPPER
 
-from retype.resource_handler import root_path, getLibraryPath
+from retype.resource_handler import root_path, getLibraryPath, getIncludePath
 
 
 default_config = {
@@ -83,3 +85,17 @@ ACKNOWLEDGEMENTS = {
 }
 
 iswindows = platform.lower() in ['win32', 'win64']
+
+
+def maybeGetBuilddate():
+    builddate = None
+    if not getattr(sys, 'frozen', False) and not hasattr(sys, '_MEIPASS'):
+        return builddate
+    path = os.path.join(getIncludePath(), 'builddate.txt')
+    if os.path.exists(path):
+        with open(path, 'r') as f:
+            builddate = f.read()
+    return builddate
+
+
+builddate = maybeGetBuilddate()

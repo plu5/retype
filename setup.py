@@ -47,8 +47,8 @@ def main(args=sys.argv):
         sub_dir = source_dir + '/include'
         file_names = os.listdir(source_dir)
         exclude = {'lxml', 'PyQt5', 'base_library.zip', 'python37.dll',
-                   'icons', 'library', 'style', 'retype.exe'}
-        os.makedirs(sub_dir)
+                   'icons', 'library', 'style', 'retype.exe', 'include'}
+        os.makedirs(sub_dir, exist_ok=True)
         for f in file_names:
             if f not in exclude:
                 shutil.move(os.path.join(source_dir, f),

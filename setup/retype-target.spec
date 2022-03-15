@@ -1,12 +1,14 @@
 # -*- mode: python ; coding: utf-8 -*-
 import os
-from setup.config import data, binaries, imports
+from setup.config import data, binaries, imports, builddate
 
+
+datas = builddate.saveDateToFile(os.path.abspath("."))
 
 a = Analysis(['../retype-target.py'],  # noqa: F821
              pathex=[],
              binaries=[],
-             datas=data.datas_tuples,
+             datas=datas,
              hiddenimports=imports.addn,
              hookspath=[],
              hooksconfig={},
