@@ -38,6 +38,7 @@ class MainController(QObject):
         self._window = MainWin(self.console, self.getGeometry(self.config))
         if iswindows:
             self._window.opened.connect(self.maybeHideConsoleWindow)
+            self.console_status = None
 
         self._view = None
         self._prev_view = None
@@ -234,7 +235,8 @@ Attempting to load config from: {}".format(user_dir, custom_path))
                 logger.info("No pywin32")
 
         def toggleConsoleWindow(self):
-            self.hideConsoleWindow(not self.console_status)
+            if self.console_status is not None:
+                self.hideConsoleWindow(not self.console_status)
 
         def maybeHideConsoleWindow(self):
             hide = self.config.get('hide_sysconsole', True)
