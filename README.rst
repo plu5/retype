@@ -7,15 +7,12 @@ retype is a free and open-source typing practice application that allows you to 
 .. figure:: https://raw.githubusercontent.com/plu5/retype/main/style/scr/col.png
    :align: center
 
+|
+:Source code:   https://github.com/plu5/retype
+:Issue tracker: https://github.com/plu5/issues
+:Documentation: https://github.com/plu5/wiki
+
 .. contents::
-
--------------------
-General Information
--------------------
-
-- Source code: https://github.com/plu5/retype
-- Issue tracker: https://github.com/plu5/issues
-- Documentation and manual: https://github.com/plu5/wiki
 
 -----
 Usage
