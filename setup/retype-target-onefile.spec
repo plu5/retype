@@ -2,6 +2,8 @@
 import os
 from setup.config import data, binaries, imports, builddate, util
 
+from PyInstaller.config import CONF
+
 
 datas = builddate.saveDateToFile(os.path.abspath("."))
 
@@ -32,13 +34,16 @@ for (dest, source, kind) in a.datas:
     else:
         bundled_data.append((dest, source, kind))
 
+old_distpath = CONF['distpath']
+CONF['distpath'] = CONF['workpath']
+
 exe = EXE(pyz,  # noqa: F821
           a.scripts,
           a.binaries,
           a.zipfiles,
           bundled_data,
           [],
-          name=data.name,
+          name=os.path.join(workpath, data.name),  # noqa: F821
           icon=data.icon,
           debug=False,
           bootloader_ignore_signals=False,
@@ -51,6 +56,8 @@ exe = EXE(pyz,  # noqa: F821
           target_arch=None,
           codesign_identity=None,
           entitlements_file=None)
+
+CONF['distpath'] = old_distpath
 
 coll = COLLECT(exe,  # noqa: F821
                unbundled_data,
