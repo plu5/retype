@@ -37,7 +37,7 @@ Running from sources
 
 #. Get a local copy of this repository: either clone it or download and extract `ZIP of latest <https://github.com/plu5/retype/archive/main.zip>`_   
 #. Install the `dependencies`_
-#. Run ``bin/retype.pyw``
+#. Run ``bin/retype``. On Windows, you can simply double-click on ``bin/retype.pyw``. Alternatively, you can run ``python retype-target.py``.
 
 Dependencies
 ^^^^^^^^^^^^
