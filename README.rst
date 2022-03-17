@@ -27,8 +27,8 @@ Build instructions
 
 #. Get a local copy of this repository: either clone it or download and extract `ZIP of latest <https://github.com/plu5/retype/archive/main.zip>`_   
 #. Install the `dependencies`_
-#. Install ``pyinstaller``
-#. Run ``python setup.py`` (add ``-h`` to see options)
+#. Install ``pyinstaller`` and ``setuptools``
+#. Run ``python setup.py b`` and help text will print with the build options you can use. For example, ``python setup.py b -k onedir`` will build retype with pyinstaller in onedir mode.
 
 The output will be in ``/dist``.
 
@@ -52,8 +52,9 @@ Dependencies
 
 - ``pywin32`` -- Windows-only. This is only used for optionally hiding the System Console window.
 - ``pytest`` -- to run tests
+- ``pyinstaller`` and ``setuptools`` -- to build retype
 - ``Sphinx`` and ``sphinx-rtd-theme`` -- to build the docs locally
-
+  
 Getting started
 ^^^^^^^^^^^^^^^
  
