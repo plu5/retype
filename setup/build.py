@@ -1,8 +1,15 @@
 import os
 import shutil
 from textwrap import wrap
-import PyInstaller.__main__
 from setuptools import Command
+
+has_pyinstaller = False
+
+try:
+    import PyInstaller.__main__
+    has_pyinstaller = True
+except ModuleNotFoundError:
+    has_pyinstaller = False
 
 
 build_dir = './build'
@@ -30,6 +37,9 @@ def helpForArgsdict(argsdict, line_length=80, key_len=12,
 
 
 def build(kind):
+    if not has_pyinstaller:
+        print('Could not import PyInstaller')
+        return 1
     if kind == 'onedir':
         PyInstaller.__main__.run(['./setup/retype-target.spec'])
     elif kind == 'onefile':
