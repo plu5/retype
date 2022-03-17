@@ -1,0 +1,1 @@
+{% extends "!autosummary/base.rst" %}

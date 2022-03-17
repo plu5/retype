@@ -48,7 +48,7 @@ RETYPE_REPOSITORY_URL = "https://www.github.com/plu5/retype"
 RETYPE_ISSUE_TRACKER_URL = "https://www.github.com/plu5/retype/issues"
 
 
-RETYPE_DOCUMENTATION_URL = "https://www.github.com/plu5/retype/wiki"
+RETYPE_DOCUMENTATION_URL = "https://retype.readthedocs.io/"
 
 
 ACKNOWLEDGEMENTS = {

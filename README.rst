@@ -2,7 +2,7 @@
 retype
 ======
 
-retype is a free and open-source typing practice application that allows you to type along to epub books. It saves your progress so you can come back where you left off.
+*retype* is a free and open-source typing practice application that allows you to type along to epub books. It saves your progress so you can come back where you left off.
 
 .. figure:: https://raw.githubusercontent.com/plu5/retype/main/style/scr/col.png
    :align: center
@@ -10,7 +10,9 @@ retype is a free and open-source typing practice application that allows you to 
 |
 :Source code:   https://github.com/plu5/retype
 :Issue tracker: https://github.com/plu5/issues
-:Documentation: https://github.com/plu5/wiki
+:Documentation: https://retype.readthedocs.io/
+
+.. _documentation: https://retype.readthedocs.io/
 
 .. contents::
 
@@ -49,7 +51,8 @@ Dependencies
 **Optional:**
 
 - ``pywin32`` -- Windows-only. This is only used for optionally hiding the System Console window.
-- ``pytest`` -- to run tests.
+- ``pytest`` -- to run tests
+- ``Sphinx`` and ``sphinx-rtd-theme`` -- to build the docs locally
 
 Getting started
 ^^^^^^^^^^^^^^^
@@ -62,7 +65,7 @@ Other than typing, you can navigate the book with toolbar buttons and console co
 
 You can add more library search paths and customise retype’s operation in the Customisation Dialog, which can be accessed from the menu or by :kbd:`Ctrl+O`.
 
-See the `documentation <https://github.com/plu5/wiki>`_ for more.
+More information on the user interface and available features can be found in the documentation_.
 
 ----------
 Influences & acknowledgements
