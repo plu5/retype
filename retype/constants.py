@@ -2,9 +2,8 @@ import os
 import sys
 from sys import version as PYTHON_VERSION_STR
 from sys import platform
-from PyQt6.sip import SIP_VERSION_STR
 from ebooklib import VERSION as EBOOKLIB_VERSION
-from qt import QT_VERSION_STR, PYQT_VERSION_STR, QT_WRAPPER
+from qt import QT_VERSION_STR, PYQT_VERSION_STR, QT_WRAPPER, sip
 
 from retype.resource_handler import root_path, getLibraryPath, getIncludePath
 
@@ -39,17 +38,12 @@ default_config = {
 }
 
 
+SIP_VERSION_STR = sip.SIP_VERSION_STR
+
 RETYPE_VERSION_STR = "1.0.0"
-
-
 RETYPE_REPOSITORY_URL = "https://www.github.com/plu5/retype"
-
-
 RETYPE_ISSUE_TRACKER_URL = "https://www.github.com/plu5/retype/issues"
-
-
 RETYPE_DOCUMENTATION_URL = "https://retype.readthedocs.io/"
-
 
 ACKNOWLEDGEMENTS = {
     'Python':
@@ -83,6 +77,7 @@ ACKNOWLEDGEMENTS = {
         'Web': 'https://github.com/aerkalov/ebooklib'
     }
 }
+
 
 iswindows = platform.lower() in ['win32', 'win64']
 
