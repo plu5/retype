@@ -18,6 +18,7 @@ Contents
    getting-started
    running-from-sources
    build-instructions
+   build-docs
    dependencies
    features
 
