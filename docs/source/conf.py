@@ -3,12 +3,17 @@
 import os
 import sys
 
+
 proj_path = os.path.abspath('../..')
+sys.path.insert(0, proj_path)
+
+
+from retype.console.command_service import commands_info  # noqa: E402
+
+
 docs_path = os.path.join(proj_path, 'docs')
 static_path = os.path.join(docs_path, '_static')
 img_path = os.path.join(static_path, 'img')
-
-sys.path.insert(0, proj_path)
 
 on_rtd = os.environ.get('READTHEDOCS', None) == 'True'
 
@@ -29,14 +34,18 @@ extensions = [
     'sphinx.ext.autosummary',
     'sphinx.ext.intersphinx',
     'sphinx.ext.viewcode',
+    'sphinx_jinja',
 ]
-
 
 intersphinx_mapping = {
     'python': ('https://docs.python.org/3/', None),
     'sphinx': ('https://www.sphinx-doc.org/en/master/', None),
 }
 intersphinx_disabled_domains = ['std']
+
+jinja_contexts = {
+    'console_commands': {'commands_info': commands_info},
+}
 
 templates_path = [os.path.join(docs_path, '_templates')]
 exclude_patterns = ['_build', '_templates']

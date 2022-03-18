@@ -37,11 +37,14 @@ class AboutDialog(QDialog):
     def consoleCommandsPage(self):
         commands = {}
 
-        for desc, obj in self.commands_info.items():
+        for cmd in self.commands_info.values():
             aliases = [f'<tt>{self.prompt}{alias}</tt>'
-                       for alias in obj['aliases']]
+                       for alias in cmd['aliases']]
+            args_str = cmd['args'] or ''
             aliases_str = ' / '.join(aliases)
-            commands[aliases_str] = desc
+            aliases_str += ' ' if args_str != '' else ''
+            aliases_str += args_str
+            commands[aliases_str] = cmd['desc']
 
         return ReadOnlyTextWidget(format_page_details(commands))
 

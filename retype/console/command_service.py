@@ -3,6 +3,61 @@ import logging
 logger = logging.getLogger(__name__)
 
 
+commands_info = {
+    'switch':
+    {
+        'desc': 'Switch view between Shelf View and Book View',
+        'aliases': ['switch', 'view'],
+        'args': None,
+        # 'func': self.switch
+    },
+    'load':
+    {
+        'desc': 'Load book with a given numerical ID. 0 if none passed',
+        'aliases': ['load', 'book'],
+        'args': 'ID',
+        # 'func': self.load
+    },
+    'gotoCursorPosition':
+    {
+        'desc': 'Go to cursor position. If followed by \'m\' or \'move\', move\
+ cursor to your current position',
+        'aliases': ['cursor'],
+        'args': '[m / move ?]',
+        # 'func': self.gotoCursorPosition
+    },
+    'advanceLine':
+    {
+        'desc': 'Skip line',
+        'aliases': ['line', 'advanceline', 'skipline', 'l'],
+        'args': None,
+        # 'func': self.advanceLine
+    },
+    'setChapter':
+    {
+        'desc': 'Set chapter to the chapter of the given numerical POS.\
+ Ignored if none passed. If followed by \'m\' or \'move\', move the cursor too',
+        'aliases': ['setchapter', 'chapter'],
+        'args': 'POS [m / move ?]',
+        # 'func': self.setChapter
+    },
+    'customise':
+    {
+        'desc': 'Open customisation dialog',
+        'aliases': ['config', 'customise', 'customisation'],
+        'args': None,
+        # 'func': self.customise
+    },
+    'help_':
+    {
+        'desc': 'Show dialog with available console commands',
+        'aliases': ['?', 'help'],
+        'args': None,
+        # 'func': self.help_
+    }
+}
+
+
 class CommandService(object):
     def __init__(self, console, book_view, switchView, loadBook, prompt,
                  customise, about):
@@ -18,45 +73,10 @@ class CommandService(object):
         self._initCommandHistory()
 
     def _initCommands(self):
-        self.commands_info = {
-            'Switch view':
-            {
-                'aliases': ['switch', 'view'],
-                'func': self.switch
-            },
-            'Load book with a given numerical id. 0 if none passed':
-            {
-                'aliases': ['load', 'book'],
-                'func': self.load
-            },
-            'Go to cursor position. If followed by \'move\', move cursor to\
- your current position':
-            {
-                'aliases': ['cursor'],
-                'func': self.gotoCursorPosition
-            },
-            'Skip line':
-            {
-                'aliases': ['line', 'advanceline', 'skipline', 'l'],
-                'func': self.advanceLine
-            },
-            'Set chapter to the chapter of the given numerical index.\
- Ignored if none passed':
-            {
-                'aliases': ['setchapter', 'chapter'],
-                'func': self.setChapter
-            },
-            'Open customisation dialog':
-            {
-                'aliases': ['config', 'customise', 'customisation'],
-                'func': self.customise
-            },
-            'Show dialog with available console commands':
-            {
-                'aliases': ['?', 'help'],
-                'func': self.help_
-            }
-        }
+        self.commands_info = commands_info
+
+        for f in self.commands_info.keys():
+            self.commands_info[f]['func'] = getattr(self, f)
 
         self.commands = {}
         for cmd in self.commands_info.values():

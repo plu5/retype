@@ -30,6 +30,7 @@ Contents
    book-view
    console
    customisation-dialog
+   about-dialog
 
 .. toctree::
    :maxdepth: 2
