@@ -8,6 +8,8 @@ from qt import QT_VERSION_STR, PYQT_VERSION_STR, QT_WRAPPER, sip
 from retype.resource_handler import root_path, getLibraryPath, getIncludePath
 
 
+iswindows = platform.lower() in ['win32', 'win64']
+
 default_config = {
     "user_dir": root_path,
     "library_paths": [getLibraryPath()],
@@ -36,6 +38,9 @@ default_config = {
         "save_splitters_on_quit": True
     }
 }
+
+if iswindows:
+    default_config["hide_sysconsole"] = True
 
 
 SIP_VERSION_STR = sip.SIP_VERSION_STR
@@ -77,9 +82,6 @@ ACKNOWLEDGEMENTS = {
         'Web': 'https://github.com/aerkalov/ebooklib'
     }
 }
-
-
-iswindows = platform.lower() in ['win32', 'win64']
 
 
 def maybeGetBuilddate():
