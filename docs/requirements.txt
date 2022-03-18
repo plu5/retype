@@ -2,3 +2,4 @@ sphinx
 sphinx-rtd-theme
 sphinx-jinja
 PyQt5
+ebooklib
