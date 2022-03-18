@@ -96,3 +96,4 @@ def maybeGetBuilddate():
 
 
 builddate = maybeGetBuilddate()
+builddate_str = f' built @ {builddate}' if builddate else ''
