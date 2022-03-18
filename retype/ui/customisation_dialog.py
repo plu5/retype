@@ -94,8 +94,9 @@ class CustomisationDialog(QDialog):
         btnbox.accepted.connect(self.accept)
         btnbox.rejected.connect(self.reject)
         self.revert_btn.clicked.connect(self.revert)
-        btnbox.button(StandardButton.RestoreDefaults)\
-              .clicked.connect(self.restoreDefaults)
+        self.restore_btn = btnbox.button(StandardButton.RestoreDefaults)
+        self.restore_btn.clicked.connect(self.restoreDefaults)
+        self.restore_btn.setEnabled(self.config != DEFAULTS)
 
     def _pathSettings(self):
         plib = QWidget()
@@ -183,6 +184,7 @@ class CustomisationDialog(QDialog):
         logger.debug("config_edited updated to: {}".format(self.config_edited))
 
         self.revert_btn.setEnabled(self.config_edited != self.config)
+        self.restore_btn.setEnabled(self.config_edited != DEFAULTS)
 
     def accept(self):
         # User dir validation
@@ -226,6 +228,8 @@ class CustomisationDialog(QDialog):
     def restoreDefaults(self):
         self.config_edited = deepcopy(default_config)
         self.setSelectors(self.config_edited)
+
+        self.restore_btn.setEnabled(False)
 
     def revert(self):
         self.config_edited = deepcopy(self.config)
