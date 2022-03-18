@@ -135,7 +135,7 @@ class CustomisationDialog(QDialog):
         # Windows-only: system console
         if iswindows:
             lyt.addRow(hline())
-            hide_sysconsole_checkbox = QCheckBox(
+            hide_sysconsole_checkbox = CheckBox(
                 "Hide System Console window on UI load (Windows-only)")
             hide_sysconsole_checkbox.setChecked(
                 self.config_edited.get('hide_sysconsole', True))
@@ -256,6 +256,19 @@ class CustomisationDialog(QDialog):
 
         if shouldSave:
             self.saveConfig.emit(self.config)
+
+
+class CheckBox(QCheckBox):
+    changed = pyqtSignal(bool)
+
+    def __init__(self, desc, parent=None):
+        QCheckBox.__init__(self, desc, parent)
+
+    def value(self):
+        return self.isChecked()
+
+    def set_(self, value):
+        self.setChecked(value)
 
 
 class PathSelector(QWidget):
