@@ -11,7 +11,9 @@ It can be made larger or smaller, or even collapsed, using the drag handle above
 The prompt
 ----------
 
-Commands need to be prefaced with the prompt, which is ``>`` by default. It can be set to anything, even an empty string. See :doc:`customisation-dialog`.
+Commands need to be prefaced with the prompt, which is ``>`` by default. :ref:`It can be set to anything <prompt-customisation>`, even an empty string.
+
+.. _console-commands:
 
 Console commands
 ----------------

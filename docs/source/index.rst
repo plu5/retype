@@ -14,6 +14,7 @@ Contents
 
 .. toctree::
    :caption: Usage
+   :maxdepth: 2
 
    getting-started
    running-from-sources
@@ -24,6 +25,7 @@ Contents
 
 .. toctree::
    :caption: User interface
+   :maxdepth: 2
 
    main-window
    shelf-view

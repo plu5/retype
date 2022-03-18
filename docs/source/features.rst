@@ -17,6 +17,6 @@ Available features
 
   * Customisable font size
 
-* String replacements: the ability to make a substring be typeable by another of the same length. This is useful for typing unicode characters, for example making any unicode dash character typeable by hyphen.
+* :ref:`String replacements <replacements>`: the ability to make a substring be typeable by another of the same length. This is useful for typing unicode characters, for example making any unicode dash character typeable by hyphen.
     
-* Foldable Stats Dock that shows you a graph of your current typing speed in WPM and your personal best for the session
+* Foldable :ref:`stats-dock` that shows you a graph of your current typing speed in WPM and your personal best for the session
