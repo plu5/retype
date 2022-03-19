@@ -1,8 +1,8 @@
 Build docs locally
 ==================
 
-#. :doc:`Download retype sources and required dependencies <running-from-sources>`
-#. Install ``Sphinx`` and ``sphinx-rtd-theme``
+#. Get a local copy of `the code repository <https://github.com/plu5/retype>`_: either clone it or download and extract `ZIP of latest <https://github.com/plu5/retype/archive/main.zip>`_
+#. Install the docs dependencies, which are in ``docs/requirements.txt`` [``pip3 install -r docs/requirements.txt``]
 #. cd into the ``docs`` folder
 #. Run ``make html``, or on Windows ``./make.bat html``
 #. If build succeeds, open ``build/html/index.html`` in your browser
