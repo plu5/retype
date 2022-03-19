@@ -4,7 +4,7 @@ retype
 
 *retype* is a free and open-source typing practice application that allows you to type along to epub books. It saves your progress so you can come back where you left off.
 
-.. figure:: https://raw.githubusercontent.com/plu5/retype/main/style/scr/col.png
+.. figure:: https://raw.githubusercontent.com/plu5/retype/main/docs/_static/img/col.png
    :align: center
 
 |
