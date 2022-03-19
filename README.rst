@@ -26,8 +26,8 @@ Build instructions
 ^^^^^^^^^^^^^^^^^^
 
 #. Get a local copy of this repository: either clone it or download and extract `ZIP of latest <https://github.com/plu5/retype/archive/main.zip>`_   
-#. Install the `dependencies`_
-#. Install ``pyinstaller`` and ``setuptools``
+#. Install the `dependencies`_ [``pip3 install -r requirements.txt``]
+#. Install ``pyinstaller`` and ``setuptools`` [``pip3 install pyinstaller setuptools``]
 #. Run ``python setup.py b`` and help text will print with the build options you can use. For example, ``python setup.py b -k onedir`` will build retype with pyinstaller in onedir mode.
 
 The output will be in ``/dist``.
@@ -36,7 +36,7 @@ Running from sources
 ^^^^^^^^^^^^^^^^^^^^
 
 #. Get a local copy of this repository: either clone it or download and extract `ZIP of latest <https://github.com/plu5/retype/archive/main.zip>`_   
-#. Install the `dependencies`_
+#. Install the `dependencies`_ [``pip3 install -r requirements.txt``]
 #. Run ``bin/retype``. On Windows, you can simply double-click on ``bin/retype.pyw``. Alternatively, you can run ``python retype-target.py``.
 
 Dependencies
