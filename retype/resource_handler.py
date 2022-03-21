@@ -5,8 +5,8 @@ from qt import QIcon
 
 def __getRoot():
     root = ''
-    if sys.argv[0].lower().endswith('.exe'):
-        root = os.path.dirname(sys.argv[0])
+    if getattr(sys, 'frozen', False) or hasattr(sys, '_MEIPASS'):
+        root = os.path.dirname(sys.executable)
     else:
         file = None
         try:

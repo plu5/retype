@@ -48,14 +48,23 @@ def build(kind):
         PyInstaller.__main__.run(['./setup/retype-target-hacky.spec'])
         source_dir = dist_dir + '/retype-hacky'
         sub_dir = source_dir + '/include'
+        qtlib_dir = sub_dir + '/PyQt5/Qt5/lib'
         file_names = os.listdir(source_dir)
-        exclude = {'base_library.zip', 'python37.dll',
-                   'icons', 'library', 'style', 'retype.exe', 'include'}
+        exclude = {'base_library.zip', 'python3',
+                   'icons', 'library', 'style', 'retype', 'include',
+                   '_struct', 'zlib'}
         os.makedirs(sub_dir, exist_ok=True)
         for f in file_names:
-            if f not in exclude:
-                shutil.move(os.path.join(source_dir, f),
-                            os.path.join(sub_dir, f))
+            matches = [x for x in exclude if x in f]
+            if not matches:
+                if f.startswith('libQt5') or f in \
+                   ['libicuuc.so.56', 'libicui18n.so.56', 'libicudata.so.56']:
+                    os.makedirs(qtlib_dir, exist_ok=True)
+                    shutil.move(os.path.join(source_dir, f),
+                                os.path.join(qtlib_dir, f))
+                else:
+                    shutil.move(os.path.join(source_dir, f),
+                                os.path.join(sub_dir, f))
     else:
         print('Undefined build kind')
 

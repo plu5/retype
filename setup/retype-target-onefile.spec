@@ -20,7 +20,7 @@ a = Analysis(['../retype-target.py'],  # noqa: F821
              win_private_assemblies=False,
              noarchive=False)
 
-a.binaries -= [(os.path.normcase(x), None, None) for x in binaries.to_exclude]
+a.binaries = binaries.filterBinaries(a.binaries)
 
 pyz = PYZ(a.pure, a.zipped_data, cipher=None)  # noqa: F821
 
