@@ -1,8 +1,8 @@
 import logging
-from qt import (QWidget, QPixmap, QPainter, QFont, QColor, Qt, QSize, QPoint,
-                QPolygon)
+from qt import QWidget, QPixmap, QPainter, QColor, Qt, QSize, QPoint, QPolygon
 
-from retype.ui.painting import rectPixmap, textPixmap, ellipsePixmap, arcPixmap
+from retype.ui.painting import (rectPixmap, textPixmap, ellipsePixmap,
+                                arcPixmap, Font)
 
 logger = logging.getLogger(__name__)
 
@@ -33,10 +33,10 @@ class PregeneratedCover:
         inner_xy = (10, 10)
         inner_size = (w - 20, h - 20)
         qp.drawPixmap(*inner_xy, rectPixmap(*inner_size))
-        font = QFont('Times', 9, 99)
+        font = Font.BOLD
         qp.drawPixmap(inner_xy[0], 0,
                       textPixmap(self.title, *inner_size, font))
-        font = QFont('Times', 8)
+        font = Font.GENERAL
         qp.drawPixmap(inner_xy[0], 80,
                       textPixmap(self.author, *inner_size, font))
 
@@ -59,7 +59,7 @@ class HoverCover:
 
         inner_xy = (10, 10)
         inner_size = (w - 20, h - 20)
-        font = QFont('Times', 9, 99)
+        font = Font.BOLD
         qp.drawPixmap(inner_xy[0], 0,
                       textPixmap(self.title, *inner_size, font))
 

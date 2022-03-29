@@ -1,10 +1,10 @@
 import logging
 from qt import (QWidget, QVBoxLayout, QPainter, Qt, QColor, QEvent, QPixmap,
-                QFont, QSize)
+                QSize)
 
 from retype.layouts import ShelvesWidget
 from retype.ui import Cover
-from retype.ui.painting import rectPixmap, linePixmap, textPixmap
+from retype.ui.painting import rectPixmap, linePixmap, textPixmap, Font
 
 logger = logging.getLogger(__name__)
 
@@ -139,7 +139,7 @@ class IDNDisplay(QWidget):
         pixmap = QPixmap(w, h)
         pixmap.fill(QColor('transparent'))
         qp = QPainter(pixmap)
-        font = QFont('Times', 8)
+        font = Font.GENERAL
         qp.drawPixmap(0, -3,
                       textPixmap(str(idn), w, 20, font, QColor('gray'),
                                  Qt.AlignmentFlag.AlignHCenter))

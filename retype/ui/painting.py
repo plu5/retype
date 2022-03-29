@@ -1,4 +1,5 @@
-from qt import Qt, QPainter, QPixmap, QRectF, QPen, QColor
+from enum import Enum
+from qt import Qt, QPainter, QPixmap, QRectF, QPen, QColor, QFontDatabase
 
 
 white = QColor('white')
@@ -7,6 +8,37 @@ center = Qt.AlignmentFlag.AlignCenter
 wordwrap = Qt.TextFlag.TextWordWrap
 solid = Qt.PenStyle.SolidLine
 squarecap = Qt.PenCapStyle.SquareCap
+
+
+class Font(Enum):
+    GENERAL = 1
+    FIXED = 2
+    BOLD = 3
+
+    @staticmethod
+    def systemfonts():
+        get = QFontDatabase.systemFont
+        return {
+            1: get(QFontDatabase.GeneralFont),
+            2: get(QFontDatabase.FixedFont),
+        }
+
+    @classmethod
+    def general(cls):
+        return cls.systemfonts()[1]
+
+    @classmethod
+    def fixed(cls):
+        return cls.systemfonts()[2]
+
+    @classmethod
+    def bold(cls):
+        font = cls.general()
+        font.setBold(True)
+        return font
+
+    def toQFont(self):
+        return getattr(self, self.name.lower())()
 
 
 def rectPixmap(w, h, fg=white, bg=transparent):
@@ -24,6 +56,7 @@ def textPixmap(text, w, h, font, fg=white,
     pixmap = QPixmap(w, h)
     pixmap.fill(transparent)
     qp = QPainter(pixmap)
+    font = font.toQFont() if type(font) == Font else font
     qp.setFont(font)
     qp.setPen(fg)
     qp.drawText(QRectF(0, 0, w, h), alignment, text)

@@ -1,8 +1,8 @@
 from math import floor
 from time import time
-from qt import QWidget, QPainter, QFont, Qt, QSize, QColor, QFontMetricsF
+from qt import QWidget, QPainter, Qt, QSize, QColor, QFontMetricsF
 
-from retype.ui.painting import rectPixmap, textPixmap, linePixmap
+from retype.ui.painting import rectPixmap, textPixmap, linePixmap, Font
 
 
 class StatsDock(QWidget):
@@ -114,7 +114,7 @@ class StatsDock(QWidget):
             i += 50
 
         # Text
-        font = QFont('Times', 9, 0)
+        font = Font.GENERAL.toQFont()
         fm = QFontMetricsF(font)
         font_h = fm.height()
         pb_txt = "PB: {}".format(self.wpm_pb)
