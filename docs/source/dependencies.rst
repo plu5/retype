@@ -3,7 +3,7 @@ Dependencies
 
 **Required:**
 
-- Python 3.7.4 or higher
+- Python 3.7 or higher
 - ``PyQt5``
 - ``ebooklib``
 
