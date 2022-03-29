@@ -1,9 +1,5 @@
-from sys import platform
+from setup.config.env import iswindows, islinux
 
-
-iswindows = platform.lower() in ['win32', 'win64']
-ismacos = 'darwin' in platform.lower()
-islinux = not(iswindows or ismacos)
 
 to_exclude = []
 
