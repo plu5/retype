@@ -31,3 +31,8 @@ This list can also be accessed in retype in the :doc:`about-dialog` and by enter
 
 ..
    might want to link to the function being called for reference
+
+Command history
+---------------
+
+Commands entered are preserved in the command history, which can be traversed with the up and down arrow keys.
