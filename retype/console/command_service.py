@@ -123,8 +123,8 @@ class CommandService(object):
                 return
             self.command_history_pos -= 1
         self._console.setText(self.command_history[self.command_history_pos])
-        logger.info("{} {}".format(self.command_history_pos,
-                                   self.command_history))
+        logger.debug("command_history_pos: %s, command_history: %s" %
+                     (self.command_history_pos, self.command_history))
 
     def commandHistoryDown(self):
         if not self.command_history_pos:
@@ -136,8 +136,8 @@ class CommandService(object):
         else:
             self.command_history_pos += 1
         self._console.setText(self.command_history[self.command_history_pos])
-        logger.info("{} {}".format(self.command_history_pos,
-                                   self.command_history))
+        logger.debug("command_history_pos: %s, command_history: %s" %
+                     (self.command_history_pos, self.command_history))
 
     def onBookView(self):
         return self.book_view.isVisible()
