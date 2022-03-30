@@ -406,7 +406,6 @@ class BookView(QWidget):
             self._library.save(self.book, key, data)
 
     def switchToShelves(self):
-        self.maybeSave()
         self._controller.console.command_service.switch('shelves')
 
     def gotoCursorPosition(self, move=False):

@@ -49,6 +49,8 @@ class LibraryController(object):
             self.books[idn] = book
 
     def setBook(self, book_id, book_view, switchView):
+        book_view.maybeSave()
+
         if book_id in self.books:
             book = self.books[book_id]
             logger.info("Loading book {}: {}".format(book_id, book.title))
