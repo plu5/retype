@@ -85,14 +85,14 @@ class MainController(QObject):
         self._window.stacker.setCurrentWidget(view)
 
     def setView(self, view):
+        # Clear console before view change
+        self.console.clear()
+
         if view is self._view:
             return
         self._prev_view = self._view
         self._setView(view)
         self._view = view
-
-        # Clear console after view change
-        self.console.clear()
 
     def setViewByEnum(self, view_e=View.shelf_view):
         self.setView(self._viewFromEnumOrInt(view_e))
