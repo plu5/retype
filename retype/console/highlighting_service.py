@@ -74,6 +74,7 @@ class HighlightingService(object):
             return
 
         self.wrong = True
+        v.mistake_cursor.setPosition(self.wrong_start)
         self._insertWrongText(v, v.mistake_cursor.position(), self.wrong_text)
         self.wrong_end = self.wrong_start + len(self.wrong_text)
 

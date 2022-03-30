@@ -228,3 +228,18 @@ class TestHighlightingService:
         assert service.wrong_text == ""
         assert service.wrong_start is None
         assert cursor.position() == 9
+
+    def test_handleMistakes_deleting_from_front(self):
+        (console, v, service, cursor) = setup(SAMPLE_CONTENT)
+
+        def getFirstLine():
+            text = v.display.document().toPlainText()
+            return text.split('\n')[0]
+
+        console.setText("some test")
+        console.setText("ome test")
+        assert service.wrong is True
+        assert service.wrong_text == "ome test"
+        assert service.wrong_start == 0
+        assert cursor.position() == 0
+        assert getFirstLine() == "ome testsome test text"
