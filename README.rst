@@ -9,7 +9,7 @@ retype
 
 |
 :Source code:   https://github.com/plu5/retype
-:Issue tracker: https://github.com/plu5/issues
+:Issue tracker: https://github.com/plu5/retype/issues
 :Documentation: https://retype.readthedocs.io/
 
 .. _documentation: https://retype.readthedocs.io/
