@@ -1,6 +1,9 @@
-======
-retype
-======
+.. raw:: html
+
+  <h1>
+  <img src="https://raw.githubusercontent.com/plu5/retype/main/docs/_static/img/retype.ico" width="32"/>
+  retype
+  </h1>
 
 *retype* is a free and open-source typing practice application that allows you to type along to epub books. It saves your progress so you can come back where you left off.
 
