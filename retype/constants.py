@@ -9,6 +9,7 @@ from retype.resource_handler import root_path, getLibraryPath, getIncludePath
 
 
 iswindows = platform.lower() in ['win32', 'win64']
+ismacos = 'darwin' in platform.lower()
 
 default_config = {
     "user_dir": root_path,
