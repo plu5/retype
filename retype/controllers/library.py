@@ -83,13 +83,22 @@ class LibraryController(object):
             logger.info(f'Read save: {self.save_abs_path}')
             with open(self.save_abs_path, 'r') as f:
                 save = json.load(f)
-                self.save_file_contents = save
-                return save
+        else:
+            save = {}
+
+        self.save_file_contents = save
+        return save
 
     def load(self, key):
-        save = self.save_file_contents or self.loadSaveFile()
+        save = None
+        if self.save_file_contents is not None:
+            save = self.save_file_contents
+        else:
+            save = self.loadSaveFile()
+
         if save and key in save:
             return save[key]
+
         return None
 
 
