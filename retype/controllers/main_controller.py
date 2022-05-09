@@ -32,7 +32,10 @@ class MainController(QObject):
         super().__init__()
 
         self.config_rel_path = 'config.json'
-        self.config = self.loadConfig(self.config_rel_path)
+        self.default_user_dir = default_config['user_dir']
+        self.base_config_abs_path = os.path.join(
+            self.default_user_dir, self.config_rel_path)
+        self.config = self.loadConfig(self.base_config_abs_path)
 
         self.console = Console(self.config['prompt'])
         self._window = MainWin(self.console, self.getGeometry(self.config))
@@ -157,7 +160,7 @@ class MainController(QObject):
 
     def isPathDefaultUserDir(self, path):
         return os.path.abspath(path) == \
-            os.path.abspath(default_config['user_dir'])
+            os.path.abspath(self.default_user_dir)
 
     def loadConfig(self, path):
         config = self._loadConfig(path)
