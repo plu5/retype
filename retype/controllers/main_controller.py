@@ -182,6 +182,10 @@ Attempting to load config from: {}".format(user_dir, custom_path))
             with open(path, 'r') as f:
                 config = json.load(f)
                 return config
+        else:
+            logger.debug(
+                f'Config path {path} not found.\n'
+                'This is normal if the config file has not been created yet.')
 
     def saveConfig(self, config):
         user_dir = config['user_dir']

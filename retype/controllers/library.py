@@ -84,6 +84,9 @@ class LibraryController(object):
             with open(self.save_abs_path, 'r') as f:
                 save = json.load(f)
         else:
+            logger.debug(
+                f'Save path {self.save_abs_path} not found.\n'
+                'This is normal if the save file has not been created yet.')
             save = {}
 
         self.save_file_contents = save
