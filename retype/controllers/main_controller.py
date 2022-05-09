@@ -125,7 +125,7 @@ class MainController(QObject):
         self._menu_controller = MenuController(self, menu)
 
     def quit(self):
-        QApplication().quit()
+        self._window.close()
 
     def _initLibrary(self):
         self.library = LibraryController(self.config['user_dir'],
