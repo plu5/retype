@@ -1,4 +1,4 @@
-from setup.config.env import iswindows, islinux
+from setup.config.env import iswindows, islinux, ismacos
 
 
 to_exclude = []
@@ -33,6 +33,15 @@ elif islinux:
         'libXdmcp', 'libuuid', 'libgmodule', 'libkeyutils', 'libcom',
         'libxshmfence', 'libgthread', 'clean', 'diff', 'libXau', 'libXdamage',
         'libXcomposite',
+    }
+elif ismacos:
+    to_exclude = {
+        'libcrypto', 'libncursesw', 'libssl', 'QtNetwork', 'QtQml', 'QtQuick',
+        'QtSvg', 'QtWebSockets', 'objectify', 'sax', '_bisect', '_blake2',
+        '_bz2', '_codecs', '_ctypes', '_datetime', '_hashlib', '_heapq',
+        '_json', '_lzma', '_md5', '_multibyte', '_opcode', '_pickle',
+        '_random', '_scproxy', '_sha', '_socket', '_ssl', '_uuid', 'grp',
+        'pyexpat', 'readline', 'resource', 'termios', 'unicodedata',
     }
 
 
