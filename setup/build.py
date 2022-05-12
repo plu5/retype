@@ -50,9 +50,9 @@ def build(kind):
         sub_dir = source_dir + '/include'
         qtlib_dir = sub_dir + '/PyQt5/Qt5/lib'
         file_names = os.listdir(source_dir)
-        exclude = {'base_library.zip', 'python3',
+        exclude = {'base_library.zip', 'python3', 'Python',
                    'icons', 'library', 'style', 'retype', 'include',
-                   '_struct', 'zlib'}
+                   '_struct', 'zlib', 'lib-dynload'}
         os.makedirs(sub_dir, exist_ok=True)
         for f in file_names:
             matches = [x for x in exclude if x in f]
