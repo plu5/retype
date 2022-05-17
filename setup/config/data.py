@@ -4,4 +4,4 @@ for f in folder_names:
     datas_tuples.append(('../' + f, f))
 
 name = 'retype'
-icon = ['../style/icons/retype.ico']
+icon = '../style/icons/retype.ico'
