@@ -36,5 +36,12 @@ jobs:
       - name: Run setup script
         run: venv/bin/python3 setup.py b -k onedir
 
-      - name: ls
-        run: ls
+      - run: ls
+
+      - name: Upload the build artifacts
+        uses: actions/upload-artifact@v3.0.0
+        with:
+          name: retype-1.0.0-linux
+          path: ./dist/retype
+          if-no-files-found: error
+          retention-days: 1
