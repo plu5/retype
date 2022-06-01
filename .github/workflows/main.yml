@@ -11,10 +11,11 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       
+      - name: get python?
+        run: apt-get install -y python3 python3-pip
+      
       - name: check python version
-        run: |
-          python --version
-          python3 --version
+        run: python3 --version
 
 #       # from rashidnhm’s snippet @ https://github.com/actions/setup-python/issues/330
 #       - id: setup_python
