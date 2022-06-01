@@ -1,3 +1,5 @@
+#!/bin/bash -e
+
 VERSION="3.7.4"
 
 apt update && apt upgrade -y && apt clean && apt update
