@@ -7,7 +7,9 @@ jobs:
   linux-build:
     name: 'Linux'
     runs-on: 'ubuntu-latest'
-    container: 'ubuntu:16.04'
+    container: 
+      image: 'ubuntu:16.04'
+      options: --user 0
     steps:
       - uses: actions/checkout@v3
       
@@ -19,15 +21,15 @@ jobs:
       
       - run: cd /usr/src
       
-      - run: sudo wget https://www.python.org/ftp/python/3.8.10/Python-3.8.10.tgz
+      - run: wget https://www.python.org/ftp/python/3.8.10/Python-3.8.10.tgz
       
-      - run: sudo tar xzf Python-3.8.10.tgz
+      - run: tar xzf Python-3.8.10.tgz
         
       - run: cd Python-3.8.10
       
-      - run: sudo ./configure --enable-optimizations
+      - run: ./configure --enable-optimizations
       
-      - run: sudo make altinstall
+      - run: make altinstall
       
       - name: check python version
         run: |
