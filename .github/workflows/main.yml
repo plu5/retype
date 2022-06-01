@@ -30,11 +30,22 @@ jobs:
           ls
           ./configure --enable-optimizations --enable-shared
           make altinstall
+          ls
       
-      - name: check python version
-        run: |
+      - run: |
+          export LD_LIBRARY_PATH=/lib:/usr/lib:/usr/local/lib
           python3.7 --version
-          python3 --version
+          
+      - if: success() || failure()
+        run: python3.7 --version
+        
+      - if: success() || failure()
+        run: |
+          ldconfig /usr/local/lib
+          python3.7 --version
+
+      - if: success() || failure()
+        run: python3 --version
 
 #       # from rashidnhm’s snippet @ https://github.com/actions/setup-python/issues/330
 #       - id: setup_python
