@@ -21,19 +21,27 @@ jobs:
       
       - run: cd /usr/src
       
-      - run: wget https://www.python.org/ftp/python/3.8.10/Python-3.8.10.tgz
+      - run: ls
       
-      - run: tar xzf Python-3.8.10.tgz
+      - run: wget https://www.python.org/ftp/python/3.7.4/Python-3.7.4.tgz
+      
+      - run: ls
+      
+      - run: tar xzf Python-3.7.4.tgz
+      
+      - run: ls
         
-      - run: cd Python-3.8.10
+      - run: cd Python-3.7.4
       
-      - run: ./configure --enable-optimizations
+      - run: ls
+      
+      - run: ./configure --enable-optimizations --enable-shared
       
       - run: make altinstall
       
       - name: check python version
         run: |
-          python3.8 --version
+          python3.7 --version
           python3 --version
 
 #       # from rashidnhm’s snippet @ https://github.com/actions/setup-python/issues/330
