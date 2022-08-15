@@ -13,21 +13,8 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       
-      - name: Generate cache
-        id: cache-id
-        uses: actions/cache@v2
-        with:
-          path: ${{ runner.temp }}/cache-directory
-          key: python-3.7.4-cache-key
-
-      - name: Build/cache Python
-        uses: airvzxf/cache-anything-new-action@main
-        with:
-          script: 'ubuntu-setup-python.sh'
-          is_cached: ${{ steps.cache-id.outputs.cache-hit }}
-          cache: ${{ runner.temp }}/cache-directory
-          snapshot: '/'
-          exclude: '/boot /data /dev /mnt /proc /run /sys'
+      - name: Build Python
+        run: 'ubuntu-setup-python.sh'
       
       - run: |
           export LD_LIBRARY_PATH=/lib:/usr/lib:/usr/local/lib
