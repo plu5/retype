@@ -15,7 +15,7 @@ jobs:
       
       - run: pwd
       
-      - run: ls
+      - run: ls -A
       
       - name: Build Python
         run: 'ubuntu-setup-python.sh'
