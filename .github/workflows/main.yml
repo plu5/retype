@@ -13,6 +13,10 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       
+      - run: cwd
+      
+      - run: ls
+      
       - name: Build Python
         run: 'ubuntu-setup-python.sh'
       
