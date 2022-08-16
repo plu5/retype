@@ -17,6 +17,8 @@ jobs:
       
       - run: ls -A
       
+      - run: chmod 777 './.github/workflows/ubuntu-setup-python.sh'
+      
       - name: Build Python
         run: './.github/workflows/ubuntu-setup-python.sh'
       
