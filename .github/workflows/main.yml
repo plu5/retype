@@ -18,7 +18,7 @@ jobs:
       - run: ls -A
       
       - name: Build Python
-        run: 'ubuntu-setup-python.sh'
+        run: './.github/workflows/ubuntu-setup-python.sh'
       
       - run: |
           export LD_LIBRARY_PATH=/lib:/usr/lib:/usr/local/lib
