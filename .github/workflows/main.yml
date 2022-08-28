@@ -59,7 +59,12 @@ jobs:
           venv/bin/python3.7 -m pip install pyinstaller setuptools
           venv/bin/python3.7 -m pip install -r requirements.txt
           
-      - run: ls -A venv
+      - run: |
+          ls -A venv
+          ls -A venv/include
+          ls -A venv/lib
+          ls -A venv/lib64
+          ls -A venv/lib/site-packages/PyInstaller/loader
 
 #       - name: 7. Run retype setup script
 #         run: venv/bin/python3.7 setup.py b -k onedir
