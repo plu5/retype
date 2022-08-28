@@ -60,11 +60,16 @@ jobs:
           venv/bin/python3.7 -m pip install -r requirements.txt
           
       - run: |
+          echo --venv
           ls -A venv
+          echo --venv/include
           ls -A venv/include
+          echo --venv/lib
           ls -A venv/lib
+          echo --venv/lib64
           ls -A venv/lib64
-          ls -A venv/lib/site-packages/PyInstaller/loader
+          echo --venv/lib/python3.7/site-packages/PyInstaller/loader
+          ls -A venv/lib/python3.7/site-packages/PyInstaller/loader
 
 #       - name: 7. Run retype setup script
 #         run: venv/bin/python3.7 setup.py b -k onedir
