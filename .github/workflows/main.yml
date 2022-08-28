@@ -22,7 +22,7 @@ jobs:
         id: cache-id
         with:
           path: ${{ runner.temp }}/cache-directory
-          key: ${{ runner.os }}-cache-key-v1.0
+          key: ${{ runner.os }}-cache-key-v2.0
       
       - uses: plu5/cache-anything-new-in-container-action@main
         with:
