@@ -13,72 +13,59 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       
-      - run: pwd
-      
-      - run: ls -A
-      
-      - name: Generate cache
+      - name: 1. Generate cache
         uses: actions/cache@v2
         id: cache-id
         with:
           path: ${{ runner.temp }}/cache-directory
           key: ${{ runner.os }}-cache-key-v2.0
       
-      - uses: plu5/cache-anything-new-in-container-action@main
+      - name: 2. Install Python or restore it from cache
+        uses: plu5/cache-anything-new-in-container-action@main
         with:
           script: 'ubuntu-setup-python.sh'
           is_cached: ${{ steps.cache-id.outputs.cache-hit }}
           cache: ${{ runner.temp }}/cache-directory
           snapshot: '/'
           exclude: '/boot /data /dev /mnt /proc /run /sys'
-      
-      - run: |
-          export LD_LIBRARY_PATH=/lib:/usr/lib:/usr/local/lib
-          python3.7 --version
-          
-      - if: success() || failure()
-        run: python3.7 --version
-        
-      - if: success() || failure()
+
+      - name: 3. Run ldconfig (Python is unable to find its shared libraries otherwise)
         run: |
           ldconfig /usr/local/lib
           python3.7 --version
 
-      - if: success() || failure()
+      - name: 4. Check if Python is fine
+        if: success() || failure()
         run: python3.7 --version
 
-#       # from rashidnhm’s snippet @ https://github.com/actions/setup-python/issues/330
-#       - id: setup_python
-#         uses: actions/setup-python@v3
-#         with:
-#           python-version: 3.7
+      # from rashidnhm’s snippet @ https://github.com/actions/setup-python/issues/330
+      - name: 5. Generate Python venv cache
+        id: python_cache
+        uses: actions/cache@v3
+        with:
+          path: venv
+          key: pip-${{ steps.setup_python.outputs.python-version }}-${{ hashFiles('requirements.txt') }}
 
-#       - id: python_cache
-#         uses: actions/cache@v3
-#         with:
-#           path: venv
-#           key: pip-${{ steps.setup_python.outputs.python-version }}-${{ hashFiles('requirements.txt') }}
+      - name: 6. Install dependencies unless cached
+        if: steps.python_cache.outputs.cache-hit != 'true'
+        run: |
+          # Check if venv exists (restored from secondary keys if any, and delete)
+          if [ -d "venv" ]; then rm -rf venv; fi
+          # Re-create the venv
+          python3 -m venv venv
+          # Install dependencies
+          venv/bin/python3 -m pip install pyinstaller setuptools
+          venv/bin/python3 -m pip install -r requirements.txt
 
-#       - name: Install dependencies unless cached
-#         if: steps.python_cache.outputs.cache-hit != 'true'
-#         run: |
-#           # Check if venv exists (restored from secondary keys if any, and delete)
-#           if [ -d "venv" ]; then rm -rf venv; fi
-#           # Re-create the venv
-#           python3 -m venv venv
-#           # Install dependencies
-#           venv/bin/python3 -m pip install pyinstaller setuptools
-#           venv/bin/python3 -m pip install -r requirements.txt
+      - name: 7. Run retype setup script
+        run: venv/bin/python3 setup.py b -k onedir
 
-#       - name: Run setup script
-#         run: venv/bin/python3 setup.py b -k onedir
+      - run: ls
 
-#       - run: ls
-
-#       - name: Upload the build artifacts
-#         uses: actions/upload-artifact@v3.0.0
-#         with:
-#           name: retype-1.0.0-linux
-#           path: ./dist/retype
-#           if-no-files-found: error
-#           retention-days: 1
+      - name: 8. Upload the build artifacts
+        uses: actions/upload-artifact@v3.0.0
+        with:
+          name: retype-1.0.0-linux
+          path: ./dist/retype
+          if-no-files-found: error
+          retention-days: 1
