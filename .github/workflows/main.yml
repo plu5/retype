@@ -58,16 +58,16 @@ jobs:
           # Install dependencies
           venv/bin/python3.7 -m pip install pyinstaller setuptools
           venv/bin/python3.7 -m pip install -r requirements.txt
+          
+      - run: ls -A venv
 
-      - name: 7. Run retype setup script
-        run: venv/bin/python3.7 setup.py b -k onedir
+#       - name: 7. Run retype setup script
+#         run: venv/bin/python3.7 setup.py b -k onedir
 
-      - run: ls
-
-      - name: 8. Upload the build artifacts
-        uses: actions/upload-artifact@v3.0.0
-        with:
-          name: retype-1.0.0-linux
-          path: ./dist/retype
-          if-no-files-found: error
-          retention-days: 1
+#       - name: 8. Upload the build artifacts
+#         uses: actions/upload-artifact@v3.0.0
+#         with:
+#           name: retype-1.0.0-linux
+#           path: ./dist/retype
+#           if-no-files-found: error
+#           retention-days: 1
