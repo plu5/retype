@@ -61,10 +61,9 @@ jobs:
           
       - run: |
           cd venv/lib/python3.7/site-packages/PyInstaller/loader
-          ls -A
           LINE_TO_ADD='sys._MEIPASS = pyi_os_path.os_path_join(sys._MEIPASS, "include")'
-          MEIPASS_LINENUM=$(cat pyimod03_importers.py | sed -n '/sys._MEIPASS/{=;q;}')
-          sed -i "${testlinenum}i ${LINE_TO_ADD}" pyimod03_importers.py
+          MEIPASS_LINENUM=$(cat pyimod02_importers.py | sed -n '/sys._MEIPASS/{=;q;}')
+          sed -i "${testlinenum}i ${LINE_TO_ADD}" pyimod02_importers.py
           
       - name: 7. Run retype setup script
         run: venv/bin/python3.7 setup.py b -k hacky
