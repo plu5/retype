@@ -61,10 +61,10 @@ def build(kind):
                    ['libicuuc.so.56', 'libicui18n.so.56', 'libicudata.so.56']:
                     os.makedirs(qtlib_dir, exist_ok=True)
                     shutil.move(os.path.join(source_dir, f),
-                                os.path.join(qtlib_dir, f))
+                                qtlib_dir)
                 else:
                     shutil.move(os.path.join(source_dir, f),
-                                os.path.join(sub_dir, f))
+                                sub_dir)
     else:
         print('Undefined build kind')
 
