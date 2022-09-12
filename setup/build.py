@@ -59,10 +59,12 @@ def build(kind):
             if not matches:
                 if f.startswith('libQt5') or f in \
                    ['libicuuc.so.56', 'libicui18n.so.56', 'libicudata.so.56']:
+                    print('passes, moving', os.path.join(source_dir, f))  # temp
                     os.makedirs(qtlib_dir, exist_ok=True)
                     shutil.move(os.path.join(source_dir, f),
                                 qtlib_dir)
                 else:
+                    print('does not pass, moving', os.path.join(source_dir, f))  # temp
                     shutil.move(os.path.join(source_dir, f),
                                 sub_dir)
     else:
