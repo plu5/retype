@@ -48,25 +48,27 @@ def build(kind):
         PyInstaller.__main__.run(['./setup/retype-target-hacky.spec'])
         source_dir = dist_dir + '/retype-hacky'
         sub_dir = source_dir + '/include'
+
+        os.shutil.move(source_dir + '/PyQt5', sub_dir)
         qtlib_dir = sub_dir + '/PyQt5/Qt5/lib'
+        os.makedirs(qtlib_dir, exist_ok=True)
+
         file_names = os.listdir(source_dir)
         exclude = {'base_library.zip', 'python3', 'Python',
                    'icons', 'library', 'style', 'retype', 'include',
                    '_struct', 'zlib', 'lib-dynload'}
-        os.makedirs(sub_dir, exist_ok=True)
+
         for f in file_names:
+            file_path = os.path.join(source_dir, f)
             matches = [x for x in exclude if x in f]
             if not matches:
                 if f.startswith('libQt5') or f in \
                    ['libicuuc.so.56', 'libicui18n.so.56', 'libicudata.so.56']:
-                    print('passes, moving', os.path.join(source_dir, f))  # temp
-                    os.makedirs(qtlib_dir, exist_ok=True)
-                    shutil.move(os.path.join(source_dir, f),
-                                qtlib_dir)
+                    print('passes, moving', file_path)  # temp
+                    shutil.move(file_path, qtlib_dir)
                 else:
-                    print('does not pass, moving', os.path.join(source_dir, f))  # temp
-                    shutil.move(os.path.join(source_dir, f),
-                                sub_dir)
+                    print('does not pass, moving', file_path)  # temp
+                    shutil.move(file_path, sub_dir)
     else:
         print('Undefined build kind')
 
