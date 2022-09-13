@@ -49,7 +49,7 @@ def build(kind):
         source_dir = dist_dir + '/retype-hacky'
         sub_dir = source_dir + '/include'
 
-        os.shutil.move(source_dir + '/PyQt5', sub_dir)
+        shutil.move(source_dir + '/PyQt5', sub_dir)
         qtlib_dir = sub_dir + '/PyQt5/Qt5/lib'
         os.makedirs(qtlib_dir, exist_ok=True)
 
