@@ -55,13 +55,15 @@ hacky
 
 In this build all of the dependencies are put into a subdirectory, ``include``. It uses a `hook <https://github.com/plu5/retype/blob/main/setup/subdir-hook.py>`_ that adds that directory to sys.path when the program is launched, and a modification of a pyinstaller loader.
 
-For this build to work a modification has to first be made to pyinstaller’s file ``pyimod03_importers.py``. The following line needs to be added after the imports and before ``SYS_PREFIX`` is set:
+For this build to work a modification has to first be made to pyinstaller’s file ``pyimod02_importers.py``. The following line needs to be added after the imports and before ``SYS_PREFIX`` is set:
 
 .. code-block:: python
 
-   sys._MEIPASS = pyi_os_path.os_path_join(sys._MEIPASS, "include")
+   sys._MEIPASS = os.path.join(sys._MEIPASS, "include")
 
 .. warning:: If you afterwards want to build with other options, you have to first comment out or remove this line.
+
+.. note:: If using a version of PyInstaller lower than 5.3, the line should instead be ``sys._MEIPASS = pyi_os_path.os_path_join(sys._MEIPASS, "include")``, and the file to modify is ``pyimod03_importers.py``
 
 The result is somewhere in between onedir_ and onefile_; much cleaner resulting directory structure than onedir provides, without the need to extract files every launch.
 
