@@ -22,9 +22,9 @@ function rem_line()
 cd venv/lib/python3.7/site-packages/PyInstaller/loader
 
 if [[ $ARG == 'apply' ]]; then
-    add_line()
+    add_line
 elif [[ $ARG == 'unapply' ]]; then
-    rem_line()
+    rem_line
 else
     echo "argument error"
 fi
