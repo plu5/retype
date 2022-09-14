@@ -30,15 +30,13 @@ jobs:
           if [ -d "venv" ]; then rm -rf venv; fi
           # Re-create the venv
           python -m venv venv
-          ls venv
-          ls venv/Scripts
           # Install dependencies
           venv/Scripts/python -m pip install pyinstaller setuptools
           venv/Scripts/python -m pip install -r requirements.txt
         shell: bash
           
       - name: 4. Run retype setup script
-        run: venv/bin/python3 setup.py b -k onedir
+        run: venv/Scripts/python setup.py b -k onedir
 
       - name: 5. Upload the build artifacts
         uses: actions/upload-artifact@v3.0.0
