@@ -59,21 +59,28 @@ jobs:
           venv/bin/python3.7 -m pip install pyinstaller setuptools
           venv/bin/python3.7 -m pip install -r requirements.txt
           
-      - run: |
-          chmod 777 './.github/workflows/pyinstaller-hack.sh'
-          './.github/workflows/pyinstaller-hack.sh' unapply
-          cat venv/lib/python3.7/site-packages/PyInstaller/loader/pyimod02_importers.py
-          
-      - name: 7. Run retype setup script
-        run: venv/bin/python3.7 setup.py b -k onefile
-        
-      - name: 8. Upload the build artifacts
-        uses: actions/upload-artifact@v3.0.0
+#       - run: |
+#           chmod 777 './.github/workflows/pyinstaller-hack.sh'
+#           './.github/workflows/pyinstaller-hack.sh' unapply
+#           cat venv/lib/python3.7/site-packages/PyInstaller/loader/pyimod02_importers.py
+
+      - uses: plu5/run-script-in-workflows-dir-action@main
         with:
-          name: retype-1.0.0-linux
-          path: ./dist/retype-onefile
-          if-no-files-found: error
-          retention-days: 1
+          script: 'pyinstaller-hack.sh'
+          args: 'unapply'
+      
+      - run: cat venv/lib/python3.7/site-packages/PyInstaller/loader/pyimod02_importers.py
+          
+#       - name: 7. Run retype setup script
+#         run: venv/bin/python3.7 setup.py b -k onefile
+        
+#       - name: 8. Upload the build artifacts
+#         uses: actions/upload-artifact@v3.0.0
+#         with:
+#           name: retype-1.0.0-linux
+#           path: ./dist/retype-onefile
+#           if-no-files-found: error
+#           retention-days: 1
           
 
 #       - name: 7. Run retype setup script
