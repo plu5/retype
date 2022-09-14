@@ -31,7 +31,7 @@ jobs:
           ls
           echo '@@ 2'
           # Re-create the venv
-          python3 -m venv venv --user
+          python -m venv venv
           ls
           echo '@@ 3'
           # Install dependencies
