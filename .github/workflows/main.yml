@@ -60,7 +60,8 @@ jobs:
           venv/bin/python3.7 -m pip install -r requirements.txt
           
       - run: |
-          pyinstaller-hack.sh unapply
+          chmod 777 './.github/workflows/pyinstaller-hack.sh'
+          './.github/workflows/pyinstaller-hack.sh' unapply
           cat venv/lib/python3.7/site-packages/PyInstaller/loader/pyimod02_importers.py
           
       - name: 7. Run retype setup script
