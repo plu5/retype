@@ -59,18 +59,9 @@ jobs:
           venv/bin/python3.7 -m pip install pyinstaller setuptools
           venv/bin/python3.7 -m pip install -r requirements.txt
           
-#       - run: |
-#           cd venv/lib/python3.7/site-packages/PyInstaller/loader
-#           LINE_TO_ADD='sys._MEIPASS = os.path.join(sys._MEIPASS, "include")'
-#           MEIPASS_LINENUM=$(cat pyimod02_importers.py | sed -n '/sys._MEIPASS/{=;q;}')
-#           sed -i "${MEIPASS_LINENUM}i ${LINE_TO_ADD}" pyimod02_importers.py
-#           cat pyimod02_importers.py
-
       - run: |
-          cd venv/lib/python3.7/site-packages/PyInstaller/loader
-          LINE_TO_REM='sys._MEIPASS = os.path.join(sys._MEIPASS, "include")'
-          sed -i "/${LINE_TO_REM}/d" pyimod02_importers.py
-          cat pyimod02_importers.py
+          pyinstaller-hack.sh unapply
+          cat venv/lib/python3.7/site-packages/PyInstaller/loader/pyimod02_importers.py
           
       - name: 7. Run retype setup script
         run: venv/bin/python3.7 setup.py b -k onefile
