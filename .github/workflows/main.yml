@@ -34,15 +34,20 @@ jobs:
           venv/Scripts/python -m pip install pyinstaller setuptools
           venv/Scripts/python -m pip install -r requirements.txt
         shell: bash
+        
+      - uses: plu5/run-script-in-workflows-dir-action@main
+        with:
+          script: 'pyinstaller-hack.sh'
+          args: 'apply venv/lib/site-packages'
           
       - name: 4. Run retype setup script
-        run: venv/Scripts/python setup.py b -k onedir
+        run: venv/Scripts/python setup.py b -k hacky
 
       - name: 5. Upload the build artifacts
         uses: actions/upload-artifact@v3.0.0
         with:
           name: retype-1.0.0-win
-          path: ./dist/retype
+          path: ./dist/retype-hacky
           if-no-files-found: error
           retention-days: 1
 #   linux-build:
@@ -103,7 +108,7 @@ jobs:
 #       - uses: plu5/run-script-in-workflows-dir-action@main
 #         with:
 #           script: 'pyinstaller-hack.sh'
-#           args: 'apply'
+#           args: 'apply venv/lib/python3.7/site-packages'
       
 #       - run: cat venv/lib/python3.7/site-packages/PyInstaller/loader/pyimod02_importers.py
           
