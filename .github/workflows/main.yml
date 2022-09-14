@@ -30,9 +30,11 @@ jobs:
           if [ -d "venv" ]; then rm -rf venv; fi
           # Re-create the venv
           python -m venv venv
+          ls venv
+          ls venv/bin
           # Install dependencies
-          ./venv/bin/python3 -m pip install pyinstaller setuptools
-          ./venv/bin/python3 -m pip install -r requirements.txt
+          venv/bin/python -m pip install pyinstaller setuptools
+          venv/bin/python -m pip install -r requirements.txt
         shell: bash
           
       - name: 4. Run retype setup script
