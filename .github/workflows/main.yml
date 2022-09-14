@@ -22,10 +22,24 @@ jobs:
         with:
           path: venv
           key: pip-${{ steps.setup_python.outputs.python-version }}-${{ hashFiles('requirements.txt') }}
+          
+      - run: python3.7 --version
+        if: success() || failure()
+        shell: bash
+        
+      - run: python3 --version
+        if: success() || failure()
+        shell: bash
+        
+      - run: python --version
+        if: success() || failure()
+        shell: bash
 
       - name: 3. Install dependencies unless cached
         if: steps.python_cache.outputs.cache-hit != 'true'
         run: |
+          python3 --version
+          python --version
           ls
           echo '@@ 1'
           # Check if venv exists (restored from secondary keys if any, and delete)
