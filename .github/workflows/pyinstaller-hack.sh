@@ -2,10 +2,13 @@
 # pyinstaller-hack.sh: apply or unapply sys._MEIPASS hack to PyInstaller
 # When applied, the built executable will search for supporting files in
 #  ./include instead of .
-# Takes argument 'apply' or 'unapply'.
+# POSITIONAL ARGUMENTS:
+# 1: 'apply' or 'unapply'
+# 2: Path to site-packages
 
 THE_LINE='sys._MEIPASS = os.path.join(sys._MEIPASS, "include")'
 ARG=$1  # should be 'apply' or 'unapply'
+SITE_PACKAGES=$2
 
 function add_line()
 {
@@ -19,7 +22,7 @@ function rem_line()
   sed -i "/${LINE_TO_REM}/d" pyimod02_importers.py
 }
 
-cd venv/lib/python3.7/site-packages/PyInstaller/loader
+cd ${SITE_PACKAGES}/PyInstaller/loader
 
 if [[ $ARG == 'apply' ]]; then
     add_line
