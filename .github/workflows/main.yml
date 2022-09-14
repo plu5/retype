@@ -15,8 +15,8 @@ jobs:
           image: ubuntu:16.04
           options: -v ${{ github.workspace }}:/var/www
           run: |
-            pwd
             cd /var/www
+            chmod 777 .github/workflows/ubuntu-setup-python.sh
             .github/workflows/ubuntu-setup-python.sh
             ldconfig /usr/local/lib
             python3.7 --version
