@@ -20,9 +20,9 @@ jobs:
       - uses: addnab/docker-run-action@v3
         with:
           image: test-image:latest
-          options: -v ${{ github.workspace }}:/var/www
+          options: -v ${{ github.workspace }}:/usr/src/retype
           run: |
-            cd /var/www
+            cd /usr/src/retype
             ls
             venv/bin/python3.7 setup.py b -k onedir
 
