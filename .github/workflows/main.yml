@@ -10,32 +10,25 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       
-      - uses: satackey/action-docker-layer-caching@v0.0.11
-        continue-on-error: true
-      
+      - uses: docker/build-push-action@v2
+        with:
+          tags: test-image:latest
+          push: false
+
       - uses: addnab/docker-run-action@v3
         with:
-          image: ubuntu:16.04
+          image: test-image:latest
           options: -v ${{ github.workspace }}:/var/www
           run: |
             cd /var/www
-            chmod 777 .github/workflows/ubuntu-setup-python.sh
-            .github/workflows/ubuntu-setup-python.sh
-            ldconfig /usr/local/lib
-            python3.7 --version
-            python3.7 -m venv venv
-            venv/bin/python3.7 -m pip install --upgrade pip
-            venv/bin/python3.7 -m pip install pyinstaller setuptools
-            venv/bin/python3.7 -m pip install -r requirements.txt
-            chmod 777 .github/workflows/pyinstaller-hack.sh
-            .github/workflows/pyinstaller-hack.sh apply venv/lib/python3.7/site-packages
-            venv/bin/python3.7 setup.py b -k hacky
+            ls
+            venv/bin/python3.7 setup.py b -k onedir
 
-      - name: 8. Upload the build artifacts
+      - name: Upload the build artifacts
         uses: actions/upload-artifact@v3.0.0
         with:
           name: retype-1.0.0-linux
-          path: ./dist/retype-hacky
+          path: ./dist/retype
           if-no-files-found: error
           retention-days: 1
 
