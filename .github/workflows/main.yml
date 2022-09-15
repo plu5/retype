@@ -15,6 +15,7 @@ jobs:
           tags: test-image:latest
           push: false
           file: .github/workflows/Dockerfile
+          context: .
 
       - uses: addnab/docker-run-action@v3
         with:
