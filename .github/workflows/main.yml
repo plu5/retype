@@ -20,7 +20,7 @@ jobs:
       - uses: addnab/docker-run-action@v3
         with:
           image: test-image:latest
-          options: -v ${{ github.workspace }}:/usr/src/retype
+          options: -v ${{ github.workspace }}/dist:/usr/src/retype/dist
           run: |
             cd /usr/src/retype
             ls
