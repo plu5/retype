@@ -1,6 +1,9 @@
 FROM ubuntu:16.04
 
-RUN ls -A
+WORKDIR /usr/src/retype
+RUN ls -A ; echo "@1"
+COPY . .
+RUN ls -A ; echo "@2"
 
 RUN .github/workflows/ubuntu-setup-python.sh
 RUN ldconfig /usr/local/lib
