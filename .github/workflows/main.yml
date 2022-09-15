@@ -10,6 +10,9 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       
+      - uses: satackey/action-docker-layer-caching@v0.0.11
+        continue-on-error: true
+      
       - uses: addnab/docker-run-action@v3
         with:
           image: ubuntu:16.04
@@ -24,13 +27,15 @@ jobs:
             venv/bin/python3.7 -m pip install --upgrade pip
             venv/bin/python3.7 -m pip install pyinstaller setuptools
             venv/bin/python3.7 -m pip install -r requirements.txt
-            venv/bin/python3.7 setup.py b -k onedir
+            chmod 777 .github/workflows/pyinstaller-hack.sh
+            .github/workflows/pyinstaller-hack.sh apply venv/lib/python3.7/site-packages
+            venv/bin/python3.7 setup.py b -k hacky
 
       - name: 8. Upload the build artifacts
         uses: actions/upload-artifact@v3.0.0
         with:
           name: retype-1.0.0-linux
-          path: ./dist/retype
+          path: ./dist/retype-hacky
           if-no-files-found: error
           retention-days: 1
 
