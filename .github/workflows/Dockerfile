@@ -1,5 +1,7 @@
 FROM ubuntu:16.04
 
+RUN ls -A
+
 RUN .github/workflows/ubuntu-setup-python.sh
 RUN ldconfig /usr/local/lib
 
