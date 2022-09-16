@@ -6,20 +6,21 @@
 # 1: 'apply' or 'unapply'
 # 2: Path to site-packages
 
-THE_LINE='sys._MEIPASS = os.path.join(sys._MEIPASS, "include")'
 ARG=$1  # should be 'apply' or 'unapply'
 SITE_PACKAGES=$2
 
+FILE="pyimod02_importers.py"
+THE_LINE='sys._MEIPASS = os.path.join(sys._MEIPASS, "include")'
+MEIPASS_LINENUM=$(cat pyimod02_importers.py | sed -n '/sys._MEIPASS/{=;q;}')
+
 function add_line()
 {
-  MEIPASS_LINENUM=$(cat pyimod02_importers.py | sed -n '/sys._MEIPASS/{=;q;}')
-  sed -i "${MEIPASS_LINENUM}i ${THE_LINE}" pyimod02_importers.py
+  printf '%s\n' $MEIPASS_LINENUM a "$THE_LINE" . wq | ed $FILE
 }
 
 function rem_line()
 {
-  LINE_TO_REM='sys._MEIPASS = os.path.join(sys._MEIPASS, "include")'
-  sed -i "/${LINE_TO_REM}/d" pyimod02_importers.py
+  printf '%s\n' "g/$THE_LINE/d" . wq | ed $FILE
 }
 
 cd ${SITE_PACKAGES}/PyInstaller/loader
