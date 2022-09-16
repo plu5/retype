@@ -4,39 +4,77 @@ on:
   workflow_dispatch:
 
 jobs:
-  linux-build:
+  macos-build:
     name: 'macOS'
     runs-on: 'macos-latest'
     steps:
       - uses: actions/checkout@v3
       
-      - uses: docker/build-push-action@v2
+      - name: 1. Setup Python
+        id: setup_python
+        uses: actions/setup-python@v3
         with:
-          tags: test-image:latest
-          push: false
-          file: .github/workflows/Dockerfile
-          context: .
-
-      - uses: addnab/docker-run-action@v3
+          python-version: 3.7
+          
+      - name: 2. Generate Python venv cache
+        id: python_cache
+        uses: actions/cache@v3
         with:
-          image: test-image:latest
-          options: -v ${{ github.workspace }}/dist:/usr/src/retype/dist
-          run: |
-            cd /usr/src/retype
-            ls
-            venv/bin/python3.7 setup.py b -k onedir
+          path: venv
+          key: pip-${{ steps.setup_python.outputs.python-version }}-${{ hashFiles('requirements.txt') }}
 
-      - name: Upload the build artifacts
+      - name: 3. Install dependencies unless cached
+        if: steps.python_cache.outputs.cache-hit != 'true'
+        run: |
+          # Check if venv exists (restored from secondary keys if any, and delete)
+          if [ -d "venv" ]; then rm -rf venv; fi
+          # Re-create the venv
+          python -m venv venv
+          # Install dependencies
+          venv/Scripts/python -m pip install pyinstaller setuptools
+          venv/Scripts/python -m pip install -r requirements.txt
+        shell: bash
+          
+      - name: 4. Run retype setup script
+        run: venv/Scripts/python setup.py b -k onedir
+
+      - name: 5. Upload the build artifacts
         uses: actions/upload-artifact@v3.0.0
         with:
-          name: retype-1.0.0-macos
+          name: retype-1.0.0-win
           path: ./dist/retype
           if-no-files-found: error
           retention-days: 1
 
-#   macos-build:
-#     name: 'macOS'
-#     runs-on: ''
+#   linux-build:
+#     name: 'Linux'
+#     runs-on: 'linux-latest'
+#     steps:
+#       - uses: actions/checkout@v3
+      
+#       - uses: docker/build-push-action@v2
+#         with:
+#           tags: test-image:latest
+#           push: false
+#           file: .github/workflows/Dockerfile
+#           context: .
+
+#       - uses: addnab/docker-run-action@v3
+#         with:
+#           image: test-image:latest
+#           options: -v ${{ github.workspace }}/dist:/usr/src/retype/dist
+#           run: |
+#             cd /usr/src/retype
+#             ls
+#             venv/bin/python3.7 setup.py b -k onedir
+
+#       - name: Upload the build artifacts
+#         uses: actions/upload-artifact@v3.0.0
+#         with:
+#           name: retype-1.0.0-linux
+#           path: ./dist/retype
+#           if-no-files-found: error
+#           retention-days: 1
 
 #   windows-build:
 #     name: 'Windows'
