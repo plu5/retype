@@ -14,7 +14,8 @@ THE_LINE='sys._MEIPASS = os.path.join(sys._MEIPASS, "include")'
 
 function add_line()
 {
-  MEIPASS_LINENUM=$(cat pyimod02_importers.py | sed -n '/sys._MEIPASS/{=;q;}')
+  MEIPASS_LINENUM=$(cat $FILE | sed -n '/sys._MEIPASS/{=;q;}')
+  MEIPASS_LINENUM=$((MEIPASS_LINENUM + 1))
   printf '%s\n' $MEIPASS_LINENUM a "$THE_LINE" . wq | ed $FILE
 }
 
