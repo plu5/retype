@@ -11,10 +11,10 @@ SITE_PACKAGES=$2
 
 FILE="pyimod02_importers.py"
 THE_LINE='sys._MEIPASS = os.path.join(sys._MEIPASS, "include")'
-MEIPASS_LINENUM=$(cat pyimod02_importers.py | sed -n '/sys._MEIPASS/{=;q;}')
 
 function add_line()
 {
+  MEIPASS_LINENUM=$(cat pyimod02_importers.py | sed -n '/sys._MEIPASS/{=;q;}')
   printf '%s\n' $MEIPASS_LINENUM a "$THE_LINE" . wq | ed $FILE
 }
 
