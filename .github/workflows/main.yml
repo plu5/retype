@@ -40,7 +40,7 @@ jobs:
           args: 'apply venv/lib/python3.7/site-packages'
           
       - run: |
-          cd venv/lib/python3.7/site-packages
+          cd venv/lib/python3.7/site-packages/PyInstaller/loader
           cat pyimod02_importers.py
           
 #       - name: 4. Run retype setup script
