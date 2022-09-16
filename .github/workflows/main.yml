@@ -16,35 +16,37 @@ jobs:
         with:
           python-version: 3.7
           
-      - name: 2. Generate Python venv cache
-        id: python_cache
-        uses: actions/cache@v3
-        with:
-          path: venv
-          key: pip-${{ steps.setup_python.outputs.python-version }}-${{ hashFiles('requirements.txt') }}
-
-      - name: 3. Install dependencies unless cached
-        if: steps.python_cache.outputs.cache-hit != 'true'
-        run: |
-          # Check if venv exists (restored from secondary keys if any, and delete)
-          if [ -d "venv" ]; then rm -rf venv; fi
-          # Re-create the venv
-          python -m venv venv
-          # Install dependencies
-          venv/bin/python -m pip install pyinstaller setuptools
-          venv/bin/python -m pip install -r requirements.txt
-        shell: bash
+      - run: python --version
           
-      - name: 4. Run retype setup script
-        run: venv/bin/python setup.py b -k onedir
+#       - name: 2. Generate Python venv cache
+#         id: python_cache
+#         uses: actions/cache@v3
+#         with:
+#           path: venv
+#           key: pip-${{ steps.setup_python.outputs.python-version }}-${{ hashFiles('requirements.txt') }}
 
-      - name: 5. Upload the build artifacts
-        uses: actions/upload-artifact@v3.0.0
-        with:
-          name: retype-1.0.0-win
-          path: ./dist/retype
-          if-no-files-found: error
-          retention-days: 1
+#       - name: 3. Install dependencies unless cached
+#         if: steps.python_cache.outputs.cache-hit != 'true'
+#         run: |
+#           # Check if venv exists (restored from secondary keys if any, and delete)
+#           if [ -d "venv" ]; then rm -rf venv; fi
+#           # Re-create the venv
+#           python -m venv venv
+#           # Install dependencies
+#           venv/bin/python -m pip install pyinstaller setuptools
+#           venv/bin/python -m pip install -r requirements.txt
+#         shell: bash
+          
+#       - name: 4. Run retype setup script
+#         run: venv/bin/python setup.py b -k onedir
+
+#       - name: 5. Upload the build artifacts
+#         uses: actions/upload-artifact@v3.0.0
+#         with:
+#           name: retype-1.0.0-macos
+#           path: ./dist/retype
+#           if-no-files-found: error
+#           retention-days: 1
 
 #   linux-build:
 #     name: 'Linux'
