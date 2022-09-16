@@ -10,10 +10,10 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       
-      - name: 1. Setup Python
-        uses: plu5/run-script-in-workflows-dir-action@main
-        with:
-          script: 'macos-setup-python.sh'
+#       - name: 1. Setup Python
+#         uses: plu5/run-script-in-workflows-dir-action@main
+#         with:
+#           script: 'macos-setup-python.sh'
           
       - name: 2. Generate Python venv cache
         id: python_cache
@@ -39,16 +39,20 @@ jobs:
           script: 'pyinstaller-hack.sh'
           args: 'apply venv/lib/python3.7/site-packages'
           
-      - name: 4. Run retype setup script
-        run: venv/bin/python setup.py b -k hacky
+      - run: |
+          cd venv/lib/python3.7/site-packages
+          cat pyimod02_importers.py
+          
+#       - name: 4. Run retype setup script
+#         run: venv/bin/python setup.py b -k hacky
 
-      - name: 5. Upload the build artifacts
-        uses: actions/upload-artifact@v3.0.0
-        with:
-          name: retype-1.0.0-macos
-          path: ./dist/retype-hacky
-          if-no-files-found: error
-          retention-days: 1
+#       - name: 5. Upload the build artifacts
+#         uses: actions/upload-artifact@v3.0.0
+#         with:
+#           name: retype-1.0.0-macos
+#           path: ./dist/retype-hacky
+#           if-no-files-found: error
+#           retention-days: 1
 
 #   linux-build:
 #     name: 'Linux'
