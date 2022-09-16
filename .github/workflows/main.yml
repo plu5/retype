@@ -15,7 +15,9 @@ jobs:
           wget https://www.python.org/ftp/python/3.7.4/python-3.7.4-macosx10.9.pkg -P /tmp/
           sudo installer -pkg /tmp/python-3.7.4-macosx10.9.pkg -target /Applications
           
-      - run: python --version
+      - run: python3 --version
+      
+      - run: python3.7 --version
           
 #       - name: 2. Generate Python venv cache
 #         id: python_cache
