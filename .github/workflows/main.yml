@@ -10,19 +10,28 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       
-      - name: 1. Setup Python
-        run: |
-          wget https://www.python.org/ftp/python/3.7.4/python-3.7.4-macosx10.9.pkg -P /tmp/
-          sudo installer -pkg /tmp/python-3.7.4-macosx10.9.pkg -target /Applications
+      - name: 1. Generate cache
+        uses: actions/cache@v2
+        id: cache-id
+        with:
+          path: ${{ runner.temp }}/cache-directory
+          key: ${{ runner.os }}-cache-key
+      
+      - name: 2. Install Python or restore it from cache
+        uses: plu5/cache-anything-new-in-container-action@main
+        with:
+          script: 'macos-setup-python.sh'
+          is_cached: ${{ steps.cache-id.outputs.cache-hit }}
+          cache: ${{ runner.temp }}/cache-directory
           
-      - name: 2. Generate Python venv cache
+      - name: 3. Generate Python venv cache
         id: python_cache
         uses: actions/cache@v3
         with:
           path: venv
           key: pip-3-${{ hashFiles('requirements.txt') }}
 
-      - name: 3. Install dependencies unless cached
+      - name: 4. Install dependencies unless cached
         if: steps.python_cache.outputs.cache-hit != 'true'
         run: |
           # Check if venv exists (restored from secondary keys if any, and delete)
@@ -33,10 +42,10 @@ jobs:
           venv/bin/python3 -m pip install pyinstaller setuptools PyQt5==5.13.0 lxml==4.6.3
           venv/bin/python3 -m pip install -r requirements.txt
           
-      - name: 4. Run retype setup script
+      - name: 5. Run retype setup script
         run: venv/bin/python setup.py b -k onedir
 
-      - name: 5. Upload the build artifacts
+      - name: 6. Upload the build artifacts
         uses: actions/upload-artifact@v3.0.0
         with:
           name: retype-1.0.0-macos
