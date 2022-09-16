@@ -32,7 +32,7 @@ jobs:
           # Install dependencies
           venv/bin/python3 -m pip install pyinstaller setuptools
           venv/bin/python3 -m pip install -r requirements.txt
-          venv/bin/python3 -m pip uninstall PyQt5
+          venv/bin/python3 -m pip uninstall -y PyQt5
           venv/bin/python3 -m pip install PyQt5==5.15.0
           
       - name: 4. Run retype setup script
