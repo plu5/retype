@@ -30,7 +30,7 @@ jobs:
           # Re-create the venv
           python3 -m venv venv
           # Install dependencies
-          venv/bin/python3 -m pip install pyinstaller setuptools PyQt5==5.13.0
+          venv/bin/python3 -m pip install pyinstaller setuptools PyQt5==5.13.0 lxml==4.6.3
           venv/bin/python3 -m pip install -r requirements.txt
           
       - name: 4. Run retype setup script
