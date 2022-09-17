@@ -1,6 +1,6 @@
 {
   "title": "retype",
-  "icon": "../style/icons/retype.icns",
+  "icon": "../style/icons/retype-dmg.icns",
   "background": "./appdmg-background.png",
   "contents": [
     { "x": 448, "y": 344, "type": "link", "path": "/Applications" },
