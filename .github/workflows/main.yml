@@ -23,7 +23,7 @@ jobs:
         uses: actions/cache@v3
         with:
           path: venv
-          key: pip-3-${{ hashFiles('requirements.txt') }}
+          key: pip-${{ env.PYTHON_VERSION }}-${{ hashFiles('requirements.txt') }}
 
       - name: 3. Install dependencies unless cached
         if: steps.python_cache.outputs.cache-hit != 'true'
