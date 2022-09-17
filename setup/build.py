@@ -21,7 +21,8 @@ build_kinds = {
     'onefile': 'Build into one executable',
     'hacky': 'Hacky onedir build that moves dependencies to a subfolder.\
  Requires adding to pyinstaller pyimod03_importers.py\
- `sys._MEIPASS = pyi_os_path.os_path_join(sys._MEIPASS, "include")`'
+ `sys._MEIPASS = pyi_os_path.os_path_join(sys._MEIPASS, "include")`',
+    'bundle': 'Build macOS bundle',
 }
 
 
@@ -69,6 +70,8 @@ def build(kind):
                 else:
                     print('does not pass, moving', file_path)  # temp
                     shutil.move(file_path, sub_dir)
+    elif kind == 'bundle':
+        PyInstaller.__main__.run(['./setup/retype-target-bundle.spec'])
     else:
         print('Undefined build kind')
 
