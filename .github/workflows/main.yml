@@ -39,10 +39,10 @@ jobs:
           venv/bin/python3 -m pip install dmgbuild
         
       - name: 4. Run retype setup script
-        run: venv/bin/python setup.py b -k bundle
+        run: venv/bin/python3 setup.py b -k bundle
         
       - name: 5. Make dmg
-        run: dmgbuild "retype" retype.dmg -D icon='style/icons/retype.icns'
+        run: venv/bin/dmgbuild "retype" retype.dmg -D icon='style/icons/retype.icns'
 
       - name: 6. Upload the build artifacts
         uses: actions/upload-artifact@v3.0.0
