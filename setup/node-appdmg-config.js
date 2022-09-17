@@ -1,0 +1,9 @@
+{
+  "title": "retype",
+  "icon": "../style/icons/retype.icns",
+  "background": "./appdmg-background.png",
+  "contents": [
+    { "x": 448, "y": 344, "type": "link", "path": "/Applications" },
+    { "x": 192, "y": 344, "type": "file", "path": "../dist/retype.app" }
+  ]
+}
