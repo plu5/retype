@@ -23,7 +23,7 @@ jobs:
         uses: actions/cache@v3
         with:
           path: venv
-          key: pip-${{ env.PYTHON_VERSION }}-0-${{ hashFiles('requirements.txt') }}
+          key: pip-${{ env.PYTHON_VERSION }}-1-${{ hashFiles('requirements.txt') }}
 
       - name: 3. Install dependencies unless cached
         if: steps.python_cache.outputs.cache-hit != 'true'
@@ -36,15 +36,19 @@ jobs:
           PYINSTALLER_COMPILE_BOOTLOADER=1 venv/bin/python3 -m pip install pyinstaller setuptools
           venv/bin/python3 -m pip install PyQt5==5.13.0 lxml==4.6.3 # Compatible down to macOS 10.9
           venv/bin/python3 -m pip install -r requirements.txt
+          venv/bin/python3 -m pip install dmgbuild
         
       - name: 4. Run retype setup script
         run: venv/bin/python setup.py b -k bundle
+        
+      - name: 5. Make dmg
+        run: dmgbuild "retype" retype.dmg -D icon='retype/style/icons/retype.icns'
 
-      - name: 5. Upload the build artifacts
+      - name: 6. Upload the build artifacts
         uses: actions/upload-artifact@v3.0.0
         with:
           name: retype-1.0.0-macos
-          path: ./dist/retype.app
+          path: ./retype.dmg
           if-no-files-found: error
           retention-days: 1
 
