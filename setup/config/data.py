@@ -5,3 +5,4 @@ for f in folder_names:
 
 name = 'retype'
 icon = '../style/icons/retype.ico'
+icns = '../style/icons/retype.icns'
