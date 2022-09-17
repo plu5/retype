@@ -34,23 +34,14 @@ jobs:
           venv/bin/python3 -m pip install PyQt5==5.13.0 lxml==4.6.3 # Compatible down to macOS 10.9
           venv/bin/python3 -m pip install -r requirements.txt
           
-      - uses: plu5/run-script-in-workflows-dir-action@main
-        with:
-          script: 'pyinstaller-hack.sh'
-          args: 'apply venv/lib/python3.7/site-packages'
-          
-      - run: |
-          cd venv/lib/python3.7/site-packages/PyInstaller/loader
-          cat pyimod02_importers.py
-          
       - name: 4. Run retype setup script
-        run: venv/bin/python setup.py b -k hacky
+        run: venv/bin/python setup.py b -k bundle
 
       - name: 5. Upload the build artifacts
         uses: actions/upload-artifact@v3.0.0
         with:
           name: retype-1.0.0-macos
-          path: ./dist/retype-hacky
+          path: ./dist/retype.app
           if-no-files-found: error
           retention-days: 1
 
