@@ -49,7 +49,7 @@ coll = COLLECT(exe,  # noqa: F821
 
 app = BUNDLE(coll,  # noqa: F821
              name=data.name + '.app',
-             icon=data.icon[0],
+             icon=data.icns,
              bundle_identifier=data.name,
              info_plist={"CFBundleExecutable": "MacOS/retype",
                          # "CFBundleIconFile": "logo.icns",
