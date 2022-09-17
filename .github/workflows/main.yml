@@ -36,13 +36,14 @@ jobs:
           PYINSTALLER_COMPILE_BOOTLOADER=1 venv/bin/python3 -m pip install pyinstaller setuptools
           venv/bin/python3 -m pip install PyQt5==5.13.0 lxml==4.6.3 # Compatible down to macOS 10.9
           venv/bin/python3 -m pip install -r requirements.txt
-          venv/bin/python3 -m pip install dmgbuild
         
       - name: 4. Run retype setup script
         run: venv/bin/python3 setup.py b -k bundle
         
       - name: 5. Make dmg
-        run: venv/bin/dmgbuild "retype" retype.dmg -D app=./dist/retype.app -D icon=./style/icons/retype.icns
+        run: |
+          npm install -g appdmg
+          appdmg setup/appdmg-config.json retype.dmg
 
       - name: 6. Upload the build artifacts
         uses: actions/upload-artifact@v3.0.0
