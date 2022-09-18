@@ -14,14 +14,14 @@ jobs:
         id: setup_python
         uses: actions/setup-python@v3
         with:
-          python-version: 3.7
+          python-version: 3.8
 
       - name: 2. Generate Python venv cache
         id: python_cache
         uses: actions/cache@v3
         with:
           path: venv
-          key: pip-3.7-${{ hashFiles('requirements.txt') }}
+          key: pip-3.8-${{ hashFiles('requirements.txt') }}
 
       - name: 3. Install Python dependencies unless cached
         if: steps.python_cache.outputs.cache-hit != 'true'
@@ -41,7 +41,7 @@ jobs:
         run: venv/bin/python3 setup.py b -k onefile
         
       - name: 5. Run StaticX
-        run: venv/bin/staticx --loglevel DEBUG ./dist/retype-onefile/retype ./dist/retype-onefile/retype
+        run: venv/bin/staticx --loglevel DEBUG ./dist/retype-onefile/retype ./dist/retype-onefile/retype-static
         
       - name: 6. Upload the build artifacts
         uses: actions/upload-artifact@v3.0.0
