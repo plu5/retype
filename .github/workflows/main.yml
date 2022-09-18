@@ -17,7 +17,7 @@ jobs:
           python-version: 3.7
           
       - name: 2. Install StaticX dependencies
-        run: sudo apt-get install -y ldd readelf objcopy patchelf
+        run: sudo apt-get install -y patchelf
 
       - name: 3. Generate Python venv cache
         id: python_cache
