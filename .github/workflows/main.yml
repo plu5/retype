@@ -10,6 +10,21 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       
+      - uses: actions/checkout@v3
+        with: 
+          repository: NixOS/patchelf
+          ref: verneed_fix
+          path: patchelf
+          
+      - run: |
+          cd patchelf
+          ./bootstrap.sh
+          ./configure
+          make
+          make check
+          sudo make install
+          patchelf --version
+      
       - name: 1. Setup Python
         id: setup_python
         uses: actions/setup-python@v3
