@@ -15,18 +15,15 @@ jobs:
         uses: actions/setup-python@v3
         with:
           python-version: 3.7
-          
-      - name: 2. Install StaticX dependencies
-        run: sudo apt-get install -y patchelf
 
-      - name: 3. Generate Python venv cache
+      - name: 2. Generate Python venv cache
         id: python_cache
         uses: actions/cache@v3
         with:
           path: venv
           key: pip-3.7-${{ hashFiles('requirements.txt') }}
 
-      - name: 4. Install Python dependencies unless cached
+      - name: 3. Install Python dependencies unless cached
         if: steps.python_cache.outputs.cache-hit != 'true'
         run: |
           # Check if venv exists (restored from secondary keys if any, and delete)
@@ -40,13 +37,13 @@ jobs:
           venv/bin/python3 -m pip install -r requirements.txt
           venv/bin/python3 -m pip install staticx
           
-      - name: 7. Run retype setup script
+      - name: 4. Run retype setup script
         run: venv/bin/python3 setup.py b -k onedir
         
-      - name: 8. Run StaticX
+      - name: 5. Run StaticX
         run: venv/bin/staticx ./dist/retype/retype ./dist/retype-staticx
         
-      - name: 9. Upload the build artifacts
+      - name: 6. Upload the build artifacts
         uses: actions/upload-artifact@v3.0.0
         with:
           name: retype-1.0.0-linux
