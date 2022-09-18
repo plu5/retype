@@ -4,54 +4,104 @@ on:
   workflow_dispatch:
 
 jobs:
-  macos-build:
-    name: 'macOS'
-    runs-on: 'macos-latest'
-    env:
-      PYTHON_VERSION: "3.7.4"
-      MACOSX_DEPLOYMENT_TARGET: "10.9"
+  linux-build:
+    name: 'Linux'
+    runs-on: 'ubuntu-latest'
     steps:
       - uses: actions/checkout@v3
       
       - name: 1. Setup Python
-        uses: plu5/macos-setup-python-action@main
+        id: setup_python
+        uses: actions/setup-python@v3
         with:
-          version: ${{ env.PYTHON_VERSION }}
+          python-version: 3.7
           
-      - name: 2. Generate Python venv cache
+      - name: 2. Install StaticX dependencies
+        run: apt-get install -y ldd readelf objcopy patchelf
+
+      - name: 3. Generate Python venv cache
         id: python_cache
         uses: actions/cache@v3
         with:
           path: venv
-          key: pip-${{ env.PYTHON_VERSION }}-1-${{ hashFiles('requirements.txt') }}
+          key: pip-3.7-${{ hashFiles('requirements.txt') }}
 
-      - name: 3. Install dependencies unless cached
+      - name: 4. Install Python dependencies unless cached
         if: steps.python_cache.outputs.cache-hit != 'true'
         run: |
           # Check if venv exists (restored from secondary keys if any, and delete)
           if [ -d "venv" ]; then rm -rf venv; fi
           # Re-create the venv
           python3 -m venv venv
+          # Upgrade pip
+          venv/bin/python3 -m pip install --upgrade pip
           # Install dependencies
-          PYINSTALLER_COMPILE_BOOTLOADER=1 venv/bin/python3 -m pip install pyinstaller setuptools
-          venv/bin/python3 -m pip install PyQt5==5.13.0 lxml==4.6.3 # Compatible down to macOS 10.9
+          venv/bin/python3 -m pip install pyinstaller setuptools
           venv/bin/python3 -m pip install -r requirements.txt
+          venv/bin/python3 -m pip install staticx
+          
+      - name: 7. Run retype setup script
+        run: venv/bin/python3.7 setup.py b -k onedir
         
-      - name: 4. Run retype setup script
-        run: venv/bin/python3 setup.py b -k bundle
+      - name: 8. Run StaticX
+        run: venv/bin/staticx ./dist/retype/retype ./dist/retype-staticx
         
-      - name: 5. Make dmg
-        run: |
-          npm install -g appdmg
-          appdmg setup/appdmg-config.json retype.dmg
-
-      - name: 6. Upload the build artifacts
+      - name: 9. Upload the build artifacts
         uses: actions/upload-artifact@v3.0.0
         with:
-          name: retype-1.0.0-macos
-          path: ./retype.dmg
+          name: retype-1.0.0-linux
+          path: ./dist/retype-staticx
           if-no-files-found: error
           retention-days: 1
+
+#   macos-build:
+#     name: 'macOS'
+#     runs-on: 'macos-latest'
+#     env:
+#       PYTHON_VERSION: "3.7.4"
+#       MACOSX_DEPLOYMENT_TARGET: "10.9"
+#     steps:
+#       - uses: actions/checkout@v3
+      
+#       - name: 1. Setup Python
+#         uses: plu5/macos-setup-python-action@main
+#         with:
+#           version: ${{ env.PYTHON_VERSION }}
+          
+#       - name: 2. Generate Python venv cache
+#         id: python_cache
+#         uses: actions/cache@v3
+#         with:
+#           path: venv
+#           key: pip-${{ env.PYTHON_VERSION }}-1-${{ hashFiles('requirements.txt') }}
+
+#       - name: 3. Install dependencies unless cached
+#         if: steps.python_cache.outputs.cache-hit != 'true'
+#         run: |
+#           # Check if venv exists (restored from secondary keys if any, and delete)
+#           if [ -d "venv" ]; then rm -rf venv; fi
+#           # Re-create the venv
+#           python3 -m venv venv
+#           # Install dependencies
+#           PYINSTALLER_COMPILE_BOOTLOADER=1 venv/bin/python3 -m pip install pyinstaller setuptools
+#           venv/bin/python3 -m pip install PyQt5==5.13.0 lxml==4.6.3 # Compatible down to macOS 10.9
+#           venv/bin/python3 -m pip install -r requirements.txt
+        
+#       - name: 4. Run retype setup script
+#         run: venv/bin/python3 setup.py b -k bundle
+        
+#       - name: 5. Make dmg
+#         run: |
+#           npm install -g appdmg
+#           appdmg setup/appdmg-config.json retype.dmg
+
+#       - name: 6. Upload the build artifacts
+#         uses: actions/upload-artifact@v3.0.0
+#         with:
+#           name: retype-1.0.0-macos
+#           path: ./retype.dmg
+#           if-no-files-found: error
+#           retention-days: 1
 
 #   linux-build:
 #     name: 'Linux'
