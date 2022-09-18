@@ -38,16 +38,16 @@ jobs:
           venv/bin/python3 -m pip install staticx
           
       - name: 4. Run retype setup script
-        run: venv/bin/python3 setup.py b -k onedir
+        run: venv/bin/python3 setup.py b -k onefile
         
       - name: 5. Run StaticX
-        run: venv/bin/staticx ./dist/retype/retype ./dist/retype/retype
+        run: venv/bin/staticx --loglevel DEBUG ./dist/retype-onefile/retype ./dist/retype-onefile/retype
         
       - name: 6. Upload the build artifacts
         uses: actions/upload-artifact@v3.0.0
         with:
           name: retype-1.0.0-linux
-          path: ./dist/retype
+          path: ./dist/retype-onefile
           if-no-files-found: error
           retention-days: 1
 
