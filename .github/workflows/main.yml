@@ -41,7 +41,7 @@ jobs:
           venv/bin/python3 -m pip install staticx
           
       - name: 7. Run retype setup script
-        run: venv/bin/python3.7 setup.py b -k onedir
+        run: venv/bin/python3 setup.py b -k onedir
         
       - name: 8. Run StaticX
         run: venv/bin/staticx ./dist/retype/retype ./dist/retype-staticx
