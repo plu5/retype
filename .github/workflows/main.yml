@@ -39,10 +39,8 @@ jobs:
           
       - name: 4. Run retype setup script
         run: |
-          venv/bin/pyinstaller --path="$(pwd)" --clean --hiddenimport="PyQt5.QtWidgets" --name="retype" ./retype-target.py
+          venv/bin/pyinstaller --path="$(pwd)" --onefile --clean --hiddenimport="PyQt5.QtWidgets" --name="retype" ./retype-target.py
           # venv/bin/python3 setup.py b -k onefile
-          ls ./dist
-          ls ./dist/retype
         
       - name: 5. Run StaticX
         run: venv/bin/staticx --loglevel DEBUG ./dist/retype/retype ./dist/retype/retype-static
