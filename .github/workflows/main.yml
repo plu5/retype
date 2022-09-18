@@ -38,7 +38,9 @@ jobs:
           venv/bin/python3 -m pip install staticx
           
       - name: 4. Run retype setup script
-        run: venv/bin/python3 setup.py b -k onefile
+        run: |
+          venv/bin/pyinstaller --path="$(pwd)" --clean ./setup/retype-target-onefile.spec
+          # venv/bin/python3 setup.py b -k onefile
         
       - name: 5. Run StaticX
         run: venv/bin/staticx --loglevel DEBUG ./dist/retype-onefile/retype ./dist/retype-onefile/retype-static
