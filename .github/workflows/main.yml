@@ -2,6 +2,9 @@ name: Build
 
 on:
   workflow_dispatch:
+  
+env:
+  PYTHON_VERSION: 3.8
 
 jobs:
   linux-build:
@@ -10,33 +13,25 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       
-      - uses: actions/checkout@v3
-        with: 
-          repository: NixOS/patchelf
-          ref: verneed_fix
-          path: patchelf
-          
-      - run: |
-          cd patchelf
-          ./bootstrap.sh
-          ./configure
-          make
-          make check
-          sudo make install
-          patchelf --version
-      
-      - name: 1. Setup Python
-        id: setup_python
-        uses: actions/setup-python@v3
+      # https://github.com/DIAGNijmegen/rse-sagemaker-shim/blob/73eefc20458111797cba00f12a47f3575795a354/.github/workflows/ci.yml#L38
+      - name: 1. Setup Python ${{ env.PYTHON_VERSION }}
+        # deadsnakes python required due to https://github.com/JonathonReinhart/staticx/issues/188
+        uses: deadsnakes/action@v2.1.1
         with:
-          python-version: 3.8
+          python-version: ${{ env.PYTHON_VERSION }}
+      
+#       - name: 1. Setup Python
+#         id: setup_python
+#         uses: actions/setup-python@v3
+#         with:
+#           python-version: ${{ env.PYTHON_VERSION }}
 
       - name: 2. Generate Python venv cache
         id: python_cache
         uses: actions/cache@v3
         with:
           path: venv
-          key: pip-3.8-2-${{ hashFiles('requirements.txt') }}
+          key: pip-${{ env.PYTHON_VERSION }}--${{ hashFiles('requirements.txt') }}
 
       - name: 3. Install Python dependencies unless cached
         if: steps.python_cache.outputs.cache-hit != 'true'
