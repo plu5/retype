@@ -17,12 +17,12 @@ jobs:
           - os: ubuntu-latest
             artifact: './dist/retype-hacky'
             name: linux
-          - os: macos-latest
-            artifact: './retype.dmg'
-            name: macos
-          - os: windows-latest
-            artifact: './dist/retype-hacky'
-            name: windows
+#           - os: macos-latest
+#             artifact: './retype.dmg'
+#             name: macos
+#           - os: windows-latest
+#             artifact: './dist/retype-hacky'
+#             name: windows
     steps:
       - uses: actions/checkout@v3
       
@@ -36,6 +36,7 @@ jobs:
         with:
           tags: ubuntu16.04-with-retype-requirements:latest
           push: false
+          load: true
           file: .github/workflows/Dockerfile
           context: .
           cache-from: type=gha
