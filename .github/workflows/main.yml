@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
   
 env:
-  PYTHON_VERSION: 3.7.5
+  PYTHON_VERSION: 3.7
   MACOSX_DEPLOYMENT_TARGET: 10.9
   HACKY_SCRIPT_REL_PATH: '.github/workflows/pyinstaller-hack.sh'
 
