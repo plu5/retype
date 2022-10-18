@@ -61,17 +61,17 @@ jobs:
           rm -rf /tmp/.buildx-cache
           mv /tmp/.buildx-cache-new /tmp/.buildx-cache
 
-#       - name: 3U. Build retype in the Docker image
-#         if: matrix.os == 'ubuntu-latest'
-#         uses: addnab/docker-run-action@v3
-#         with:
-#           image: ubuntu16.04-with-retype-requirements:latest
-#           options: -v ${{ github.workspace }}/dist:/usr/src/retype/dist
-#           run: |
-#             cd /usr/src/retype
-#             chmod 777 ${HACKY_SCRIPT_REL_PATH}
-#             ${HACKY_SCRIPT_REL_PATH} apply venv/lib/python3.7/site-packages
-#             venv/bin/python setup.py b -k hacky
+      - name: 3U. Build retype in the Docker image
+        if: matrix.os == 'ubuntu-latest'
+        uses: addnab/docker-run-action@v3
+        with:
+          image: ubuntu16.04-with-retype-requirements:latest
+          options: -v ${{ github.workspace }}/dist:/usr/src/retype/dist
+          run: |
+            cd /usr/src/retype
+            chmod 777 ${HACKY_SCRIPT_REL_PATH}
+            ${HACKY_SCRIPT_REL_PATH} apply venv/lib/python3.7/site-packages
+            venv/bin/python setup.py b -k hacky
 
 #       - name: 1M. Setup Python ${{ env.PYTHON_VERSION }}
 #         if: matrix.os == 'macos-latest'
