@@ -1,4 +1,4 @@
-name: _wip-win
+name: WIP win
 
 on:
   workflow_dispatch:
