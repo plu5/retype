@@ -20,12 +20,9 @@ RUN make altinstall
 RUN ldconfig /usr/local/lib
 
 # Set up venv and install retype requirements
-WORKDIR /usr/src/retype
+WORKDIR /usr/src/app
 RUN python3.7 -m venv venv
 RUN venv/bin/python3.7 -m pip install --upgrade pip
 RUN venv/bin/python3.7 -m pip install pyinstaller setuptools
 COPY requirements.txt .
 RUN venv/bin/python3.7 -m pip install -r requirements.txt
-
-# Add the script needed to run before hacky builds
-COPY .github/workflows/pyinstaller-hack.sh .github/workflows/pyinstaller-hack.sh
