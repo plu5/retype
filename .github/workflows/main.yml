@@ -30,7 +30,7 @@ jobs:
         uses: docker/build-push-action@v2
         with:
           tags: ubuntu16.04-with-retype-requirements:latest
-          push: true
+          push: false
           file: .github/workflows/Dockerfile
           context: .
           cache-from: type=gha
