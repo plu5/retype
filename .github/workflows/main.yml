@@ -87,20 +87,24 @@ jobs:
         shell: bash
         
       - name: 4W. Apply PyInstaller hack
+        if: matrix.os == 'windows-latest'
         uses: plu5/run-script-in-workflows-dir-action@main
         with:
           script: 'pyinstaller-hack.sh'
           args: 'apply venv/lib/site-packages'
           
       - name: 4M. Run retype setup script
+        if: matrix.os == 'macos-latest'
         run: venv/bin/python3 setup.py b -k bundle
         
       - name: 5M. Make dmg
+        if: matrix.os == 'macos-latest'
         run: |
           npm install -g appdmg
           appdmg setup/appdmg-config.json retype.dmg
           
       - name: 5W. Run retype setup script
+        if: matrix.os == 'windows-latest'
         run: venv/Scripts/python setup.py b -k hacky
         
       - name: F. Upload the build artifacts
