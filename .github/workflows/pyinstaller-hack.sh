@@ -15,13 +15,20 @@ THE_LINE='sys._MEIPASS = os.path.join(sys._MEIPASS, "include")'
 function add_line()
 {
   MEIPASS_LINENUM=$(cat $FILE | sed -n '/sys._MEIPASS/{=;q;}')
-  MEIPASS_LINENUM=$((MEIPASS_LINENUM - 1))
-  printf '%s\n' $MEIPASS_LINENUM a "$THE_LINE" . wq | ed $FILE
+  if ! command -v ed &> /dev/null; then
+    sed -i "${MEIPASS_LINENUM}i ${THE_LINE}" $FILE
+  else
+    printf '%s\n' $((MEIPASS_LINENUM - 1)) a "$THE_LINE" . wq | ed $FILE
+  fi
 }
 
 function rem_line()
 {
-  printf '%s\n' "g/$THE_LINE/d" . wq | ed $FILE
+  if ! command -v ed &> /dev/null; then
+    sed -i "/${THE_LINE}/d" $FILE
+  else
+    printf '%s\n' "g/$THE_LINE/d" . wq | ed $FILE
+  fi
 }
 
 cd ${SITE_PACKAGES}/PyInstaller/loader
