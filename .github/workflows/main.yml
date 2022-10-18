@@ -6,7 +6,6 @@ on:
 env:
   PYTHON_VERSION: 3.7.9
   MACOSX_DEPLOYMENT_TARGET: 10.9
-  HACKY_SCRIPT_REL_PATH: '.github/workflows/pyinstaller-hack.sh'
 
 jobs:
   build:
@@ -66,11 +65,11 @@ jobs:
         uses: addnab/docker-run-action@v3
         with:
           image: ubuntu16.04-with-retype-requirements:latest
-          options: -v ${{ github.workspace }}/dist:/usr/src/retype/dist
+          options: -v ${{ github.workspace }}:/usr/src/retype
           run: |
             cd /usr/src/retype
-            chmod 777 ${HACKY_SCRIPT_REL_PATH}
-            ${HACKY_SCRIPT_REL_PATH} apply venv/lib/python3.7/site-packages
+            chmod 777 .github/workflows/pyinstaller-hack.sh
+            .github/workflows/pyinstaller-hack.sh apply venv/lib/python3.7/site-packages
             venv/bin/python setup.py b -k hacky
 
 #       - name: 1M. Setup Python ${{ env.PYTHON_VERSION }}
