@@ -32,6 +32,7 @@ jobs:
         with:
           tags: ubuntu16.04-with-retype-requirements:latest
           push: false
+          load: true
           file: .github/workflows/Dockerfile
           context: .
           cache-from: type=gha
