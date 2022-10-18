@@ -14,50 +14,11 @@ jobs:
     strategy:
       matrix:
         include:
-          - os: ubuntu-latest
-            artifact: './dist/retype-hacky'
-            name: linux
-          - os: macos-latest
-            artifact: './retype.dmg'
-            name: macos
           - os: windows-latest
             artifact: './dist/retype-hacky'
             name: windows
     steps:
       - uses: actions/checkout@v3
-      
-      - name: 1U. Set up Docker Buildx (required step to be able to export cache in 2U)
-        if: matrix.os == 'ubuntu-latest'
-        uses: docker/setup-buildx-action@v2
-      
-      - name: 2U. Build Dockerfile
-        if: matrix.os == 'ubuntu-latest'
-        uses: docker/build-push-action@v2
-        with:
-          tags: ubuntu16.04-with-retype-requirements:latest
-          push: false
-          file: .github/workflows/Dockerfile
-          context: .
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-      - name: 3U. Build retype in the Docker image
-        if: matrix.os == 'ubuntu-latest'
-        uses: addnab/docker-run-action@v3
-        with:
-          image: ubuntu16.04-with-retype-requirements:latest
-          options: -v ${{ github.workspace }}/dist:/usr/src/retype/dist
-          run: |
-            cd /usr/src/retype
-            chmod 777 ${HACKY_SCRIPT_REL_PATH}
-            ${HACKY_SCRIPT_REL_PATH} apply venv/lib/python3.7/site-packages
-            venv/bin/python setup.py b -k hacky
-
-      - name: 1M. Setup Python ${{ env.PYTHON_VERSION }}
-        if: matrix.os == 'macos-latest'
-        uses: plu5/macos-setup-python-action@main
-        with:
-          version: ${{ env.PYTHON_VERSION }}
           
       - name: 1W. Setup Python ${{ env.PYTHON_VERSION }}
         if: matrix.os == 'windows-latest'
@@ -72,15 +33,6 @@ jobs:
         with:
           path: venv
           key: venv-${{ env.PYTHON_VERSION }}-${{ hashFiles('requirements.txt') }}-${{ matrix.os }}
-          
-      - name: 3M. Install dependencies unless cached
-        if: matrix.os == 'macos-latest' && steps.python_venv_cache.outputs.cache-hit != 'true'
-        run: |
-          if [ -d "venv" ]; then rm -rf venv; fi
-          python3 -m venv venv
-          PYINSTALLER_COMPILE_BOOTLOADER=1 venv/bin/python3 -m pip install pyinstaller setuptools
-          venv/bin/python3 -m pip install PyQt5==5.13.0 lxml==4.6.3 # Compatible down to macOS 10.9
-          venv/bin/python3 -m pip install -r requirements.txt
           
       - name: 3W. Install dependencies unless cached
         if: matrix.os == 'windows-latest' && steps.python_venv_cache.outputs.cache-hit != 'true'
@@ -97,25 +49,126 @@ jobs:
         with:
           script: 'pyinstaller-hack.sh'
           args: 'apply venv/lib/site-packages'
+
+
+# name: Build retype
+
+# on:
+#   workflow_dispatch:
+  
+# env:
+#   PYTHON_VERSION: 3.7.5
+#   MACOSX_DEPLOYMENT_TARGET: 10.9
+#   HACKY_SCRIPT_REL_PATH: '.github/workflows/pyinstaller-hack.sh'
+
+# jobs:
+#   build:
+#     runs-on: ${{ matrix.os }}
+#     strategy:
+#       matrix:
+#         include:
+#           - os: ubuntu-latest
+#             artifact: './dist/retype-hacky'
+#             name: linux
+#           - os: macos-latest
+#             artifact: './retype.dmg'
+#             name: macos
+#           - os: windows-latest
+#             artifact: './dist/retype-hacky'
+#             name: windows
+#     steps:
+#       - uses: actions/checkout@v3
+      
+#       - name: 1U. Set up Docker Buildx (required step to be able to export cache in 2U)
+#         if: matrix.os == 'ubuntu-latest'
+#         uses: docker/setup-buildx-action@v2
+      
+#       - name: 2U. Build Dockerfile
+#         if: matrix.os == 'ubuntu-latest'
+#         uses: docker/build-push-action@v2
+#         with:
+#           tags: ubuntu16.04-with-retype-requirements:latest
+#           push: false
+#           file: .github/workflows/Dockerfile
+#           context: .
+#           cache-from: type=gha
+#           cache-to: type=gha,mode=max
+
+#       - name: 3U. Build retype in the Docker image
+#         if: matrix.os == 'ubuntu-latest'
+#         uses: addnab/docker-run-action@v3
+#         with:
+#           image: ubuntu16.04-with-retype-requirements:latest
+#           options: -v ${{ github.workspace }}/dist:/usr/src/retype/dist
+#           run: |
+#             cd /usr/src/retype
+#             chmod 777 ${HACKY_SCRIPT_REL_PATH}
+#             ${HACKY_SCRIPT_REL_PATH} apply venv/lib/python3.7/site-packages
+#             venv/bin/python setup.py b -k hacky
+
+#       - name: 1M. Setup Python ${{ env.PYTHON_VERSION }}
+#         if: matrix.os == 'macos-latest'
+#         uses: plu5/macos-setup-python-action@main
+#         with:
+#           version: ${{ env.PYTHON_VERSION }}
           
-      - name: 4M. Run retype setup script
-        if: matrix.os == 'macos-latest'
-        run: venv/bin/python3 setup.py b -k bundle
-        
-      - name: 5M. Make dmg
-        if: matrix.os == 'macos-latest'
-        run: |
-          npm install -g appdmg
-          appdmg setup/appdmg-config.json retype.dmg
+#       - name: 1W. Setup Python ${{ env.PYTHON_VERSION }}
+#         if: matrix.os == 'windows-latest'
+#         uses: actions/setup-python@v3
+#         with:
+#            python-version: ${{ env.PYTHON_VERSION }}
+           
+#       - name: 2MW. Generate Python venv cache
+#         if: matrix.os == 'macos-latest' || matrix.os == 'windows-latest'
+#         id: python_venv_cache
+#         uses: actions/cache@v3
+#         with:
+#           path: venv
+#           key: venv-${{ env.PYTHON_VERSION }}-${{ hashFiles('requirements.txt') }}-${{ matrix.os }}
           
-      - name: 5W. Run retype setup script
-        if: matrix.os == 'windows-latest'
-        run: venv/Scripts/python setup.py b -k hacky
+#       - name: 3M. Install dependencies unless cached
+#         if: matrix.os == 'macos-latest' && steps.python_venv_cache.outputs.cache-hit != 'true'
+#         run: |
+#           if [ -d "venv" ]; then rm -rf venv; fi
+#           python3 -m venv venv
+#           PYINSTALLER_COMPILE_BOOTLOADER=1 venv/bin/python3 -m pip install pyinstaller setuptools
+#           venv/bin/python3 -m pip install PyQt5==5.13.0 lxml==4.6.3 # Compatible down to macOS 10.9
+#           venv/bin/python3 -m pip install -r requirements.txt
+          
+#       - name: 3W. Install dependencies unless cached
+#         if: matrix.os == 'windows-latest' && steps.python_venv_cache.outputs.cache-hit != 'true'
+#         run: |
+#            if [ -d "venv" ]; then rm -rf venv; fi
+#            python -m venv venv
+#            venv/Scripts/python -m pip install pyinstaller setuptools pywin32
+#            venv/Scripts/python -m pip install -r requirements.txt
+#         shell: bash
         
-      - name: F. Upload the build artifacts
-        uses: actions/upload-artifact@v3.0.0
-        with:
-          name: retype-versiontodo-${{ matrix.name }}
-          path: ${{ matrix.artifact }}
-          if-no-files-found: error
-          retention-days: 1
+#       - name: 4W. Apply PyInstaller hack
+#         if: matrix.os == 'windows-latest'
+#         uses: plu5/run-script-in-workflows-dir-action@main
+#         with:
+#           script: 'pyinstaller-hack.sh'
+#           args: 'apply venv/lib/site-packages'
+          
+#       - name: 4M. Run retype setup script
+#         if: matrix.os == 'macos-latest'
+#         run: venv/bin/python3 setup.py b -k bundle
+        
+#       - name: 5M. Make dmg
+#         if: matrix.os == 'macos-latest'
+#         run: |
+#           npm install -g appdmg
+#           appdmg setup/appdmg-config.json retype.dmg
+          
+#       - name: 5W. Run retype setup script
+#         if: matrix.os == 'windows-latest'
+#         run: venv/Scripts/python setup.py b -k hacky
+        
+#       - name: F. Upload the build artifacts
+#         uses: actions/upload-artifact@v3.0.0
+#         with:
+#           name: retype-versiontodo-${{ matrix.name }}
+#           path: ${{ matrix.artifact }}
+#           if-no-files-found: error
+#           retention-days: 1
