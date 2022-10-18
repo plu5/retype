@@ -68,6 +68,7 @@ jobs:
           options: -v ${{ github.workspace }}:/usr/src/retype
           run: |
             cd /usr/src/retype
+            mv /usr/src/app/venv /usr/src/retype
             chmod 777 .github/workflows/pyinstaller-hack.sh
             .github/workflows/pyinstaller-hack.sh apply venv/lib/python3.7/site-packages
             venv/bin/python setup.py b -k hacky
