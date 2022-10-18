@@ -1,6 +1,6 @@
-ARG PYTHON_VERSION=3.7.4
-
 FROM ubuntu:16.04
+
+ARG PYTHON_VERSION=3.7.4
 
 # Install dependencies for building Python
 RUN apt update && apt upgrade -y && apt clean && apt update
