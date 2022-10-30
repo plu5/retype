@@ -38,10 +38,10 @@ jobs:
           
       - if: matrix.os == 'ubuntu-latest' && steps.image-cache.outputs.cache-hit != 'true'
         run: |
-            buildx build -t ubuntu16.04-with-retype-requirements:latest \
-                         -f .github/workflows/Dockerfile \
-                         -o type=docker,dest=~/image-cache/o.tar \
-                         .
+            docker buildx build -t ubuntu16.04-with-retype-requirements:latest \
+                                -f .github/workflows/Dockerfile \
+                                -o type=docker,dest=~/image-cache/o.tar \
+                                .
 
       - if: matrix.os == 'ubuntu-latest' && steps.image-cache.outputs.cache-hit == 'true'
         run: docker load -i ~/image-cache/o.tar
