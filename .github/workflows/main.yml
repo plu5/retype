@@ -31,7 +31,7 @@ jobs:
         uses: actions/cache@v3
         with:
           path: ~/image-cache
-          key: image-cache-${{ runner.os }}-${{ hashFiles('.github/workflows/Dockerfile') }}
+          key: image-cache-${{ runner.os }}-${{ hashFiles('.github/workflows/Dockerfile') }}-a
           
       - name: 2U.1. Set up Docker Buildx
         if: matrix.os == 'ubuntu-latest' && steps.image-cache.outputs.cache-hit != 'true'
@@ -39,52 +39,30 @@ jobs:
           
       - name: 2U.2. Build Dockerfile
         if: matrix.os == 'ubuntu-latest' && steps.image-cache.outputs.cache-hit != 'true'
-        run: |
-          mkdir ~/image-cache
-          docker buildx build -t ubuntu16.04-with-retype-requirements:latest \
-                              -f .github/workflows/Dockerfile \
-                              -o type=docker,dest=- . > ~/image-cache/o.tar
+        uses: docker/build-push-action@v3
+        with:
+          tags: ubuntu16.04-with-retype-requirements:latest
+          load: true
+          file: .github/workflows/Dockerfile
+          context: .
+          outputs: type=docker,dest=~/image-cache/o.tar
 
       - name: 2U.c. Load Docker image
         if: matrix.os == 'ubuntu-latest' && steps.image-cache.outputs.cache-hit == 'true'
         run: docker load -i ~/image-cache/o.tar
-    
+
       - name: 3U. Build retype in the Docker image
         if: matrix.os == 'ubuntu-latest'
-        run: |
-          CMDS="cd /usr/src/retype
-          mv /usr/src/app/venv /usr/src/retype
-          chmod 777 .github/workflows/pyinstaller-hack.sh
-          .github/workflows/pyinstaller-hack.sh apply venv/lib/python3.7/site-packages
-          venv/bin/python setup.py b -k hacky"
-          docker run -v "/var/run/docker.sock":"/var/run/docker.sock" \
-                     -v ${{ github.workspace }}:/usr/src/retype \
-                     --entrypoint=sh \
-                     ubuntu16.04-with-retype-requirements:latest -c "${CMDS//$'\n'/;}"
-      
-#       - name: 2U. Build Dockerfile
-#         if: matrix.os == 'ubuntu-latest'
-#         uses: docker/build-push-action@v3
-#         with:
-#           tags: ubuntu16.04-with-retype-requirements:latest
-#           load: true
-#           file: .github/workflows/Dockerfile
-#           context: .
-#           cache-from: type=gha,scope=${{ matrix.os }}
-#           cache-to: type=gha,scope=${{ matrix.os }},mode=max
-
-#       - name: 3U. Build retype in the Docker image
-#         if: matrix.os == 'ubuntu-latest'
-#         uses: addnab/docker-run-action@v3
-#         with:
-#           image: ubuntu16.04-with-retype-requirements:latest
-#           options: -v ${{ github.workspace }}:/usr/src/retype
-#           run: |
-#             cd /usr/src/retype
-#             mv /usr/src/app/venv /usr/src/retype
-#             chmod 777 .github/workflows/pyinstaller-hack.sh
-#             .github/workflows/pyinstaller-hack.sh apply venv/lib/python3.7/site-packages
-#             venv/bin/python setup.py b -k hacky
+        uses: addnab/docker-run-action@v3
+        with:
+          image: ubuntu16.04-with-retype-requirements:latest
+          options: -v ${{ github.workspace }}:/usr/src/retype
+          run: |
+            cd /usr/src/retype
+            mv /usr/src/app/venv /usr/src/retype
+            chmod 777 .github/workflows/pyinstaller-hack.sh
+            .github/workflows/pyinstaller-hack.sh apply venv/lib/python3.7/site-packages
+            venv/bin/python setup.py b -k hacky
 
       - name: 1M. Setup Python ${{ env.PYTHON_VERSION }}
         if: matrix.os == 'macos-latest'
