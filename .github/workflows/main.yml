@@ -24,29 +24,41 @@ jobs:
 #             name: windows
     steps:
       - uses: actions/checkout@v3
-      
-      - name: 1U. Set up Docker Buildx (required step to be able to export cache in 2U)
-        if: matrix.os == 'ubuntu-latest'
-        uses: docker/setup-buildx-action@v2
         
-      - id: image-cache
+      - name: 1U. Image cache
+        id: image-cache
         if: matrix.os == 'ubuntu-latest'
         uses: actions/cache@v3
         with:
           path: ~/image-cache
           key: image-cache-${{ runner.os }}-${{ hashFiles('.github/workflows/Dockerfile') }}
           
-      - if: matrix.os == 'ubuntu-latest' && steps.image-cache.outputs.cache-hit != 'true'
+      - name: 2U.1. Set up Docker Buildx
+        if: matrix.os == 'ubuntu-latest' && steps.image-cache.outputs.cache-hit != 'true'
+        uses: docker/setup-buildx-action@v2
+          
+      - name: 2U.2. Build Dockerfile
+        if: matrix.os == 'ubuntu-latest' && steps.image-cache.outputs.cache-hit != 'true'
         run: |
           mkdir ~/image-cache
           docker buildx build -t ubuntu16.04-with-retype-requirements:latest \
                               -f .github/workflows/Dockerfile \
                               -o type=docker,dest=- . > ~/image-cache/o.tar
 
-      - if: matrix.os == 'ubuntu-latest' && steps.image-cache.outputs.cache-hit == 'true'
+      - name: 2U.c. Load Docker image
+        if: matrix.os == 'ubuntu-latest' && steps.image-cache.outputs.cache-hit == 'true'
         run: docker load -i ~/image-cache/o.tar
-        
-      - run: docker images
+    
+      - name: 3U. Build retype in the Docker image
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          CMDS="cd /usr/src/retype
+          mv /usr/src/app/venv /usr/src/retype
+          chmod 777 .github/workflows/pyinstaller-hack.sh
+          .github/workflows/pyinstaller-hack.sh apply venv/lib/python3.7/site-packages
+          venv/bin/python setup.py b -k hacky"
+          docker run ubuntu16.04-with-retype-requirements:latest \
+                     -v ${{ github.workspace }}:/usr/src/retype -c "${CMDS//$'\n'/;}"
       
 #       - name: 2U. Build Dockerfile
 #         if: matrix.os == 'ubuntu-latest'
@@ -131,10 +143,10 @@ jobs:
         if: matrix.os == 'windows-latest'
         run: venv/Scripts/python setup.py b -k hacky
         
-#       - name: F. Upload the build artifacts
-#         uses: actions/upload-artifact@v3.0.0
-#         with:
-#           name: retype-versiontodo-${{ matrix.name }}
-#           path: ${{ matrix.artifact }}
-#           if-no-files-found: error
-#           retention-days: 1
+      - name: F. Upload the build artifacts
+        uses: actions/upload-artifact@v3.0.0
+        with:
+          name: retype-versiontodo-${{ matrix.name }}
+          path: ${{ matrix.artifact }}
+          if-no-files-found: error
+          retention-days: 1
