@@ -30,29 +30,25 @@ jobs:
         if: matrix.os == 'ubuntu-latest'
         uses: actions/cache@v3
         with:
-          path: ~/image-cache
+          path: image-cache
           key: image-cache-${{ runner.os }}-${{ hashFiles('.github/workflows/Dockerfile') }}
           
       - name: 1U.b1. Set up Docker Buildx
         if: matrix.os == 'ubuntu-latest' && steps.image-cache.outputs.cache-hit != 'true'
         uses: docker/setup-buildx-action@v2
-        
-      - name: 1U.b2. Mkdir ~/image-cache
-        if: matrix.os == 'ubuntu-latest' && steps.image-cache.outputs.cache-hit != 'true'
-        run: mkdir ~/image-cache
           
-      - name: 1U.b3. Build Dockerfile
+      - name: 1U.b2. Build Dockerfile
         if: matrix.os == 'ubuntu-latest' && steps.image-cache.outputs.cache-hit != 'true'
         uses: docker/build-push-action@v3
         with:
           tags: ubuntu16.04-with-retype-requirements:latest
           file: .github/workflows/Dockerfile
           context: .
-          outputs: type=docker,dest=~/image-cache/o.tar
+          outputs: type=docker,dest=image-cache/o.tar
 
       - name: 2U. Load Docker image
         if: matrix.os == 'ubuntu-latest'
-        run: docker load -i ~/image-cache/o.tar
+        run: docker load -i image-cache/o.tar
 
       - name: 3U. Build retype in the Docker image
         if: matrix.os == 'ubuntu-latest'
