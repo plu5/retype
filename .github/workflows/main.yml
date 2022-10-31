@@ -57,8 +57,8 @@ jobs:
           chmod 777 .github/workflows/pyinstaller-hack.sh
           .github/workflows/pyinstaller-hack.sh apply venv/lib/python3.7/site-packages
           venv/bin/python setup.py b -k hacky"
-          docker run ubuntu16.04-with-retype-requirements:latest \
-                     -v ${{ github.workspace }}:/usr/src/retype -c "${CMDS//$'\n'/;}"
+          docker run -v ${{ github.workspace }}:/usr/src/retype \
+                     ubuntu16.04-with-retype-requirements:latest -c "${CMDS//$'\n'/;}"
       
 #       - name: 2U. Build Dockerfile
 #         if: matrix.os == 'ubuntu-latest'
