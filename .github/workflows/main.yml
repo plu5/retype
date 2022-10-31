@@ -57,7 +57,9 @@ jobs:
           chmod 777 .github/workflows/pyinstaller-hack.sh
           .github/workflows/pyinstaller-hack.sh apply venv/lib/python3.7/site-packages
           venv/bin/python setup.py b -k hacky"
-          docker run -v ${{ github.workspace }}:/usr/src/retype \
+          docker run -v "/var/run/docker.sock":"/var/run/docker.sock" \
+                     -v ${{ github.workspace }}:/usr/src/retype \
+                     --entrypoint=sh \
                      ubuntu16.04-with-retype-requirements:latest -c "${CMDS//$'\n'/;}"
       
 #       - name: 2U. Build Dockerfile
