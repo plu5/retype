@@ -1,7 +1,9 @@
 # -*- mode: python ; coding: utf-8 -*-
 import os
-from setup.config import data, binaries, imports, builddate
+from setup.config import data, binaries, imports, version, builddate
 
+
+version_str = version.getVersionStr(os.path.abspath("."))
 
 datas = builddate.saveDateToFile(os.path.abspath("."))
 
@@ -52,7 +54,5 @@ app = BUNDLE(coll,  # noqa: F821
              icon=data.icns,
              bundle_identifier=data.name,
              info_plist={"CFBundleExecutable": "MacOS/retype",
-                         # "CFBundleIconFile": "logo.icns",
                          "LSMinimumSystemVersion": "10.9.0",
-                         # TODO (plu5): Get the version programmatically
-                         "CFBundleShortVersionString": "1.0.0"})
+                         "CFBundleShortVersionString": version_str})
