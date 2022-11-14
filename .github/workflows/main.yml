@@ -11,7 +11,7 @@ on:
         type: boolean
         required: false
         default: false
-        description: Whether to publish a release
+        description: Publish release
   push:
     tags:
       - "v*"
@@ -21,10 +21,21 @@ env:
   MACOSX_DEPLOYMENT_TARGET: 10.9
 
 jobs:
-  build:
-    runs-on: ${{ matrix.os }}
+  data:
+    runs-on: ubuntu-latest
     outputs:
       ver: ${{ steps.get-ver.outputs.ver }}
+    steps:
+      - name: Get version
+        id: get-ver
+        run: |
+          VERSION=$(echo $GITHUB_REF | sed -e "s/^refs\/tags\/v//")
+          if [ -z ${{ inputs.version }} ]; then VERSION=${{ inputs.version }}; fi
+          echo "ver=$VERSION" >> $GITHUB_OUTPUT
+
+  build:
+    needs: data
+    runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         include:
@@ -39,13 +50,6 @@ jobs:
             name: windows
     steps:
       - uses: actions/checkout@v3
-
-      - name: Pre. Get version
-        id: get-ver
-        run: |
-          VERSION=$(echo $GITHUB_REF | sed -e "s/^refs\/tags\/v//")
-          if [ -z ${{ inputs.version }} ]; then VERSION=${{ inputs.version }}; fi
-          echo "ver=$VERSION" >> $GITHUB_OUTPUT
 
       - name: 1U. Image cache
         id: image-cache
@@ -151,13 +155,13 @@ jobs:
       - name: F. Upload the build artifacts
         uses: actions/upload-artifact@v3
         with:
-          name: retype-${{ steps.get-ver.outputs.ver }}-${{ matrix.name }}
+          name: retype-${{ needs.data.outputs.ver }}-${{ matrix.name }}
           path: ${{ matrix.artifact }}
           if-no-files-found: error
           retention-days: 1
 
   release:
-    needs: build
+    needs: [data, build]
     runs-on: ubuntu-latest
     steps:
       - name: 1. Download binaries
@@ -188,7 +192,5 @@ jobs:
         uses: "marvinpinto/action-automatic-releases@latest"
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          title: v${{ needs.build.ver }}
+          title: v${{ needs.data.outputs.ver }}
           files: ./dist/*
-
-      - run: ls ./dist
