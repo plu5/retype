@@ -29,8 +29,8 @@ jobs:
       - name: Get version
         id: get-ver
         run: |
-          VERSION=$(echo $GITHUB_REF | sed -e "s/^refs\/tags\/v//")
-          if [ -z ${{ inputs.version }} ]; then VERSION=${{ inputs.version }}; fi
+          VERSION=${GITHUB_REF#refs/*/}
+          if [ -n ${{ inputs.version }} ]; then VERSION=${{ inputs.version }}; fi
           echo "ver=$VERSION" >> $GITHUB_OUTPUT
 
   build:
