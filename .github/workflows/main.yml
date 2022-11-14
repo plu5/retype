@@ -1,8 +1,21 @@
-name: Build retype
+name: Build & release retype
 
 on:
   workflow_dispatch:
-  
+    inputs:
+      version:
+        type: string
+        required: true
+        description: SemVer of release
+      release:
+        type: boolean
+        required: false
+        default: false
+        description: Whether to publish a release
+  push:
+    tags:
+      - "v*"
+
 env:
   PYTHON_VERSION: 3.7.9
   MACOSX_DEPLOYMENT_TARGET: 10.9
@@ -10,21 +23,30 @@ env:
 jobs:
   build:
     runs-on: ${{ matrix.os }}
+    outputs:
+      ver: ${{ steps.get-ver.outputs.ver }}
     strategy:
       matrix:
         include:
           - os: ubuntu-latest
             artifact: './dist/retype-hacky'
             name: linux
-#           - os: macos-latest
-#             artifact: './retype.dmg'
-#             name: macos
-#           - os: windows-latest
-#             artifact: './dist/retype-hacky'
-#             name: windows
+          - os: macos-latest
+            artifact: './retype.dmg'
+            name: macos
+          - os: windows-latest
+            artifact: './dist/retype-hacky'
+            name: windows
     steps:
       - uses: actions/checkout@v3
-        
+
+      - name: Pre. Get version
+        id: get-ver
+        run: |
+          VERSION=$(echo $GITHUB_REF | sed -e "s/^refs\/tags\/v//")
+          if ${{ inputs.version }}; then VERSION=${{ inputs.version }}; fi
+          echo "ver=$VERSION" >> $GITHUB_OUTPUT
+
       - name: 1U. Image cache
         id: image-cache
         if: matrix.os == 'ubuntu-latest'
@@ -32,15 +54,15 @@ jobs:
         with:
           path: image-cache
           key: image-cache-${{ runner.os }}-${{ hashFiles('.github/workflows/Dockerfile') }}
-          
+
       - name: 1U.b1. Set up Docker Buildx
         if: matrix.os == 'ubuntu-latest' && steps.image-cache.outputs.cache-hit != 'true'
         uses: docker/setup-buildx-action@v2
-        
+
       - name: 1U.b2. Mkdir image-cache
         if: matrix.os == 'ubuntu-latest' && steps.image-cache.outputs.cache-hit != 'true'
         run: mkdir image-cache
-          
+
       - name: 1U.b3. Build Dockerfile
         if: matrix.os == 'ubuntu-latest' && steps.image-cache.outputs.cache-hit != 'true'
         uses: docker/build-push-action@v3
@@ -72,13 +94,13 @@ jobs:
         uses: plu5/macos-setup-python-action@main
         with:
           version: ${{ env.PYTHON_VERSION }}
-          
+
       - name: 1W. Setup Python ${{ env.PYTHON_VERSION }}
         if: matrix.os == 'windows-latest'
         uses: actions/setup-python@v3
         with:
            python-version: ${{ env.PYTHON_VERSION }}
-           
+
       - name: 2MW. Generate Python venv cache
         if: matrix.os == 'macos-latest' || matrix.os == 'windows-latest'
         id: python_venv_cache
@@ -86,7 +108,7 @@ jobs:
         with:
           path: venv
           key: venv-${{ env.PYTHON_VERSION }}-${{ hashFiles('requirements.txt') }}-${{ matrix.os }}
-          
+
       - name: 3M. Install dependencies unless cached
         if: matrix.os == 'macos-latest' && steps.python_venv_cache.outputs.cache-hit != 'true'
         run: |
@@ -95,7 +117,7 @@ jobs:
           PYINSTALLER_COMPILE_BOOTLOADER=1 venv/bin/python3 -m pip install pyinstaller setuptools
           venv/bin/python3 -m pip install PyQt5==5.13.0 lxml==4.6.3 # Compatible down to macOS 10.9
           venv/bin/python3 -m pip install -r requirements.txt
-          
+
       - name: 3W. Install dependencies unless cached
         if: matrix.os == 'windows-latest' && steps.python_venv_cache.outputs.cache-hit != 'true'
         run: |
@@ -104,32 +126,69 @@ jobs:
            venv/Scripts/python -m pip install pyinstaller setuptools pywin32
            venv/Scripts/python -m pip install -r requirements.txt
         shell: bash
-        
+
       - name: 4W. Apply PyInstaller hack
         if: matrix.os == 'windows-latest'
         uses: plu5/run-script-in-workflows-dir-action@main
         with:
           script: 'pyinstaller-hack.sh'
           args: 'apply venv/lib/site-packages'
-          
+
       - name: 4M. Run retype setup script
         if: matrix.os == 'macos-latest'
         run: venv/bin/python3 setup.py b -k bundle
-        
+
       - name: 5M. Make dmg
         if: matrix.os == 'macos-latest'
         run: |
           npm install -g appdmg
           appdmg setup/appdmg-config.json retype.dmg
-          
+
       - name: 5W. Run retype setup script
         if: matrix.os == 'windows-latest'
         run: venv/Scripts/python setup.py b -k hacky
-        
+
       - name: F. Upload the build artifacts
-        uses: actions/upload-artifact@v3.0.0
+        uses: actions/upload-artifact@v3
         with:
-          name: retype-versiontodo-${{ matrix.name }}
+          name: retype-${{ steps.get-ver.outputs.ver }}-${{ matrix.name }}
           path: ${{ matrix.artifact }}
           if-no-files-found: error
           retention-days: 1
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: 1. Download binaries
+        uses: actions/download-artifact@v3
+        with:
+          path: ./dist
+
+      - name: 2i. Display structure of downloaded files
+        run: ls -R
+        working-directory: ./dist
+
+      - name: 3. Prepare files for release
+        run: |
+          for dir in */ ; do
+            if [[ $dir =~ "linux" ]]; then
+              tar -czvf ${dir%*/}.tar.gz $dir;
+            elif [[ $dir =~ "windows" ]]; then
+              zip ${dir%*/}.zip $dir;
+            elif [[ $dir =~ "macos" ]]; then
+              mv ${dir}retype.dmg ${dir%*/}.dmg;
+            fi;
+            rm -rf $dir;
+          done
+        working-directory: ./dist
+
+      - name: 4. Release
+        if: ${{ inputs.release }}
+        uses: "marvinpinto/action-automatic-releases@latest"
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          title: v${{ needs.build.ver }}
+          files: ./dist/*
+
+      - run: ls ./dist
