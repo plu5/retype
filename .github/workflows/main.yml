@@ -44,7 +44,7 @@ jobs:
         id: get-ver
         run: |
           VERSION=$(echo $GITHUB_REF | sed -e "s/^refs\/tags\/v//")
-          if ${{ inputs.version }}; then VERSION=${{ inputs.version }}; fi
+          if [ -z ${{ inputs.version }} ]; then VERSION=${{ inputs.version }}; fi
           echo "ver=$VERSION" >> $GITHUB_OUTPUT
 
       - name: 1U. Image cache
