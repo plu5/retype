@@ -101,7 +101,7 @@ jobs:
 
       - name: 1W. Setup Python ${{ env.PYTHON_VERSION }}
         if: matrix.os == 'windows-latest'
-        uses: actions/setup-python@v3
+        uses: actions/setup-python@v4
         with:
            python-version: ${{ env.PYTHON_VERSION }}
 
@@ -194,3 +194,5 @@ jobs:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           title: v${{ needs.data.outputs.ver }}
           files: ./dist/*
+
+      - run: ls ./dist
