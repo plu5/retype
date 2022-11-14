@@ -169,12 +169,9 @@ jobs:
         with:
           path: ./dist
 
-      - name: 2i. Display structure of downloaded files
-        run: ls -R
-        working-directory: ./dist
-
-      - name: 3. Prepare files for release
+      - name: 2. Prepare files for release
         run: |
+          echo "Structure of downloaded files" && ls -R
           for dir in */ ; do
             if [[ $dir =~ "linux" ]]; then
               tar -czvf ${dir%*/}.tar.gz $dir;
@@ -185,14 +182,13 @@ jobs:
             fi;
             rm -rf $dir;
           done
+          echo "Final structure" && ls
         working-directory: ./dist
 
-      - name: 4. Release
+      - name: 3. Release
         if: ${{ inputs.release }}
         uses: "marvinpinto/action-automatic-releases@latest"
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           title: v${{ needs.data.outputs.ver }}
           files: ./dist/*
-
-      - run: ls ./dist
