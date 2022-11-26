@@ -10,7 +10,7 @@ on:
       release:
         type: boolean
         required: false
-        default: false
+        default: true
         description: Publish release
   push:
     tags:
@@ -191,4 +191,5 @@ jobs:
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           title: v${{ needs.data.outputs.ver }}
+          automatic_release_tag: ${{ needs.data.outputs.ver }}
           files: ./dist/*
