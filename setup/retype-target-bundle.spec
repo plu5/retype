@@ -54,5 +54,7 @@ app = BUNDLE(coll,  # noqa: F821
              icon=data.icns,
              bundle_identifier=data.name,
              info_plist={"CFBundleExecutable": "MacOS/retype",
+                         "NSPrincipalClass": "NSApplication",
+                         "LSBackgroundOnly": "0",
                          "LSMinimumSystemVersion": "10.9.0",
                          "CFBundleShortVersionString": version_str})
