@@ -43,7 +43,7 @@ jobs:
 #             artifact: './dist/retype-hacky'
 #             name: linux
           - os: macos-latest
-            artifact: './dist/retype-hacky' # './retype.dmg'
+            artifact: './dist/retype.app' # './retype.dmg'
             name: macos
 #           - os: windows-latest
 #             artifact: './dist/retype-hacky'
