@@ -192,4 +192,5 @@ jobs:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           title: v${{ needs.data.outputs.ver }}
           automatic_release_tag: ${{ needs.data.outputs.ver }}
+          prerelease: false
           files: ./dist/*
