@@ -39,15 +39,15 @@ jobs:
     strategy:
       matrix:
         include:
-          - os: ubuntu-latest
-            artifact: './dist/retype-hacky'
-            name: linux
+#           - os: ubuntu-latest
+#             artifact: './dist/retype-hacky'
+#             name: linux
           - os: macos-latest
-            artifact: './retype.dmg'
+            artifact: './dist/retype-hacky' # './retype.dmg'
             name: macos
-          - os: windows-latest
-            artifact: './dist/retype-hacky'
-            name: windows
+#           - os: windows-latest
+#             artifact: './dist/retype-hacky'
+#             name: windows
     steps:
       - uses: actions/checkout@v3
 
@@ -142,11 +142,11 @@ jobs:
         if: matrix.os == 'macos-latest'
         run: venv/bin/python3 setup.py b -k bundle
 
-      - name: 5M. Make dmg
-        if: matrix.os == 'macos-latest'
-        run: |
-          npm install -g appdmg
-          appdmg setup/appdmg-config.json retype.dmg
+#       - name: 5M. Make dmg
+#         if: matrix.os == 'macos-latest'
+#         run: |
+#           npm install -g appdmg
+#           appdmg setup/appdmg-config.json retype.dmg
 
       - name: 5W. Run retype setup script
         if: matrix.os == 'windows-latest'
@@ -160,35 +160,35 @@ jobs:
           if-no-files-found: error
           retention-days: 1
 
-  release:
-    needs: [data, build]
-    runs-on: ubuntu-latest
-    steps:
-      - name: 1. Download binaries
-        uses: actions/download-artifact@v3
-        with:
-          path: ./dist
+#   release:
+#     needs: [data, build]
+#     runs-on: ubuntu-latest
+#     steps:
+#       - name: 1. Download binaries
+#         uses: actions/download-artifact@v3
+#         with:
+#           path: ./dist
 
-      - name: 2. Prepare files for release
-        run: |
-          echo "Structure of downloaded files" && ls -R
-          for dir in */ ; do
-            if [[ $dir =~ "linux" ]]; then
-              tar -czvf ${dir%*/}.tar.gz $dir;
-            elif [[ $dir =~ "windows" ]]; then
-              zip ${dir%*/}.zip $dir;
-            elif [[ $dir =~ "macos" ]]; then
-              mv ${dir}retype.dmg ${dir%*/}.dmg;
-            fi;
-            rm -rf $dir;
-          done
-          echo "Final structure" && ls
-        working-directory: ./dist
+#       - name: 2. Prepare files for release
+#         run: |
+#           echo "Structure of downloaded files" && ls -R
+#           for dir in */ ; do
+#             if [[ $dir =~ "linux" ]]; then
+#               tar -czvf ${dir%*/}.tar.gz $dir;
+#             elif [[ $dir =~ "windows" ]]; then
+#               zip ${dir%*/}.zip $dir;
+#             elif [[ $dir =~ "macos" ]]; then
+#               mv ${dir}retype.dmg ${dir%*/}.dmg;
+#             fi;
+#             rm -rf $dir;
+#           done
+#           echo "Final structure" && ls
+#         working-directory: ./dist
 
-      - name: 3. Release
-        if: ${{ inputs.release }}
-        uses: "marvinpinto/action-automatic-releases@latest"
-        with:
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
-          title: v${{ needs.data.outputs.ver }}
-          files: ./dist/*
+#       - name: 3. Release
+#         if: ${{ inputs.release }}
+#         uses: "marvinpinto/action-automatic-releases@latest"
+#         with:
+#           repo_token: ${{ secrets.GITHUB_TOKEN }}
+#           title: v${{ needs.data.outputs.ver }}
+#           files: ./dist/*
