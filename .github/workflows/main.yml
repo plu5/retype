@@ -43,7 +43,7 @@ jobs:
 #             artifact: './dist/retype-hacky'
 #             name: linux
           - os: macos-latest
-            artifact: './dist/retype.app' # './retype.dmg'
+            artifact: './dist/retype' # './retype.dmg'
             name: macos
 #           - os: windows-latest
 #             artifact: './dist/retype-hacky'
@@ -140,7 +140,7 @@ jobs:
 
       - name: 4M. Run retype setup script
         if: matrix.os == 'macos-latest'
-        run: venv/bin/python3 setup.py b -k bundle
+        run: venv/bin/python3 setup.py b -k onedir # bundle
 
 #       - name: 5M. Make dmg
 #         if: matrix.os == 'macos-latest'
