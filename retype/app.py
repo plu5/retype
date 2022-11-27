@@ -5,7 +5,7 @@ from qt import QApplication
 
 from retype.controllers import MainController
 from retype.constants import RETYPE_VERSION_STR as version
-from retype.constants import builddate_str, ismacos
+from retype.constants import RETYPE_BUILDDATE_DESC, ismacos
 
 
 _logging_levels = logging._levelToName  # FIXME: bad
@@ -22,7 +22,7 @@ def run():
     args = _parseArgs()
     _configLog(args.loglevel[0])
 
-    logging.info(f'retype {version}' + builddate_str)
+    logging.info(f'retype {version}' + RETYPE_BUILDDATE_DESC)
 
     controller = MainController()
     controller.show()

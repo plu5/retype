@@ -1,9 +1,14 @@
+import re
 from setuptools import setup
 from setup.build import b
 
 
+pkg_file = open("retype/__init__.py").read()
+metadata = dict(re.findall(r"__([a-z]+)__\s*=\s*'([^']+)'", pkg_file))
+
+
 setup(name='retype',
-      version='1.0.0',
+      version=metadata['version'],
       packages=['qt', 'retype'],
       zip_safe=False,
       install_requires=[

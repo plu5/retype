@@ -3,7 +3,7 @@ from qt import (QDialog, Qt, QTabWidget, QWidget, QVBoxLayout, QHBoxLayout,
 
 from retype.resource_handler import getIcon
 from retype.constants import (RETYPE_VERSION_STR, RETYPE_REPOSITORY_URL,
-                              ACKNOWLEDGEMENTS, builddate_str)
+                              ACKNOWLEDGEMENTS, RETYPE_BUILDDATE_DESC)
 
 
 class AboutDialog(QDialog):
@@ -85,8 +85,8 @@ class AboutPage(QWidget):
         img_l.setPixmap(getIcon('retype').pixmap(400))
 
         makel(f"Version {RETYPE_VERSION_STR}")
-        if (builddate_str != ''):
-            makel(builddate_str)
+        if (RETYPE_BUILDDATE_DESC != ''):
+            makel(RETYPE_BUILDDATE_DESC)
 
         rep_l = makel(
             f'<a href="{RETYPE_REPOSITORY_URL}">GitHub repository</a>')

@@ -6,6 +6,7 @@ from ebooklib import VERSION as EBOOKLIB_VERSION
 from qt import QT_VERSION_STR, PYQT_VERSION_STR, QT_WRAPPER, sip
 
 from retype.resource_handler import root_path, getLibraryPath, getIncludePath
+from retype import __version__
 
 
 iswindows = platform.lower() in ['win32', 'win64']
@@ -46,11 +47,6 @@ if iswindows:
 
 SIP_VERSION_STR = sip.SIP_VERSION_STR
 
-RETYPE_VERSION_STR = "1.0.0"
-RETYPE_REPOSITORY_URL = "https://www.github.com/plu5/retype"
-RETYPE_ISSUE_TRACKER_URL = "https://www.github.com/plu5/retype/issues"
-RETYPE_DOCUMENTATION_URL = "https://retype.readthedocs.io/"
-
 ACKNOWLEDGEMENTS = {
     'Python':
     {
@@ -85,7 +81,7 @@ ACKNOWLEDGEMENTS = {
 }
 
 
-def maybeGetBuilddate():
+def getBuilddate():
     builddate = None
     if not getattr(sys, 'frozen', False) and not hasattr(sys, '_MEIPASS'):
         return builddate
@@ -96,5 +92,10 @@ def maybeGetBuilddate():
     return builddate
 
 
-builddate = maybeGetBuilddate()
-builddate_str = f' built @ {builddate}' if builddate else ''
+RETYPE_VERSION_STR = __version__
+RETYPE_BUILDDATE_STR = getBuilddate()
+RETYPE_BUILDDATE_DESC = f' built @ {RETYPE_BUILDDATE_STR}' \
+    if RETYPE_BUILDDATE_STR else ''
+RETYPE_REPOSITORY_URL = "https://www.github.com/plu5/retype"
+RETYPE_ISSUE_TRACKER_URL = "https://www.github.com/plu5/retype/issues"
+RETYPE_DOCUMENTATION_URL = "https://retype.readthedocs.io/"
