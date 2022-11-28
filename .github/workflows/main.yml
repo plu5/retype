@@ -138,7 +138,7 @@ jobs:
           script: 'pyinstaller-hack.sh'
           args: 'apply venv/lib/site-packages'
           
-      - uses: robinraju/release-downloader@latest
+      - uses: robinraju/release-downloader@main
         with:
           repository: upx/upx
           latest: true
