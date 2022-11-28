@@ -34,7 +34,7 @@ function rem_line()
 cd ${SITE_PACKAGES}/PyInstaller/loader
 
 if [[ $ARG == 'apply' ]]; then
-    add_line
+    rem_line; add_line
 elif [[ $ARG == 'unapply' ]]; then
     rem_line
 else
