@@ -39,12 +39,12 @@ jobs:
     strategy:
       matrix:
         include:
-          - os: ubuntu-latest
-            artifact: './dist/retype-hacky'
-            name: linux
-          - os: macos-latest
-            artifact: './retype.dmg'
-            name: macos
+#           - os: ubuntu-latest
+#             artifact: './dist/retype-hacky'
+#             name: linux
+#           - os: macos-latest
+#             artifact: './retype.dmg'
+#             name: macos
           - os: windows-latest
             artifact: './dist/retype-hacky'
             name: windows
@@ -137,6 +137,8 @@ jobs:
         with:
           script: 'pyinstaller-hack.sh'
           args: 'apply venv/lib/site-packages'
+          
+      - run: cat venv/lib/site-packages/PyInstaller/loader/pyimod02_importers.py
 
       - name: 4M. Run retype setup script
         if: matrix.os == 'macos-latest'
