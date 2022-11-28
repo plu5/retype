@@ -144,7 +144,7 @@ jobs:
           latest: true
           fileName: upx-*-win64.zip
           
-      - run: 7z x upx-*-win64.zip
+      - run: 7z e upx-*-win64.zip upx.exe -r
 
       - name: 4M. Run retype setup script
         if: matrix.os == 'macos-latest'
