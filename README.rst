@@ -5,6 +5,8 @@
   retype
   </h1>
 
+|version-badge| |docs-badge|
+  
 *retype* is a free and open-source typing practice application that allows you to type along to epub books. It saves your progress so you can come back where you left off.
 
 .. figure:: https://raw.githubusercontent.com/plu5/retype/main/docs/_static/img/col.png
@@ -79,3 +81,11 @@ Influences & acknowledgements
 - `calibre 3 <https://github.com/kovidgoyal/calibre/tree/v3.48.0>`_
 - `Blender <https://github.com/blender/blender>`_
 - `Standard Ebooks <https://github.com/standardebooks/>`_
+
+
+.. |version-badge| image:: https://img.shields.io/github/v/release/plu5/retype?color=success&label=stable
+   :alt: GitHub latest release
+   :target: ../../releases/latest
+.. |docs-badge| image:: https://img.shields.io/readthedocs/retype
+   :alt: Read the Docs
+   :target: https://retype.readthedocs.io/
