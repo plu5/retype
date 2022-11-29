@@ -58,8 +58,11 @@ jobs:
           git commit -m "chore: Bump version (${{ needs.data.outputs.version }})"
           git push
 
-      - if: ${{ needs.data.outputs.release }}
-        run: echo "if ${{ needs.data.outputs.release }} passed" # temp debug
+      - if: needs.data.outputs.release
+        run: echo "if needs.data.outputs.release ${{ needs.data.outputs.release }} passed" # temp debug
+
+      - if: needs.data.outputs.release == true
+        run: echo "if needs.data.outputs.release == true ${{ needs.data.outputs.release }} passed" # temp debug
 
   build:
     needs: [data, bump-version]
