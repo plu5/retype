@@ -24,27 +24,50 @@ jobs:
   data:
     runs-on: ubuntu-latest
     outputs:
-      ver: ${{ steps.get-ver.outputs.ver }}
+      version: ${{ steps.inputs.outputs.version }}
+      release: ${{ steps.inputs.outputs.release }}
     steps:
-      - name: Get version
-        id: get-ver
+      - name: Get inputs
+        id: inputs
         run: |
-          VERSION=${GITHUB_REF#refs/*/}
-          if [ -n ${{ inputs.version }} ]; then VERSION=${{ inputs.version }}; fi
-          echo "ver=$VERSION" >> $GITHUB_OUTPUT
+          VERSION=${GITHUB_REF#refs/*/}; VERSION=${VERSION#v}
+          RELEASE=1
+          if [ -n "${{ inputs.version }}" ]; then
+            VERSION=${{ inputs.version }};
+            RELEASE=${{ inputs.release }};
+          fi
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "release=$RELEASE" >> $GITHUB_OUTPUT
+
+  bump-version:
+    needs: data
+    if: ${{ needs.data.outputs.release }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          ref: main
+
+      - run: |
+          echo "__version__ = '${{ needs.data.outputs.version }}'" > retype/__init__.py
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git add .
+          git commit -m "chore: Bump version (${{ needs.data.outputs.version }})"
+          git push
 
   build:
-    needs: data
+    needs: [data, bump-version]
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         include:
-#           - os: ubuntu-latest
-#             artifact: './dist/retype-hacky'
-#             name: linux
-#           - os: macos-latest
-#             artifact: './retype.dmg'
-#             name: macos
+          - os: ubuntu-latest
+            artifact: './dist/retype-hacky'
+            name: linux
+          - os: macos-latest
+            artifact: './retype.dmg'
+            name: macos
           - os: windows-latest
             artifact: './dist/retype-hacky'
             name: windows
@@ -137,14 +160,6 @@ jobs:
         with:
           script: 'pyinstaller-hack.sh'
           args: 'apply venv/lib/site-packages'
-          
-      - uses: robinraju/release-downloader@main
-        with:
-          repository: upx/upx
-          latest: true
-          fileName: upx-*-win64.zip
-          
-      - run: 7z e upx-*-win64.zip upx.exe -r
 
       - name: 4M. Run retype setup script
         if: matrix.os == 'macos-latest'
@@ -156,49 +171,62 @@ jobs:
           npm install -g appdmg
           appdmg setup/appdmg-config.json retype.dmg
 
-      - name: 5W. Run retype setup script
+      - name: 5W. Download UPX
+        if: matrix.os == 'windows-latest'
+        uses: robinraju/release-downloader@main
+        with:
+          repository: upx/upx
+          latest: true
+          fileName: upx-*-win64.zip
+
+      - name: 6W. Extract UPX
+        if: matrix.os == 'windows-latest'
+        run: 7z e upx-*-win64.zip upx.exe -r
+
+      - name: 7W. Run retype setup script
         if: matrix.os == 'windows-latest'
         run: venv/Scripts/python setup.py b -k hacky
 
       - name: F. Upload the build artifacts
         uses: actions/upload-artifact@v3
         with:
-          name: retype-${{ needs.data.outputs.ver }}-${{ matrix.name }}
+          name: retype-${{ needs.data.outputs.version }}-${{ matrix.name }}
           path: ${{ matrix.artifact }}
           if-no-files-found: error
           retention-days: 1
 
-#   release:
-#     needs: [data, build]
-#     runs-on: ubuntu-latest
-#     steps:
-#       - name: 1. Download binaries
-#         uses: actions/download-artifact@v3
-#         with:
-#           path: ./dist
+  release:
+    needs: [data, build]
+    runs-on: ubuntu-latest
+    steps:
+      - name: 1. Download binaries
+        uses: actions/download-artifact@v3
+        with:
+          path: ./dist
 
-#       - name: 2. Prepare files for release
-#         run: |
-#           echo "Structure of downloaded files" && ls -R
-#           for dir in */ ; do
-#             if [[ $dir =~ "linux" ]]; then
-#               tar -czvf ${dir%*/}.tar.gz $dir;
-#             elif [[ $dir =~ "windows" ]]; then
-#               zip ${dir%*/}.zip $dir;
-#             elif [[ $dir =~ "macos" ]]; then
-#               mv ${dir}retype.dmg ${dir%*/}.dmg;
-#             fi;
-#             rm -rf $dir;
-#           done
-#           echo "Final structure" && ls
-#         working-directory: ./dist
+      - name: 2. Prepare files for release
+        run: |
+          echo "Structure of downloaded files:" && ls -R && echo "-----"
+          for dir in */ ; do
+            if [[ "$dir" =~ "linux" ]]; then
+              tar -czvf "${dir%*/}.tar.gz" "$dir";
+            elif [[ "$dir" =~ "windows" ]]; then
+              zip -r "${dir%*/}.zip" "$dir";
+            elif [[ "$dir" =~ "macos" ]]; then
+              mv "${dir}retype.dmg" "${dir%*/}.dmg";
+            fi;
+            rm -rf "$dir";
+          done
+          echo "Final structure:"
+          for file in * ; do sha256sum "$file"; done
+        working-directory: ./dist
 
-#       - name: 3. Release
-#         if: ${{ inputs.release }}
-#         uses: "marvinpinto/action-automatic-releases@latest"
-#         with:
-#           repo_token: ${{ secrets.GITHUB_TOKEN }}
-#           title: v${{ needs.data.outputs.ver }}
-#           automatic_release_tag: v${{ needs.data.outputs.ver }}
-#           prerelease: false
-#           files: ./dist/*
+      - name: 3. Release
+        if: ${{ needs.data.outputs.release }}
+        uses: plu5/automatic-releases-with-sha-action@main
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          title: retype ${{ needs.data.outputs.version }}
+          automatic_release_tag: v${{ needs.data.outputs.version }}
+          prerelease: false
+          files: ./dist/*
