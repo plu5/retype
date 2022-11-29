@@ -1,0 +1,46 @@
+name: Run tests
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+env:
+  PYTHON_VERSION: 3.7.9
+
+jobs:
+  run-tests:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: windows-latest
+    steps:
+      - name: 1. Checkout
+        uses: actions/checkout@v3
+
+      - name: 2. Setup Python ${{ env.PYTHON_VERSION }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: 3. Generate Python venv cache
+        id: python_venv_cache
+        uses: actions/cache@v3
+        with:
+          path: venv
+          key: testvenv-${{ env.PYTHON_VERSION }}-${{ hashFiles('requirements.txt') }}-${{ matrix.os }}
+
+      - name: 4. Install dependencies unless cached
+        if: steps.python_venv_cache.outputs.cache-hit != 'true'
+        run: |
+          if [ -d "venv" ]; then rm -rf venv; fi
+          python -m venv venv
+          venv/Scripts/python -m pip install pytest
+          venv/Scripts/python -m pip install -r requirements.txt
+        shell: bash
+
+      - name: 5. Run pytest
+        run: venv/Scripts/python -m pytest
