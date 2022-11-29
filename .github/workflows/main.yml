@@ -19,6 +19,7 @@ on:
 env:
   PYTHON_VERSION: 3.7.9
   MACOSX_DEPLOYMENT_TARGET: 10.9
+  BRANCH: wip-actions
 
 jobs:
   data:
@@ -34,7 +35,7 @@ jobs:
           RELEASE=1
           if [ -n "${{ inputs.version }}" ]; then
             VERSION=${{ inputs.version }};
-            RELEASE=${{ inputs.release }};
+            RELEASE=RELEASE=$(if [ ${{ inputs.release }} == 'false' ]; then echo 0; fi)
           fi
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "release=$RELEASE" >> $GITHUB_OUTPUT
@@ -46,7 +47,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
         with:
-          ref: main
+          ref: ${{ env.BRANCH }}
 
       - run: |
           echo "__version__ = '${{ needs.data.outputs.version }}'" > retype/__init__.py
@@ -73,6 +74,8 @@ jobs:
             name: windows
     steps:
       - uses: actions/checkout@v3
+        with:
+          ref: ${{ env.BRANCH }}
 
       - name: 1U. Image cache
         id: image-cache
@@ -221,12 +224,12 @@ jobs:
           for file in * ; do sha256sum "$file"; done
         working-directory: ./dist
 
-      - name: 3. Release
-        if: ${{ needs.data.outputs.release }}
-        uses: plu5/automatic-releases-with-sha-action@main
-        with:
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
-          title: retype ${{ needs.data.outputs.version }}
-          automatic_release_tag: v${{ needs.data.outputs.version }}
-          prerelease: false
-          files: ./dist/*
+#       - name: 3. Release
+#         if: ${{ needs.data.outputs.release }}
+#         uses: plu5/automatic-releases-with-sha-action@main
+#         with:
+#           repo_token: ${{ secrets.GITHUB_TOKEN }}
+#           title: retype ${{ needs.data.outputs.version }}
+#           automatic_release_tag: v${{ needs.data.outputs.version }}
+#           prerelease: false
+#           files: ./dist/*
