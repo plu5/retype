@@ -58,6 +58,9 @@ jobs:
           git commit -m "chore: Bump version (${{ needs.data.outputs.version }})"
           git push
 
+      - if: ${{ needs.data.outputs.release }}
+        run: echo "if ${{ needs.data.outputs.release }} passed" # temp debug
+
   build:
     needs: [data, bump-version]
     runs-on: ${{ matrix.os }}
