@@ -35,10 +35,11 @@ jobs:
           RELEASE=1
           if [ -n "${{ inputs.version }}" ]; then
             VERSION=${{ inputs.version }};
-            RELEASE=RELEASE=$(if [ ${{ inputs.release }} == 'false' ]; then echo 0; fi)
+            RELEASE=$(if [ ${{ inputs.release }} == false ]; then echo 0; fi)
           fi
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "release=$RELEASE" >> $GITHUB_OUTPUT
+          echo "version=$VERSION, release=$RELEASE" # temp debug
 
   bump-version:
     needs: data
@@ -63,12 +64,12 @@ jobs:
     strategy:
       matrix:
         include:
-          - os: ubuntu-latest
-            artifact: './dist/retype-hacky'
-            name: linux
-          - os: macos-latest
-            artifact: './retype.dmg'
-            name: macos
+#           - os: ubuntu-latest
+#             artifact: './dist/retype-hacky'
+#             name: linux
+#           - os: macos-latest
+#             artifact: './retype.dmg'
+#             name: macos
           - os: windows-latest
             artifact: './dist/retype-hacky'
             name: windows
