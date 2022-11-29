@@ -10,7 +10,7 @@ class FakeBookWrapper:
         self.save_data = None
 
 
-def setup():
+def _setup():
     library = LibraryController('', [''])
     book = FakeBookWrapper()
     key = "hey"
@@ -26,7 +26,7 @@ def setup():
 class TestLibraryControllerSaveFunction:
     def test_save_file_exists_and_has_key(
             self, m_jsondump, m_jsonload, m_open, m_exists):
-        (library, book, key, data, save) = setup()
+        (library, book, key, data, save) = _setup()
 
         m_exists.return_value = True
         m_jsonload.return_value = {key: data}
@@ -39,7 +39,7 @@ class TestLibraryControllerSaveFunction:
 
     def test_save_file_exists_and_does_not_have_key(
             self, m_jsondump, m_jsonload, m_open, m_exists):
-        (library, book, key, data, save) = setup()
+        (library, book, key, data, save) = _setup()
 
         m_exists.return_value = True
         m_jsonload.return_value = save
@@ -54,7 +54,7 @@ class TestLibraryControllerSaveFunction:
 
     def test_save_file_does_not_exist(
             self, m_jsondump, m_jsonload, m_open, m_exists):
-        (library, book, key, data, save) = setup()
+        (library, book, key, data, save) = _setup()
 
         m_exists.return_value = False
 
@@ -70,7 +70,7 @@ class TestLibraryControllerSaveFunction:
 @patch('json.load')
 class TestLibraryControllerLoadFunction:
     def test_load_save_file_exists(self, m_jsonload, m_open, m_exists):
-        (library, _, _, data, _) = setup()
+        (library, _, _, data, _) = _setup()
         key = "dummykey"
         save = {key: data}
 
@@ -83,7 +83,7 @@ class TestLibraryControllerLoadFunction:
         assert loaded == data
 
     def test_load_save_file_does_not_exist(self, m_jsonload, m_open, m_exists):
-        (library, _, _, data, _) = setup()
+        (library, _, _, data, _) = _setup()
         key = "dummykey"
 
         m_exists.return_value = False
@@ -94,7 +94,7 @@ class TestLibraryControllerLoadFunction:
 
     def test_load_save_file_exists_and_does_not_have_key(
             self, m_jsonload, m_open, m_exists):
-        (library, _, _, data, _) = setup()
+        (library, _, _, data, _) = _setup()
         key = "dummykey"
         save = {key: data}
 

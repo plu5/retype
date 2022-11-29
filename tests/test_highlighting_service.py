@@ -94,7 +94,7 @@ class FakeBookView(QObject):
 app = QApplication(sys.argv)
 
 
-def setup(book_view_content=SAMPLE_CONTENT):
+def _setup(book_view_content=SAMPLE_CONTENT):
     console = FakeConsole()
     book_view = FakeBookView(book_view_content)
     service = HighlightingService(console, book_view)
@@ -104,7 +104,7 @@ def setup(book_view_content=SAMPLE_CONTENT):
 
 class TestHighlightingService:
     def test_handleHighlighting(self):
-        (console, _, service, cursor) = setup()
+        (console, _, service, cursor) = _setup()
 
         # Initial position should be 0
         assert cursor.position() == 0
@@ -142,7 +142,7 @@ class TestHighlightingService:
         assert cursor.position() == 26
 
     def test_skipEmptyLines(self):
-        (console, _, service, cursor) = setup(SAMPLE_CONTENT2)
+        (console, _, service, cursor) = _setup(SAMPLE_CONTENT2)
 
         console.setText("")
         assert cursor.position() == 1
@@ -152,7 +152,7 @@ class TestHighlightingService:
         assert cursor.position() == 1 + (len(t) - 1) + 3
 
     def test_handleMistakes(self):
-        (console, v, service, cursor) = setup(SAMPLE_CONTENT)
+        (console, v, service, cursor) = _setup(SAMPLE_CONTENT)
         mistake_cursor = v.mistake_cursor
 
         assert mistake_cursor.position() == 0
@@ -230,7 +230,7 @@ class TestHighlightingService:
         assert cursor.position() == 9
 
     def test_handleMistakes_deleting_from_front(self):
-        (console, v, service, cursor) = setup(SAMPLE_CONTENT)
+        (console, v, service, cursor) = _setup(SAMPLE_CONTENT)
 
         def getFirstLine():
             text = v.display.document().toPlainText()

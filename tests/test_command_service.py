@@ -68,7 +68,7 @@ class FakeBookView:
         self._called = ('previousChapter', move)
 
 
-def setup():
+def _setup():
     console = FakeConsole()
     book_view = FakeBookView()
     service = CommandService(console, book_view, console.switchView, None, '>',
@@ -78,7 +78,7 @@ def setup():
 
 class TestCommandService:
     def test_switch(self):
-        (console, _, _) = setup()
+        (console, _, _) = _setup()
         switchView = console.switchView
 
         console.submitText(">switch main")
@@ -99,7 +99,7 @@ class TestCommandService:
         assert switchView.emitted is None
 
     def test_command_history(self):
-        (console, _, service) = setup()
+        (console, _, service) = _setup()
 
         console.submitText(">switch main")
         assert service.command_history == [">switch main"]
@@ -112,7 +112,7 @@ class TestCommandService:
         assert service.command_history == [">switch book", ">switch main"]
 
     def test_setChapter(self):
-        (console, book_view, _) = setup()
+        (console, book_view, _) = _setup()
 
         # No argument
         console.submitText(">chapter")
