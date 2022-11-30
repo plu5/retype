@@ -13,10 +13,10 @@ on:
         default: true
         description: Publish release
   push:
-    tags:
-      - "v*"
+    paths: ['retype/__init__.py'] # VERSION_FILE
 
 env:
+  VERSION_FILE: 'retype/__init__.py'
   PYTHON_VERSION: 3.7.9
   MACOSX_DEPLOYMENT_TARGET: 10.9
 
@@ -24,20 +24,18 @@ jobs:
   data:
     runs-on: ubuntu-latest
     outputs:
-      version: ${{ steps.inputs.outputs.version }}
-      release: ${{ steps.inputs.outputs.release }}
+      version: ${{ steps.a.outputs.version }}
+      release: ${{ steps.a.outputs.release }}
     steps:
       - name: Get inputs
-        id: inputs
+        id: a
         run: |
-          VERSION=${GITHUB_REF#refs/*/}; VERSION=${VERSION#v}
-          RELEASE=1
+          VERSION=$(cat $VERSION_FILE | sed "s/__version__ = '//;s/'//")
+          RELEASE=true
           if [ -n "${{ inputs.version }}" ]; then
-            VERSION=${{ inputs.version }};
-            RELEASE=${{ inputs.release }};
+            VERSION=${{ inputs.version }}; RELEASE=${{ inputs.release }}
           fi
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-          echo "release=$RELEASE" >> $GITHUB_OUTPUT
+          echo -e "version=$VERSION\nrelease=$RELEASE" >> $GITHUB_OUTPUT
 
   build:
     needs: data
