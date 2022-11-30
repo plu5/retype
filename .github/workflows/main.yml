@@ -12,6 +12,10 @@ on:
         required: false
         default: true
         description: Publish release
+      annotation:
+        type: string
+        required: false
+        description: Tag annotation
   push:
     paths: ['retype/__init__.py'] # VERSION_FILE
 
@@ -26,7 +30,10 @@ jobs:
     outputs:
       version: ${{ steps.a.outputs.version }}
       release: ${{ steps.a.outputs.release }}
+      annotation: ${{ steps.a.outputs.annotation }}
     steps:
+      - uses: actions/checkout@v3
+
       - name: Get inputs
         id: a
         run: |
@@ -34,6 +41,10 @@ jobs:
           RELEASE=true
           if [ -n "${{ inputs.version }}" ]; then
             VERSION=${{ inputs.version }}; RELEASE=${{ inputs.release }}
+            echo "annotation=${{ inputs.annotation }}" >> $GITHUB_OUTPUT
+          else
+            echo "${{ github.event.head_commit.message }}" > commit_msg
+            echo -e "annotation<<EOF\n$(tail -n +3 commit_msg)\nEOF" >> $GITHUB_OUTPUT
           fi
           echo -e "version=$VERSION\nrelease=$RELEASE" >> $GITHUB_OUTPUT
 
@@ -209,5 +220,6 @@ jobs:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           title: retype ${{ needs.data.outputs.version }}
           automatic_release_tag: v${{ needs.data.outputs.version }}
+          tag_annotation: ${{ needs.data.outputs.annotation }}
           prerelease: false
           files: ./dist/*
