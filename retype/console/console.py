@@ -44,8 +44,10 @@ class Console(QLineEdit):
 
     def transferFocus(self, e):
         """Like setFocus, except you can also pass a keyPress event from
- another widget. Only does so if no modifier keys are held."""
-        if e.modifiers() == Qt.KeyboardModifier.NoModifier:
+ another widget. Only does so if no modifier keys (excluding Shift) are
+ held."""
+        if e.modifiers() in [Qt.KeyboardModifier.NoModifier,
+                             Qt.KeyboardModifier.ShiftModifier]:
             self.setFocus()
             self.keyPressEvent(e)
 
