@@ -16,6 +16,11 @@ on:
         type: string
         required: false
         description: Tag annotation
+      prerelease:
+        type: boolean
+        required: false
+        default: true
+        description: Whether release should be marked as prerelease
   push:
     paths: ['retype/__init__.py'] # VERSION_FILE
 
@@ -31,6 +36,7 @@ jobs:
       version: ${{ steps.a.outputs.version }}
       release: ${{ steps.a.outputs.release }}
       annotation: ${{ steps.a.outputs.annotation }}
+      prerelease: ${{ steps.a.outputs.prerelease }}
     steps:
       - uses: actions/checkout@v3
 
@@ -38,15 +44,17 @@ jobs:
         id: a
         run: |
           VERSION=$(cat $VERSION_FILE | sed "s/__version__ = '//;s/'//")
-          RELEASE=true
+          RELEASE=true; PRERELEASE=true
           if [ -n "${{ inputs.version }}" ]; then
             VERSION=${{ inputs.version }}; RELEASE=${{ inputs.release }}
             echo "annotation=${{ inputs.annotation }}" >> $GITHUB_OUTPUT
+            PRERELEASE=${{ inputs.prerelease }}
           else
             echo "${{ github.event.head_commit.message }}" > commit_msg
             echo -e "annotation<<EOF\n$(tail -n +3 commit_msg)\nEOF" >> $GITHUB_OUTPUT
+            if [ $GITHUB_REF == 'refs/heads/main' ]; then PRERELEASE=false; fi
           fi
-          echo -e "version=$VERSION\nrelease=$RELEASE" >> $GITHUB_OUTPUT
+          echo -e "version=$VERSION\nrelease=$RELEASE\nprerelease=$PRERELEASE" >> $GITHUB_OUTPUT
 
   build:
     needs: data
@@ -221,5 +229,5 @@ jobs:
           title: retype ${{ needs.data.outputs.version }}
           automatic_release_tag: v${{ needs.data.outputs.version }}
           tag_annotation: ${{ needs.data.outputs.annotation }}
-          prerelease: false
+          prerelease: ${{ needs.data.outputs.prerelease }}
           files: ./dist/*
