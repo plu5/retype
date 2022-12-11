@@ -4,3 +4,4 @@ config.json
 build
 dist
 builddate.txt
+*.egg-info
