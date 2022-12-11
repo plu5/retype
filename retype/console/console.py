@@ -1,9 +1,10 @@
-from qt import QLineEdit, pyqtSignal, Qt, QSize
+from qt import pyqtSignal, Qt, QSize
 
+from retype.ui import LineEdit
 from retype.console import CommandService, HighlightingService
 
 
-class Console(QLineEdit):
+class Console(LineEdit):
     submitted = pyqtSignal(str)
 
     def __init__(self, prompt, parent=None):
@@ -40,7 +41,7 @@ class Console(QLineEdit):
             self.command_service.commandHistoryUp()
         if e.key() == Qt.Key.Key_Down:
             self.command_service.commandHistoryDown()
-        QLineEdit.keyPressEvent(self, e)
+        super().keyPressEvent(e)
 
     def transferFocus(self, e):
         """Like setFocus, except you can also pass a keyPress event from
@@ -59,4 +60,4 @@ class Console(QLineEdit):
         if height:
             px = int(0.8 * height - 5)
             self.setStyleSheet("font-size: {}px".format(px))
-        QLineEdit.resizeEvent(self, e)
+        super().resizeEvent(e)
