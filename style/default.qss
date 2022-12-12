@@ -1,4 +1,4 @@
-QLineEdit[accessibleName="console"] {
+*[accessibleName="console"] {
   background-color: #BEBEBE;
   color: #333;
   border: 1px outset;
