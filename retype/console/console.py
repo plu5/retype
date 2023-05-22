@@ -14,6 +14,7 @@ class Console(LineEdit):
         self.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Preferred)
         self.setMaximumHeight(200)
 
+        self._font = self.font()
         self._prompt = prompt
 
     @property
@@ -57,5 +58,6 @@ class Console(LineEdit):
         height = self.size().height()
         if height > 10:
             px = int(0.8 * height - 5)
-            self.setStyleSheet("font-size: {}px".format(px))
+            self._font.setPixelSize(px)
+            self.setFont(self._font)
         super().resizeEvent(e)

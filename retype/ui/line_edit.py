@@ -80,6 +80,12 @@ class LineEdit(QWidget):
     def sizeHint(self):
         return self.edit.sizeHint()
 
+    def font(self):
+        return self.edit.font()
+
+    def setFont(self, *args):
+        self.edit.setFont(*args)
+
 
 class _LineEdit(QPlainTextEdit):
     returnPressed = pyqtSignal()
