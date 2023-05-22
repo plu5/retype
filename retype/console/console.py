@@ -1,4 +1,4 @@
-from qt import pyqtSignal, Qt, QSize
+from qt import pyqtSignal, Qt, QSizePolicy
 
 from retype.ui import LineEdit
 from retype.console import CommandService, HighlightingService
@@ -11,6 +11,7 @@ class Console(LineEdit):
         super().__init__(parent)
         self.setAccessibleName("console")
         self.returnPressed.connect(self._handleReturnPressed)
+        self.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Preferred)
         self.setMaximumHeight(200)
 
         self._prompt = prompt
@@ -52,12 +53,9 @@ class Console(LineEdit):
             self.setFocus()
             self.keyPressEvent(e)
 
-    def sizeHint(self):  # TODO
-        return QSize(15, 15)
-
     def resizeEvent(self, e):
         height = self.size().height()
-        if height:
+        if height > 10:
             px = int(0.8 * height - 5)
             self.setStyleSheet("font-size: {}px".format(px))
         super().resizeEvent(e)

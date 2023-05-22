@@ -12,10 +12,9 @@ NOTE:
 * Unimplemented signals: editingFinished, inputRejected"""
 
 import sys
-from qt import (QPlainTextEdit, QWidget, QSize, QSizePolicy, QKeySequence,
+from qt import (QPlainTextEdit, QWidget, QSizePolicy, QKeySequence,
                 pyqtSlot, pyqtSignal, QFocusEvent, QShortcut, QTextOption,
-                QTextCursor, QStyle, Qt, QStyleOptionFrame, QFontMetricsF,
-                QVBoxLayout,
+                QTextCursor, Qt, QVBoxLayout,
                 # for the demo only:
                 QApplication, QLineEdit)
 
@@ -44,6 +43,13 @@ class LineEdit(QWidget):
     def setAccessibleName(self, name):
         self.edit.setAccessibleName(name)
 
+    def setStyleSheet(self, ss):
+        self.edit.setStyleSheet(ss)
+
+    def setSizePolicy(self, hsp, vsp):
+        self.edit.setSizePolicy(hsp, vsp)
+        super().setSizePolicy(hsp, vsp)
+
     def keyPressEvent(self, e):
         self.edit.keyPressEvent(e)
 
@@ -51,6 +57,9 @@ class LineEdit(QWidget):
         return self.edit.toPlainText()
 
     def setText(self, text):
+        self.edit.setPlainText(text)
+
+    def setPlainText(self, text):
         self.edit.setPlainText(text)
 
     def _emitTextChanged(self):
@@ -65,12 +74,23 @@ class LineEdit(QWidget):
         self.cursorPositionChanged.emit(self._oldPos, newPos)
         self._oldPos = newPos
 
+    def minimumSizeHint(self):
+        return self.edit.minimumSizeHint()
+
+    def sizeHint(self):
+        return self.edit.sizeHint()
+
 
 class _LineEdit(QPlainTextEdit):
     returnPressed = pyqtSignal()
 
     def __init__(self, wrapper, *args):
         super().__init__(*args)
+
+        # Internal QLineEdit element to get the minimum size hint from this
+        #  instead of doing some crazy calculation which I cannot get
+        #  working reliably. Perhaps a cheat.
+        self.template = QLineEdit()
 
         # Set up expected Insert/Overwrite cursor mode toggle
         QShortcut(
@@ -79,7 +99,7 @@ class _LineEdit(QPlainTextEdit):
             self, self.cb_toggle_insert, context=Qt.WidgetShortcut)
 
         # Set up QPlainTextEdit to act like QLineEdit
-        self.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
+        self.setSizePolicy(self.template.sizePolicy())
         self.setLineWrapMode(QPlainTextEdit.NoWrap)
         self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
@@ -89,6 +109,9 @@ class _LineEdit(QPlainTextEdit):
 
         self.wrapper = wrapper
         self._isUserModified = False  # used for textEdited signal logic
+
+        self.setContentsMargins(0, 0, 0, 0)
+        self.document().setDocumentMargin(3)
 
     def focusInEvent(self, e: QFocusEvent):
         """Override focusInEvent to mimic QLineEdit behaviour"""
@@ -112,30 +135,12 @@ class _LineEdit(QPlainTextEdit):
             self.setTextCursor(cur)
 
     def minimumSizeHint(self):
-        """Redefine minimum size hint to match QLineEdit"""
-        block_fmt = self.document().firstBlock().blockFormat()
-        width = super().minimumSizeHint().width()
-        height = int(
-            QFontMetricsF(self.font()).lineSpacing() +  # noqa
-            block_fmt.topMargin() + block_fmt.bottomMargin() +  # noqa
-            self.document().documentMargin() +  # noqa
-            2 * self.frameWidth()
-        )
+        # """Redefine minimum size hint to match QLineEdit"""
+        return self.template.minimumSizeHint()
 
-        style_opts = QStyleOptionFrame()
-        style_opts.initFrom(self)
-        style_opts.lineWidth = self.frameWidth()
-        # TODO: Is it correct that I'm achieving the correct content height
-        #       under test conditions by feeding self.frameWidth() to both
-        #       QStyleOptionFrame.lineWidth and the sizeFromContents height
-        #       calculation?
-
-        return self.style().sizeFromContents(
-            QStyle.CT_LineEdit,
-            style_opts,
-            QSize(width, height),
-            self
-        )
+    def setStyleSheet(self, ss):
+        super().setStyleSheet(ss)
+        self.template.setStyleSheet(ss)
 
     def sizeHint(self):
         """Reuse minimumSizeHint for sizeHint"""
