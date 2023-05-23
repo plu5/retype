@@ -155,7 +155,7 @@ class TestLibraryControllerLoadFunction:
     def test_load_save_file_v1_two_books_same_checksum(
             self, m_jsonload, m_open, m_exists, m_hash):
         (library, book, data, _) = _setup()
-        save = {book.path: 'different-data', book.checksum: data}
+        save = {book.path: {'different': 'data'}, book.checksum: data}
 
         m_exists.return_value = True
         m_jsonload.return_value = save
