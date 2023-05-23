@@ -82,6 +82,35 @@ class LibraryController(object):
         self.save_file_contents = save
         book.save_data = data
 
+    def migrateV1Save(self, save):
+        book_checksum_list = []
+        new_save = {}
+        for key in save:
+            checksum = None
+            if key.lower().endswith(".epub"):
+                if (not os.path.exists(key)):
+                    logger.warning(f"Save file contains v1 format save data for\
+ a file that cannot be found: {key}")
+                    # Not a checksum; can’t generate it as we cannot find the
+                    #  file, but setting it anyway in order that we keep the
+                    #  save entry rather than delete it from the save. This
+                    #  save data entry cannot be used by retype, but we should
+                    #  not delete it as that would be unnecessary data loss and
+                    #  user could correct the issue by fixing the path,
+                    #  replacing it with a checksum, or moving the file back.
+                    checksum = key
+                else:
+                    checksum = generate_file_md5(key)
+            else:  # assume it’s a checksum
+                checksum = key
+            if checksum in book_checksum_list:
+                logger.warning(f"Save file contains several entries for the same\
+ book (checksum {checksum}). The lowest one in the file will be used")
+            else:
+                book_checksum_list.append(checksum)
+            new_save[checksum] = save[key]
+        return new_save
+
     def loadSaveFile(self):
         if os.path.exists(self.save_abs_path):
             logger.info(f'Read save: {self.save_abs_path}')
@@ -93,6 +122,7 @@ class LibraryController(object):
                 'This is normal if the save file has not been created yet.')
             save = {}
 
+        save = self.migrateV1Save(save)
         self.save_file_contents = save
         return save
 
