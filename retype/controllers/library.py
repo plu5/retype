@@ -69,6 +69,7 @@ class LibraryController(object):
         book_view.display.centreAroundCursor()
 
     def save(self, book, data):
+        self.addFriendlyName(data, book.path)
         key = book.checksum
         save = self.save_file_contents
         if (save):
@@ -100,6 +101,7 @@ class LibraryController(object):
                     checksum = key
                 else:
                     checksum = generate_file_md5(key)
+                    self.addFriendlyName(save[key], key)
             else:  # assume it’s a checksum
                 checksum = key
             if checksum in book_checksum_list:
@@ -109,6 +111,9 @@ class LibraryController(object):
                 book_checksum_list.append(checksum)
             new_save[checksum] = save[key]
         return new_save
+
+    def addFriendlyName(self, data, path):
+        data['friendly_name'] = os.path.basename(path)
 
     def loadSaveFile(self):
         if os.path.exists(self.save_abs_path):
