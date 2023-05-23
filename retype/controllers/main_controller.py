@@ -214,6 +214,12 @@ Attempting to load config from: {}".format(user_dir, custom_path))
         # Update library’s user_dir
         self.library.user_dir = config['user_dir']
 
+        # Update book display font
+        if not config['bookview']['save_font_size_on_quit']:
+            self.views[View.book_view].setFontSize(
+                config['bookview']['font_size'])
+        self.views[View.book_view].setFontFamily(config['bookview']['font'])
+
     def getGeometry(self, config):
         return config.get('window', default_config['window'])
 

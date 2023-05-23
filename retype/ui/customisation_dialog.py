@@ -7,7 +7,8 @@ from qt import (QWidget, QFormLayout, QVBoxLayout, QLabel, QLineEdit,
                 QSpinBox, QListView, QToolButton, QDialogButtonBox,
                 QAbstractListModel, Qt, QStyledItemDelegate, QStyle,
                 QApplication, QRectF, QTextDocument, QFileDialog, pyqtSignal,
-                QModelIndex, QItemSelectionModel, QMessageBox, QDialog, QSize)
+                QModelIndex, QItemSelectionModel, QMessageBox, QDialog, QSize,
+                QFont, QFontComboBox)
 
 from retype.extras.utils import update
 from retype.constants import default_config, iswindows
@@ -777,13 +778,18 @@ class BookViewSettingsWidget(QWidget):
             lambda val: self.updateSetting('font_size', val))
         self.selectors['font_size'] = self.font_size_selector
 
+        self.font_selector = QFontComboBox()
+        self.font_selector.currentFontChanged.connect(
+            lambda val: self.updateSetting('font', val.family()))
+        self.selectors['font'] = self.font_selector
+
         lyt = QFormLayout(self)
         lyt.addRow(save_font_size_checkbox)
         lyt.addRow(hline())
         lyt.addRow("Default font size:", self.font_size_selector)
+        lyt.addRow("Font family:", self.font_selector)
 
-        save_font_size_checkbox.setChecked(
-            self.settings['save_font_size_on_quit'])
+        self.set_(bookview_settings)
 
     def updateSetting(self, name, val):
         self.settings[name] = val
@@ -798,6 +804,9 @@ class BookViewSettingsWidget(QWidget):
             if key == 'save_font_size_on_quit':
                 state = settings[key]
                 selector.setChecked(state)
+                continue
+            elif key == 'font':
+                selector.setCurrentFont(QFont(settings[key]))
                 continue
             value = settings[key]
             selector.setValue(value)
