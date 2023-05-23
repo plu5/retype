@@ -29,7 +29,8 @@ default_config = {
     },
     "bookview": {
         "save_font_size_on_quit": True,
-        "font_size": 12
+        "font_size": 12,
+        "font": "Times New Roman"
     },
     "window": {
         "x": None,

@@ -16,11 +16,12 @@ logger = logging.getLogger(__name__)
 class BookDisplay(QTextBrowser):
     keyPressed = pyqtSignal(object)
 
-    def __init__(self, font_size=12, parent=None):
+    def __init__(self, font_family, font_size=12, parent=None):
         super().__init__(parent)
         self.cursor = QTextCursor(self.document())
         self.setOpenLinks(False)
         self.setOpenExternalLinks(True)
+        self.font = QFont(font_family, font_size)
         self.font_size = font_size
         self.updateFont()
 
@@ -28,12 +29,16 @@ class BookDisplay(QTextBrowser):
         self.cursor = cursor
 
     def updateFont(self):
-        font = QFont("Times New Roman", self.font_size)
-        self.setFont(font)
-        self.document().setDefaultFont(font)
+        self.font.setPixelSize(self.font_size)
+        self.setFont(self.font)
+        self.document().setDefaultFont(self.font)
 
     def setFontSize(self, val):
         self.font_size = val
+        self.updateFont()
+
+    def setFontFamily(self, val):
+        self.font.setFamily(val)
         self.updateFont()
 
     def paintEvent(self, e):
@@ -84,6 +89,7 @@ class BookView(QWidget):
         self._controller = main_controller
         self._library = self._controller.library
         self._console = self._controller.console
+        self.font_family = bookview_settings.get('font')
         self.font_size = bookview_settings.get('font_size')
         self._initUI()
 
@@ -107,7 +113,7 @@ class BookView(QWidget):
         self.mistake_format.setForeground(QColor('white'))
 
     def _initUI(self):
-        self.display = BookDisplay(self.font_size, self)
+        self.display = BookDisplay(self.font_family, self.font_size, self)
         self.display.anchorClicked.connect(self.anchorClicked)
         self.display.keyPressed.connect(self._controller.console.transferFocus)
 
@@ -442,6 +448,10 @@ class BookView(QWidget):
 
     def getFontSize(self):
         return self.display.font_size
+
+    def setFontFamily(self, val):
+        self.font_family = val
+        self.display.setFontFamily(val)
 
     def onLastChapter(self):
         return self.chapter_pos == len(self.book.chapters)-1
