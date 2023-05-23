@@ -1,15 +1,12 @@
-import os
-import json
 import logging
 from enum import Enum
-from copy import deepcopy
-from qt import QObject, QApplication, pyqtSignal, QUrl, QDesktopServices
+from qt import QObject, pyqtSignal, QUrl, QDesktopServices
 
 from retype.ui import (MainWin, ShelfView, BookView, CustomisationDialog,
                        AboutDialog)
-from retype.controllers import MenuController, LibraryController
+from retype.controllers import SafeConfig, MenuController, LibraryController
 from retype.console import Console
-from retype.constants import default_config, iswindows
+from retype.constants import iswindows
 
 logger = logging.getLogger(__name__)
 
@@ -30,12 +27,7 @@ class MainController(QObject):
 
     def __init__(self):
         super().__init__()
-
-        self.config_rel_path = 'config.json'
-        self.default_user_dir = default_config['user_dir']
-        self.base_config_abs_path = os.path.join(
-            self.default_user_dir, self.config_rel_path)
-        self.config = self.loadConfig(self.base_config_abs_path)
+        self.config = SafeConfig()
 
         self.console = Console(self.config['prompt'])
         self._window = MainWin(self.console, self.getGeometry(self.config))
@@ -64,13 +56,13 @@ class MainController(QObject):
     def _instantiateViews(self):
         self.views[View.shelf_view] = ShelfView(self._window, self)
 
-        rdict = self.config.get('rdict', None)
-        bookview_settings = self.config.get('bookview', None)
+        rdict = self.config['rdict']
+        bookview_settings = self.config['bookview']
         self.views[View.book_view] = BookView(self._window, self, rdict,
                                               bookview_settings)
 
         self.customisation_dialog = CustomisationDialog(
-            self.config, self._window,
+            self.config.raw, self._window,
             self.saveConfigRequested, self.prevViewRequested,
             self.views[View.book_view].getFontSize, self._window)
 
@@ -158,51 +150,14 @@ class MainController(QObject):
                                   self.customisationDialogRequested,
                                   self.aboutDialogRequested)
 
-    def isPathDefaultUserDir(self, path):
-        return os.path.abspath(path) == \
-            os.path.abspath(self.default_user_dir)
-
-    def loadConfig(self, path):
-        config = self._loadConfig(path)
-        user_dir = config['user_dir'] if config else None
-        if user_dir and not self.isPathDefaultUserDir(user_dir):
-            custom_path = os.path.join(user_dir, self.config_rel_path)
-            logger.debug("Non-default user_dir: {}\n\
-Attempting to load config from: {}".format(user_dir, custom_path))
-            config = self._loadConfig(custom_path)
-            if not config:
-                config = deepcopy(default_config)
-                config['user_dir'] = user_dir
-                return config
-        return config or default_config
-
-    def _loadConfig(self, path):
-        if os.path.exists(path):
-            logger.info(f'Read config: {path}')
-            with open(path, 'r') as f:
-                config = json.load(f)
-                return config
-        else:
-            logger.debug(
-                f'Config path {path} not found.\n'
-                'This is normal if the config file has not been created yet.')
-
     def saveConfig(self, config):
-        user_dir = config['user_dir']
-        path = os.path.join(user_dir, self.config_rel_path)
-        with open(path, 'w') as f:
-            json.dump(config, f, indent=2)
-        if not self.isPathDefaultUserDir(user_dir):
-            with open(self.config_rel_path, 'r') as f:
-                dconfig = json.load(f)
-                dconfig['user_dir'] = user_dir
-            with open(self.config_rel_path, 'w') as f:
-                json.dump(dconfig, f, indent=2)
+        self.config.save(config)
 
         # Repopulate library if paths changed
         if config['library_paths'] != self.library.library_paths:
             logger.debug("Repopulating library")
-            self._repopulateLibrary(user_dir, config['library_paths'])
+            self._repopulateLibrary(config['user_dir'],
+                                    config['library_paths'])
 
         # Update prompt if changed
         if config['prompt'] != self.console.prompt:
@@ -221,7 +176,7 @@ Attempting to load config from: {}".format(user_dir, custom_path))
         self.views[View.book_view].setFontFamily(config['bookview']['font'])
 
     def getGeometry(self, config):
-        return config.get('window', default_config['window'])
+        return config['window']
 
     def openUrl(self, url_str):
         url = QUrl(url_str)
@@ -252,6 +207,6 @@ Attempting to load config from: {}".format(user_dir, custom_path))
                 self.hideConsoleWindow(not self.console_status)
 
         def maybeHideConsoleWindow(self):
-            hide = self.config.get('hide_sysconsole', True)
+            hide = self.config['hide_sysconsole']
             if hide:
                 self.hideConsoleWindow()
