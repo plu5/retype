@@ -29,7 +29,8 @@ class MainController(QObject):
         super().__init__()
         self.config = SafeConfig()
 
-        self.console = Console(self.config['prompt'])
+        self.console = Console(
+            self.config['prompt'], self.config['console_font'])
         self._window = MainWin(self.console, self.getGeometry(self.config))
         if iswindows:
             self._window.opened.connect(self.maybeHideConsoleWindow)
@@ -174,6 +175,9 @@ class MainController(QObject):
             self.views[View.book_view].setFontSize(
                 config['bookview']['font_size'])
         self.views[View.book_view].setFontFamily(config['bookview']['font'])
+
+        # Update console font
+        self.console.font_family = config['console_font']
 
     def getGeometry(self, config):
         return config['window']
