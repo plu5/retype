@@ -398,12 +398,11 @@ class BookView(QWidget):
 
     def maybeSave(self):
         if self.book:
-            key = self.book.path
             data = {'persistent_pos': self.persistent_pos,
                     'line_pos': self.line_pos,
                     'chapter_pos': self.chapter_pos,
                     'progress': self.progress}
-            self._library.save(self.book, key, data)
+            self._library.save(self.book, data)
 
     def switchToShelves(self):
         self._controller.console.command_service.switch('shelves')

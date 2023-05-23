@@ -6,6 +6,7 @@ from ebooklib import epub
 from qt import QTextBrowser
 
 from retype.extras.utils import isspaceorempty
+from retype.extras.hashing import generate_file_md5
 
 logger = logging.getLogger(__name__)
 
@@ -14,7 +15,7 @@ class LibraryController(object):
     def __init__(self, user_dir, library_paths):
         self.user_dir = user_dir
         self.library_paths = library_paths
-        self._book_files = self.indexLibrary(library_paths)
+        self._library_items = self.indexLibrary(library_paths)
         self.books = None
         self.save_file_contents = None
 
@@ -28,24 +29,26 @@ class LibraryController(object):
         self.save_abs_path = os.path.join(value, 'save.json')
 
     def indexLibrary(self, library_paths):
-        book_path_list = []
-        book_list = {}
+        book_checksum_list = []
+        library_items = {}
+        idn = 0
         for library_path in library_paths:
             for root, dirs, files in os.walk(library_path):
                 for f in files:
                     if f.lower().endswith(".epub"):
                         path = os.path.join(root, f)
-                        if path not in book_path_list:
-                            book_path_list.append(path)
-        # internal name assignment
-        for i in range(0, len(book_path_list)):
-            book_list[i] = book_path_list[i]
-        return book_list
+                        checksum = generate_file_md5(path)
+                        if checksum in book_checksum_list:
+                            continue
+                        book_checksum_list.append(checksum)
+                        library_items[idn] = LibraryItem(idn, path, checksum)
+                        idn += 1
+        return library_items
 
     def instantiateBooks(self):
         self.books = {}
-        for idn, path in self._book_files.items():
-            book = BookWrapper(path, idn, self.load(path))
+        for idn, item in self._library_items.items():
+            book = BookWrapper(item, self.load(item))
             self.books[idn] = book
 
     def setBook(self, book_id, book_view, switchView):
@@ -65,7 +68,8 @@ class LibraryController(object):
         switchView.emit(2)
         book_view.display.centreAroundCursor()
 
-    def save(self, book, key, data):
+    def save(self, book, data):
+        key = book.checksum
         if os.path.exists(self.save_abs_path):
             with open(self.save_abs_path, 'r') as f:
                 save = json.load(f)
@@ -92,12 +96,14 @@ class LibraryController(object):
         self.save_file_contents = save
         return save
 
-    def load(self, key):
+    def load(self, item):
         save = None
         if self.save_file_contents is not None:
             save = self.save_file_contents
         else:
             save = self.loadSaveFile()
+
+        key = item.checksum
 
         if save and key in save:
             return save[key]
@@ -105,11 +111,20 @@ class LibraryController(object):
         return None
 
 
-class BookWrapper(object):
-    def __init__(self, path, idn, save_data=None):
-        self.path = path
-        self._book = epub.read_epub(path)
+class LibraryItem:
+    def __init__(self, idn, path, checksum):
         self.idn = idn
+        self.path = path
+        self.checksum = checksum
+
+
+class BookWrapper(object):
+    def __init__(self, library_item, save_data=None):
+        self._library_item = library_item
+        self.path = library_item.path
+        self.idn = library_item.idn
+        self.checksum = library_item.checksum
+        self._book = epub.read_epub(self.path)
         self.title = self._book.title
         self._chapters = None
         self._images = None
