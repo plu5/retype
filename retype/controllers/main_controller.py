@@ -65,7 +65,7 @@ class MainController(QObject):
         self.customisation_dialog = CustomisationDialog(
             self.config.raw, self._window,
             self.saveConfigRequested, self.prevViewRequested,
-            self.views[View.book_view].getFontSize, self._window)
+            lambda: self.views[View.book_view].font_size, self._window)
 
     def _viewFromEnumOrInt(self, view):
         if isinstance(view, View):
@@ -172,9 +172,9 @@ class MainController(QObject):
 
         # Update book display font
         if not config['bookview']['save_font_size_on_quit']:
-            self.views[View.book_view].setFontSize(
-                config['bookview']['font_size'])
-        self.views[View.book_view].setFontFamily(config['bookview']['font'])
+            self.views[View.book_view].font_size = \
+                config['bookview']['font_size']
+        self.views[View.book_view].font_family = config['bookview']['font']
 
         # Update console font
         self.console.font_family = config['console_font']

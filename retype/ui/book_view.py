@@ -22,7 +22,8 @@ class BookDisplay(QTextBrowser):
         self.setOpenLinks(False)
         self.setOpenExternalLinks(True)
         self.font = QFont(font_family, font_size)
-        self.font_size = font_size
+        self._font_size = font_size
+        self._font_family = font_family
         self.updateFont()
 
     def setCursor(self, cursor):
@@ -33,11 +34,21 @@ class BookDisplay(QTextBrowser):
         self.setFont(self.font)
         self.document().setDefaultFont(self.font)
 
-    def setFontSize(self, val):
-        self.font_size = val
+    @property
+    def font_size(self):
+        return self._font_size
+
+    @font_size.setter
+    def font_size(self, val):
+        self._font_size = val
         self.updateFont()
 
-    def setFontFamily(self, val):
+    @property
+    def font_family(self):
+        return self._font_family
+
+    @font_family.setter
+    def font_family(self, val):
         self.font.setFamily(val)
         self.updateFont()
 
@@ -89,8 +100,8 @@ class BookView(QWidget):
         self._controller = main_controller
         self._library = self._controller.library
         self._console = self._controller.console
-        self.font_family = bookview_settings['font']
-        self.font_size = bookview_settings['font_size']
+        self.display = BookDisplay(
+            bookview_settings['font'], bookview_settings['font_size'], self) 
         self._initUI()
 
         self.rdict = rdict
@@ -113,7 +124,6 @@ class BookView(QWidget):
         self.mistake_format.setForeground(QColor('white'))
 
     def _initUI(self):
-        self.display = BookDisplay(self.font_family, self.font_size, self)
         self.display.anchorClicked.connect(self.anchorClicked)
         self.display.keyPressed.connect(self._controller.console.transferFocus)
 
@@ -442,16 +452,21 @@ class BookView(QWidget):
         self.progress = (typed / self.total_len) * 100
         self.book.updateProgress(self.progress)
 
-    def setFontSize(self, val):
-        self.font_size = val
-        self.display.setFontSize(val)
-
-    def getFontSize(self):
+    @property
+    def font_size(self):
         return self.display.font_size
 
-    def setFontFamily(self, val):
-        self.font_family = val
-        self.display.setFontFamily(val)
+    @font_size.setter
+    def font_size(self, val):
+        self.display.font_size = val
+
+    @property
+    def font_family(self):
+        return self.display.font_family
+
+    @font_family.setter
+    def font_family(self, val):
+        self.display.font_family = val
 
     def onLastChapter(self):
         return self.chapter_pos == len(self.book.chapters)-1
