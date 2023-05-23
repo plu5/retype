@@ -1,7 +1,12 @@
+import os
+
 from setup.config.env import iswindows, islinux, ismacos
 
 
+s_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..')
+
 to_exclude = []
+to_add = []
 
 if iswindows:
     to_exclude = {
@@ -34,6 +39,14 @@ elif islinux:
         'libxshmfence', 'libgthread', 'clean', 'diff', 'libXau', 'libXdamage',
         'libXcomposite',
     }
+    to_add = [
+        {'from': s_dir + '/plugins/libcomposeplatforminputcontextplugin.so',
+         'to': 'PyQt5/Qt5/plugins/platforminputcontexts/\
+libcomposeplatforminputcontextplugin.so'},
+        {'from': s_dir + '/plugins/libfcitxplatforminputcontextplugin.so',
+         'to': 'PyQt5/Qt5/plugins/platforminputcontexts/\
+libfcitxplatforminputcontextplugin.so'}
+    ]
 elif ismacos:
     to_exclude = {
         'libcrypto', 'libncursesw', 'libssl', 'QtNetwork', 'QtQml', 'QtQuick',
@@ -52,4 +65,8 @@ def filterBinaries(toc):
         if not matches:
             filtered_binaries.append(b)
 
-    return filtered_binaries
+    added_binaries = []
+    for b in to_add:
+        added_binaries.append((b['to'], b['from'], 'BINARY'))
+
+    return added_binaries + filtered_binaries
