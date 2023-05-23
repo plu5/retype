@@ -7,8 +7,8 @@ if iswindows:
     to_exclude = {
         'Qt5DBus.dll', 'opengl32sw.dll', 'Qt5Network.dll', 'Qt5Qml.dll',
         'Qt5QmlModels.dll', 'Qt5Quick.dll', 'Qt5Svg.dll', 'Qt5WebSockets.dll',
-        '_bz2', '_hashlib', '_socket', '_ssl', 'libcrypto-1_1.dll',
-        'libssl-1_1.dll', 'objectify', 'sax', 'core-libraryloader',
+        '_bz2', '_socket', '_ssl', 'libcrypto-1_1.dll', 'libssl-1_1.dll',
+        'objectify', 'sax', 'core-libraryloader',
     }
 elif islinux:
     to_exclude = {
@@ -22,9 +22,9 @@ elif islinux:
         '_codecs', 'libprotobuf', 'libpango', 'libdbus', 'libgssapi',
         'libmount', 'libQt5WebSockets', 'libfontconfig', 'libblkid',
         'libxkbcommon', 'libmircommon', '_multibytecodec', '_asyncio',
-        'libpng16', '_hashlib', 'libatk', 'libatspi', 'libk5crypto',
+        'libpng16', 'libatk', 'libatspi', 'libk5crypto',
         'libglapi', 'libexpat', 'libgraphite', 'libselinux', 'liblzma', '_sha',
-        'libxcb', '_csv', 'libz', 'libboost', 'libgcc', '_heapq', '_md5',
+        'libxcb', '_csv', 'libz', 'libboost', 'libgcc', '_heapq',
         'libpangoft2', 'mmap', 'libgpg', 'libXext', 'libwayland', '_random',
         'libXi', 'termios', '_multiprocessing', '_bisect', 'libgbm', 'grp',
         'libpangocairo', 'resource', '_queue', 'libXrandr', 'libXrender',
@@ -38,8 +38,8 @@ elif ismacos:
     to_exclude = {
         'libcrypto', 'libncursesw', 'libssl', 'QtNetwork', 'QtQml', 'QtQuick',
         'QtSvg', 'QtWebSockets', 'objectify', 'sax', '_bisect', '_blake2',
-        '_bz2', '_codecs', '_ctypes', '_datetime', '_hashlib', '_heapq',
-        '_json', '_lzma', '_md5', '_multibyte', '_opcode', '_pickle',
+        '_bz2', '_codecs', '_ctypes', '_datetime', '_heapq',
+        '_json', '_lzma', '_multibyte', '_opcode', '_pickle',
         '_random', '_scproxy', '_sha', '_socket', '_ssl', '_uuid', 'grp',
         'pyexpat', 'readline', 'resource', 'termios', 'unicodedata',
     }
