@@ -134,6 +134,13 @@ class CustomisationDialog(QDialog):
             lambda t: self.update("prompt", t))
         lyt.addRow("Prompt:", self.selectors['prompt'])
 
+        # console font
+        self.selectors['console_font'] = ConsoleFontSelector(
+            self.config_edited['console_font'])
+        self.selectors['console_font'].currentFontChanged.connect(
+            lambda f: self.update("console_font", f.family()))
+        lyt.addRow("Console font:", self.selectors['console_font'])
+
         # Windows-only: system console
         if iswindows:
             lyt.addRow(hline())
@@ -488,6 +495,15 @@ class PromptEdit(QLineEdit):
 
     def set_(self, prompt):
         self.setText(prompt)
+
+
+class ConsoleFontSelector(QFontComboBox):
+    def __init__(self, font, parent=None):
+        QLineEdit.__init__(self, parent)
+        self.set_(font)
+
+    def set_(self, font):
+        self.setCurrentFont(QFont(font))
 
 
 class RDictModel(QAbstractListModel):

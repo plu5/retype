@@ -7,7 +7,7 @@ from retype.console import CommandService, HighlightingService
 class Console(LineEdit):
     submitted = pyqtSignal(str)
 
-    def __init__(self, prompt, parent=None):
+    def __init__(self, prompt, font_family=None, parent=None):
         super().__init__(parent)
         self.setAccessibleName("console")
         self.returnPressed.connect(self._handleReturnPressed)
@@ -15,6 +15,7 @@ class Console(LineEdit):
         self.setMaximumHeight(200)
 
         self._font = self.font()
+        self._font_family = self.font_family = font_family
         self._prompt = prompt
 
     @property
@@ -25,6 +26,16 @@ class Console(LineEdit):
     def prompt(self, value):
         self._prompt = value
         self.command_service.prompt = value
+
+    @property
+    def font_family(self):
+        return self._font_family
+
+    @font_family.setter
+    def font_family(self, value):
+        self._font_family = value
+        self._font.setFamily(value)
+        self.setFont(self._font)
 
     def initServices(self, book_view, switchView, loadBook, customise, about):
         self.command_service = CommandService(

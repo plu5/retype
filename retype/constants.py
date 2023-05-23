@@ -16,6 +16,7 @@ default_config = {
     "user_dir": root_path,
     "library_paths": [getLibraryPath()],
     "prompt": ">",
+    "console_font": "Default",
     "rdict": {
         "\ufffc": [" "],
         "\u00ae": ["r", "R"],
@@ -30,7 +31,7 @@ default_config = {
     "bookview": {
         "save_font_size_on_quit": True,
         "font_size": 12,
-        "font": "Times New Roman"
+        "font": "Default"
     },
     "window": {
         "x": None,
