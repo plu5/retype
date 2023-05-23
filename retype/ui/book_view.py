@@ -89,8 +89,8 @@ class BookView(QWidget):
         self._controller = main_controller
         self._library = self._controller.library
         self._console = self._controller.console
-        self.font_family = bookview_settings.get('font')
-        self.font_size = bookview_settings.get('font_size')
+        self.font_family = bookview_settings['font']
+        self.font_size = bookview_settings['font_size']
         self._initUI()
 
         self.rdict = rdict

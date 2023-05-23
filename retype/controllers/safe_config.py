@@ -1,0 +1,80 @@
+import os
+import json
+import logging
+from copy import deepcopy
+
+from retype.constants import default_config
+
+logger = logging.getLogger(__name__)
+
+
+class SafeConfig:
+    def __init__(self):
+        self.config_rel_path = 'config.json'
+        self.default_user_dir = default_config['user_dir']
+        self.base_config_abs_path = os.path.join(
+            self.default_user_dir, self.config_rel_path)
+        self.config = self.raw = self.load(self.base_config_abs_path)
+
+    def isPathDefaultUserDir(self, path):
+        return os.path.abspath(path) == \
+            os.path.abspath(self.default_user_dir)
+
+    def load(self, path):
+        config = self._load(path)
+        user_dir = config['user_dir'] if config else None
+        if user_dir and not self.isPathDefaultUserDir(user_dir):
+            custom_path = os.path.join(user_dir, self.config_rel_path)
+            logger.debug("Non-default user_dir: {}\n\
+Attempting to load config from: {}".format(user_dir, custom_path))
+            config = self._load(custom_path)
+            if not config:
+                config = deepcopy(default_config)
+                config['user_dir'] = user_dir
+                return config
+        return config or default_config
+
+    def _load(self, path):
+        if os.path.exists(path):
+            logger.info(f'Read config: {path}')
+            with open(path, 'r') as f:
+                config = json.load(f)
+                return config
+        else:
+            logger.debug(
+                f'Config path {path} not found.\n'
+                'This is normal if the config file has not been created yet.')
+
+    def save(self, config):
+        user_dir = config['user_dir']
+        path = os.path.join(user_dir, self.config_rel_path)
+        with open(path, 'w') as f:
+            json.dump(config, f, indent=2)
+        if not self.isPathDefaultUserDir(user_dir):
+            with open(self.config_rel_path, 'r') as f:
+                dconfig = json.load(f)
+                dconfig['user_dir'] = user_dir
+            with open(self.config_rel_path, 'w') as f:
+                json.dump(dconfig, f, indent=2)
+
+    def __getitem__(self, key, default=None):
+        r = self.config.get(key, default_config.get(key, default))
+        if type(r) == dict and key != 'rdict':
+            return ConfigGroup(key, r)
+        return r
+
+    def get(self, key, default=None):
+        return self.__getitem__(key, default)
+
+
+class ConfigGroup():
+    def __init__(self, name, group):
+        self.name = name
+        self.group = group
+
+    def __getitem__(self, key, default=None):
+        return self.group.get(
+            key, default_config[self.name].get(key, default))
+
+    def get(self, key, default=None):
+        return self.__getitem__(key, default)

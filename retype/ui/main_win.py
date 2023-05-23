@@ -61,7 +61,7 @@ class MainWin(QMainWindow):
 
     def maybeRestoreSplitterState(self, name):
         splitter = self.splitters.get(name)
-        if splitter and self.geometry.get('save_splitters_on_quit', True):
-            encoded_state = self.geometry.get(f'{name}_splitter_state', None)
+        if splitter and self.geometry['save_splitters_on_quit']:
+            encoded_state = self.geometry[f'{name}_splitter_state']
             if encoded_state is not None:
                 splitter.restoreState(b64decode(encoded_state))
