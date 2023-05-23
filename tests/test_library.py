@@ -5,106 +5,167 @@ from PyQt5.Qt import QApplication
 from retype.controllers.library import LibraryController, BookWrapper
 
 
-class FakeBookWrapper:
+class FakeLibraryItem:
     def __init__(self):
+        self.idn = 0
+        self.path = 'mock-path.epub'
+        self.checksum = 'mock-checksum'
+
+
+class FakeBookWrapper:
+    def __init__(self, item):
+        self._library_item = item
+        self.checksum = item.checksum
+        self.path = item.path
         self.save_data = None
 
 
 def _setup():
     library = LibraryController('', [''])
-    book = FakeBookWrapper()
-    key = "hey"
+    book = FakeBookWrapper(FakeLibraryItem())
     data = {"test": "data"}
     save = {"dummykey": {"test": "data"}}
-    return library, book, key, data, save
+    return library, book, data, save
 
 
 @patch('os.path.exists')
 @patch('builtins.open')
-@patch('json.load')
 @patch('json.dump')
 class TestLibraryControllerSaveFunction:
-    def test_save_file_exists_and_has_key(
-            self, m_jsondump, m_jsonload, m_open, m_exists):
-        (library, book, key, data, save) = _setup()
+    def test_save_file_exists_and_has_book_save_data_already(
+            self, m_jsondump, m_open, m_exists):
+        (library, book, data, save) = _setup()
 
         m_exists.return_value = True
-        m_jsonload.return_value = {key: data}
+        library.save_file_contents = {book.checksum: 'other-data'}
 
-        library.save(book, key, data)
+        library.save(book, data)
 
-        m_jsonload.assert_called_once()
-        m_jsondump.assert_called_once_with({key: data}, ANY, indent=2)
+        m_jsondump.assert_called_once_with(
+            {book.checksum: data}, ANY, indent=2)
         assert book.save_data == data
 
-    def test_save_file_exists_and_does_not_have_key(
-            self, m_jsondump, m_jsonload, m_open, m_exists):
-        (library, book, key, data, save) = _setup()
+    def test_save_file_exists_and_does_not_have_book_save_data_yet(
+            self, m_jsondump, m_open, m_exists):
+        (library, book, data, _) = _setup()
 
         m_exists.return_value = True
-        m_jsonload.return_value = save
 
-        library.save(book, key, data)
+        library.save(book, data)
 
-        m_jsonload.assert_called_once()
-        new_save = save
-        new_save[key] = data
-        m_jsondump.assert_called_once_with(new_save, ANY, indent=2)
+        m_jsondump.assert_called_once_with(
+            {book.checksum: data}, ANY, indent=2)
+        assert book.save_data == data
+
+    def test_save_file_two_books_in_save(
+            self, m_jsondump, m_open, m_exists):
+        (library, book, data, _) = _setup()
+        save = {'other': data, book.checksum: data}
+
+        m_exists.return_value = True
+        library.save_file_contents = save
+
+        library.save(book, data)
+
+        m_jsondump.assert_called_once_with(save, ANY, indent=2)
         assert book.save_data == data
 
     def test_save_file_does_not_exist(
-            self, m_jsondump, m_jsonload, m_open, m_exists):
-        (library, book, key, data, save) = _setup()
+            self, m_jsondump, m_open, m_exists):
+        (library, book, data, save) = _setup()
 
         m_exists.return_value = False
 
-        library.save(book, key, data)
+        library.save(book, data)
 
-        m_jsonload.assert_not_called()
-        m_jsondump.assert_called_once_with({key: data}, ANY, indent=2)
+        m_jsondump.assert_called_once_with(
+            {book.checksum: data}, ANY, indent=2)
         assert book.save_data == data
 
 
+@patch('retype.controllers.library.generate_file_md5')
 @patch('os.path.exists')
 @patch('builtins.open')
 @patch('json.load')
 class TestLibraryControllerLoadFunction:
-    def test_load_save_file_exists(self, m_jsonload, m_open, m_exists):
-        (library, _, _, data, _) = _setup()
-        key = "dummykey"
+    def test_load_save_file_exists_and_has_key(
+            self, m_jsonload, m_open, m_exists, _):
+        (library, book, data, _) = _setup()
+        key = book.checksum
         save = {key: data}
 
         m_exists.return_value = True
         m_jsonload.return_value = save
 
-        loaded = library.load(key)
+        loaded = library.load(book._library_item)
 
         m_jsonload.assert_called_once()
         assert loaded == data
 
-    def test_load_save_file_does_not_exist(self, m_jsonload, m_open, m_exists):
-        (library, _, _, data, _) = _setup()
-        key = "dummykey"
+    def test_load_save_file_does_not_exist(self, m_jsonload, m_open, m_exists, _):
+        (library, book, data, _) = _setup()
 
         m_exists.return_value = False
 
-        loaded = library.load(key)
+        loaded = library.load(book._library_item)
         m_jsonload.assert_not_called()
         assert loaded is None
 
     def test_load_save_file_exists_and_does_not_have_key(
-            self, m_jsonload, m_open, m_exists):
-        (library, _, _, data, _) = _setup()
-        key = "dummykey"
-        save = {key: data}
+            self, m_jsonload, m_open, m_exists, _):
+        (library, book, _, save) = _setup()
 
         m_exists.return_value = True
         m_jsonload.return_value = save
 
-        loaded = library.load("nonexistent-key")
+        loaded = library.load(book._library_item)
 
         m_jsonload.assert_called_once()
         assert loaded is None
+
+    def test_load_save_file_exists_and_has_v1_format_key(
+            self, m_jsonload, m_open, m_exists, m_hash):
+        (library, book, data, _) = _setup()
+        save = {book.path: data}
+
+        m_exists.return_value = True
+        m_jsonload.return_value = save
+        m_hash.return_value = book.checksum
+
+        loaded = library.load(book._library_item)
+
+        m_jsonload.assert_called_once()
+        m_hash.assert_called_once_with(book.path)
+        assert loaded == data
+
+    def test_load_save_file_v1_path_does_not_exist(
+            self, m_jsonload, m_open, m_exists, m_hash):
+        (library, book, data, _) = _setup()
+        save = {book.path: data}
+
+        m_exists.side_effect = [True, False]
+        m_jsonload.return_value = save
+
+        loaded = library.load(book._library_item)
+
+        m_jsonload.assert_called_once()
+        m_hash.assert_not_called()
+        assert loaded is None
+
+    def test_load_save_file_v1_two_books_same_checksum(
+            self, m_jsonload, m_open, m_exists, m_hash):
+        (library, book, data, _) = _setup()
+        save = {book.path: 'different-data', book.checksum: data}
+
+        m_exists.return_value = True
+        m_jsonload.return_value = save
+        m_hash.return_value = book.checksum
+
+        loaded = library.load(book._library_item)
+
+        m_jsonload.assert_called_once()
+        m_hash.assert_called_once_with(book.path)
+        assert loaded == data
 
 
 SAMPLE_CONTENT = b'<span>\
@@ -149,7 +210,7 @@ app = QApplication(sys.argv)
 class TestBookWrapper:
     @patch('ebooklib.epub.read_epub')
     def test_parseChaptersContent(self, _):
-        book = BookWrapper(None, None)
+        book = BookWrapper(FakeLibraryItem())
         chapters = [FakeChapter(SAMPLE_CONTENT, "one"),
                     FakeChapter(SAMPLE_CONTENT2, "two")]
 
@@ -182,7 +243,7 @@ class TestBookWrapper:
     @patch('retype.controllers.library.BookWrapper._getItems')
     @patch('ebooklib.epub.read_epub')
     def test_chapters(self, _, m_getItems, m_parseChaptersContent):
-        book = BookWrapper(None, None)
+        book = BookWrapper(FakeLibraryItem())
 
         def side_effect(*args):
             setattr(book, "_unparsed_chapters", "mock_unparsed_chapters")
@@ -208,7 +269,7 @@ class TestBookWrapper:
 
     @patch('ebooklib.epub.read_epub')
     def test_updateProgress(self, _):
-        book = BookWrapper(None, None)
+        book = BookWrapper(FakeLibraryItem())
 
         def dummySubscriber(progress):
             calls = getattr(dummySubscriber, 'calls', None) or []

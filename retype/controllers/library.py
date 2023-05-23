@@ -70,16 +70,15 @@ class LibraryController(object):
 
     def save(self, book, data):
         key = book.checksum
-        if os.path.exists(self.save_abs_path):
-            with open(self.save_abs_path, 'r') as f:
-                save = json.load(f)
-                save[key] = data
+        save = self.save_file_contents
+        if (save):
+            save[key] = data
         else:
-            save = {key: data}
+            save = self.save_file_contents = {key: data}
+
         with open(self.save_abs_path, 'w', encoding='utf-8') as f:
             json.dump(save, f, indent=2)
 
-        self.save_file_contents = save
         book.save_data = data
 
     def migrateV1Save(self, save):
