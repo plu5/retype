@@ -158,7 +158,7 @@ class BookWrapper(object):
         self.path = library_item.path
         self.idn = library_item.idn
         self.checksum = library_item.checksum
-        self._book = epub.read_epub(self.path)
+        self._book = epub.read_epub(self.path, options={'ignore_ncx': True})
         self.title = self._book.title
         self._chapters = None
         self._images = None
