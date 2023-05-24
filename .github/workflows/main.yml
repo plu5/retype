@@ -6,11 +6,11 @@ on:
       version:
         type: string
         required: true
-        description: SemVer of release
+        description: SemVer/name of release
       release:
         type: boolean
         required: false
-        default: true
+        default: false
         description: Publish release
       annotation:
         type: string
@@ -20,7 +20,7 @@ on:
         type: boolean
         required: false
         default: true
-        description: Whether release should be marked as prerelease
+        description: If releasing, whether release should be marked prerelease
   push:
     paths: ['retype/__init__.py'] # VERSION_FILE
 
@@ -222,7 +222,7 @@ jobs:
         working-directory: ./dist
 
       - name: 3. Release
-        if: ${{ needs.data.outputs.release }}
+        if: needs.data.outputs.release == 'true'
         uses: plu5/automatic-releases-with-sha-action@main
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
