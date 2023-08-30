@@ -217,7 +217,7 @@ class BookWrapper(object):
 
         images = []
         for image_link in image_links:
-            for image in self.images:
+            for image in self._images:
                 if image_link.lstrip('./') in image.file_name:
                     images.append({'item': image,
                                    'link': image_link,
