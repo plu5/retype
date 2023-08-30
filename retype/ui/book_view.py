@@ -438,7 +438,7 @@ class BookView(QWidget):
         self.pchap_action.setDisabled(False)
         if self.viewed_chapter_pos == len(self.book.chapters) - 1:
             self.nchap_action.setDisabled(True)
-        elif self.viewed_chapter_pos == 0:
+        if self.viewed_chapter_pos == 0:
             self.pchap_action.setDisabled(True)
 
     def updateProgress(self):
