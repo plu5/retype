@@ -51,11 +51,15 @@ Attempting to load config from: {}".format(user_dir, custom_path))
         with open(path, 'w') as f:
             json.dump(config, f, indent=2)
         if not self.isPathDefaultUserDir(user_dir):
-            with open(self.config_rel_path, 'r') as f:
-                dconfig = json.load(f)
-                dconfig['user_dir'] = user_dir
-            with open(self.config_rel_path, 'w') as f:
-                json.dump(dconfig, f, indent=2)
+            path = os.path.join(self.default_user_dir, self.config_rel_path)
+            if os.path.exists(path):
+                with open(path, 'r') as f:
+                    dconfig = json.load(f)
+                    dconfig['user_dir'] = user_dir
+                with open(path, 'w') as f:
+                    json.dump(dconfig, f, indent=2)
+            else:
+                logger.error(f'Unable to find dconfig {path}')
 
     def __getitem__(self, key, default=None):
         r = self.config.get(key, default_config.get(key, default))
