@@ -168,6 +168,7 @@ class BookWrapper(object):
         self.documents = {}
         self._unparsed_chapters = []
         self.save_data = save_data
+        self.dirty = False
         self.progress = save_data['progress'] if save_data else None
         self.progress_subscribers = []
 

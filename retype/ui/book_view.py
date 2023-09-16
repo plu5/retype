@@ -7,6 +7,7 @@ from qt import (QWidget, QVBoxLayout, QTextBrowser, QTextDocument, QUrl,
 from retype.extras.utils import isspaceorempty
 from retype.ui.modeline import Modeline
 from retype.extras import ManifoldStr
+from retype.services import Autosave
 from retype.stats import StatsDock
 from retype.resource_handler import getIcon
 
@@ -100,6 +101,9 @@ class BookView(QWidget):
         self._controller = main_controller
         self._library = self._controller.library
         self._console = self._controller.console
+        self.autosave = Autosave()
+        self.autosave.save.connect(self.maybeSave)
+        self._console.installEventFilter(self.autosave.signal)
         self.display = BookDisplay(
             bookview_settings['font'], bookview_settings['font_size'], self) 
         self._initUI()
@@ -414,6 +418,7 @@ class BookView(QWidget):
 
     def maybeSave(self):
         if self.book:
+            logger.debug(f"Saving progress in '{self.book.title}'")
             data = {'persistent_pos': self.persistent_pos,
                     'line_pos': self.line_pos,
                     'chapter_pos': self.chapter_pos,
@@ -451,6 +456,7 @@ class BookView(QWidget):
 
         self.progress = (typed / self.total_len) * 100
         self.book.updateProgress(self.progress)
+        self.book.dirty = True
 
     @property
     def font_size(self):
