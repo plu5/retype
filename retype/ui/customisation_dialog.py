@@ -10,7 +10,7 @@ from qt import (QWidget, QFormLayout, QVBoxLayout, QLabel, QLineEdit,
                 QModelIndex, QItemSelectionModel, QMessageBox, QDialog, QSize,
                 QFont, QFontComboBox)
 
-from retype.extras.utils import update
+from retype.extras.dict import update
 from retype.constants import default_config, iswindows
 
 logger = logging.getLogger(__name__)
