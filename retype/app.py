@@ -19,18 +19,20 @@ def run():
     if ismacos:
         app.setStyle('Fusion')
 
-    args = _parseArgs()
+    ver_str = f'retype {version}' + RETYPE_BUILDDATE_DESC
+
+    args = _parseArgs(ver_str)
     _configLog(args.loglevel[0])
 
-    logging.info(f'retype {version}' + RETYPE_BUILDDATE_DESC)
+    logging.info(ver_str)
 
     controller = MainController()
     controller.show()
     sys.exit(app.exec())
 
 
-def _parseArgs():
-    parser = argparse.ArgumentParser(description='retype')
+def _parseArgs(desc):
+    parser = argparse.ArgumentParser(description=desc)
     parser.add_argument(
         '-l', '--loglevel', type=str, nargs=1, metavar='LOGLEVEL',
         default=['INFO'], choices=_logging_levels_names,
