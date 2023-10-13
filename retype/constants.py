@@ -17,6 +17,21 @@ default_config = {
     "library_paths": [getLibraryPath()],
     "prompt": ">",
     "console_font": "Default",
+    "sdict": {
+        '\r\n': {'keep': False},
+        '\n': {'keep': False},
+        '\r': {'keep': False},
+        '\v': {'keep': False},
+        '\f': {'keep': False},
+        '\x1c': {'keep': False},
+        '\x1d': {'keep': False},
+        '\x1e': {'keep': False},
+        '\x85': {'keep': False},
+        '\u2028': {'keep': False},
+        '\u2029': {'keep': False},
+        '. ': {'keep': True},
+        '。': {'keep': True}
+    },
     "rdict": {
         "\ufffc": [" "],
         "\u00ae": ["r", "R"],

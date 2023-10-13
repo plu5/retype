@@ -4,9 +4,8 @@ from qt import (QWidget, QVBoxLayout, QTextBrowser, QTextDocument, QUrl,
                 QToolBar, QFont, QKeySequence, Qt, QApplication, pyqtSignal,
                 QSplitter, QSize)
 
-from retype.extras.utils import isspaceorempty
+from retype.extras import splittext, isspaceorempty, ManifoldStr
 from retype.ui.modeline import Modeline
-from retype.extras import ManifoldStr
 from retype.services import Autosave
 from retype.stats import StatsDock
 from retype.resource_handler import getIcon
@@ -93,7 +92,7 @@ class BookDisplay(QTextBrowser):
 
 
 class BookView(QWidget):
-    def __init__(self, main_win, main_controller, rdict,
+    def __init__(self, main_win, main_controller, sdict, rdict,
                  bookview_settings=None, parent=None):
         super().__init__(parent)
         self._main_win = main_win
@@ -108,12 +107,14 @@ class BookView(QWidget):
             bookview_settings['font'], bookview_settings['font_size'], self) 
         self._initUI()
 
+        self.sdict = sdict
         self.rdict = rdict
 
         self.book = None
         self.cursor = None
         self.chapter_pos = None
         self.line_pos = None
+        self.cursor_pos = None
         self.persistent_pos = None
         self.progress = None
         self.chapter_lens = None
@@ -254,15 +255,14 @@ class BookView(QWidget):
             #  not be the same as the chapter the cursor is on
             self.viewed_chapter_pos = 0
 
-        # We split the text of the chapter on new lines, and for each line the
+        # We split the text of the chapter to lines, and for each line the
         #  user types correctly, the `cursor_pos' (character position in
         #  chapter) is added to `persistent_pos' and the console is cleared.
         # We use the `line_pos' to set what line needs to be typed
         #  at the moment; this corresponds to the index of the line
         #  in `tobetyped_list'.
-        if not self.line_pos or reset:
+        if not self.cursor_pos or reset:
             self.cursor_pos = 0
-            self.line_pos = 0
             self.persistent_pos = 0
 
         if not self.progress:
@@ -271,8 +271,15 @@ class BookView(QWidget):
         self.setCursor()
 
         self.tobetyped = self.book.chapters[self.chapter_pos]['plain']
-        self.tobetyped_list = self.tobetyped.splitlines()
+        self._prepTobetypedList()
+
+        self.line_pos = self.calcLinePos(self.cursor_pos)
+
         self._setLine(self.line_pos)
+
+    def _prepTobetypedList(self):
+        self.tobetyped_list = splittext(self.tobetyped, self.sdict,
+                                        True, True, '\r')
 
     def setCursor(self):
         self.cursor = QTextCursor(self.display.document())
@@ -397,6 +404,19 @@ class BookView(QWidget):
         else:
             self.previousChapter(False)
 
+    def calcLinePos(self, cursor_pos):
+        tally = line_pos = 0
+        if (not self.tobetyped_list or
+                not isinstance(self.tobetyped_list, list)):
+            logger.error("Bad tobetyped_list; {}".format(self.tobetyped_list))
+        for line in self.tobetyped_list:
+            tally += len(line)
+            if tally > cursor_pos:
+                break
+            line_pos += 1
+            self.persistent_pos = tally
+        return line_pos
+
     def _setLine(self, pos):
         if self.tobetyped_list:
             if self.line_pos > len(self.tobetyped_list):
@@ -416,11 +436,24 @@ class BookView(QWidget):
     def advanceLine(self):
         self._controller.console.command_service.advanceLine()
 
+    def setSdict(self, sdict):
+        self.sdict = sdict
+        if not self.book:
+            return
+        self._prepTobetypedList()
+        self.line_pos = self.calcLinePos(self.cursor_pos)
+        self._setLine(self.line_pos)
+
+    def setRdict(self, rdict):
+        self.rdict = rdict
+        if not self.book:
+            return
+        self._setLine(self.line_pos)
+
     def maybeSave(self):
         if self.book:
             logger.debug(f"Saving progress in '{self.book.title}'")
             data = {'persistent_pos': self.persistent_pos,
-                    'line_pos': self.line_pos,
                     'chapter_pos': self.chapter_pos,
                     'progress': self.progress}
             self._library.save(self.book, data)

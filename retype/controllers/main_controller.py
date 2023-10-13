@@ -57,9 +57,10 @@ class MainController(QObject):
     def _instantiateViews(self):
         self.views[View.shelf_view] = ShelfView(self._window, self)
 
+        sdict = self.config['sdict']
         rdict = self.config['rdict']
         bookview_settings = self.config['bookview']
-        self.views[View.book_view] = BookView(self._window, self, rdict,
+        self.views[View.book_view] = BookView(self._window, self, sdict, rdict,
                                               bookview_settings)
 
         self.customisation_dialog = CustomisationDialog(
@@ -164,8 +165,11 @@ class MainController(QObject):
         if config['prompt'] != self.console.prompt:
             self.console.prompt = config['prompt']
 
+        # Update sdict
+        self.views[View.book_view].setSdict(config['sdict'])
+
         # Update rdict
-        self.views[View.book_view].rdict = config['rdict']
+        self.views[View.book_view].setRdict(config['rdict'])
 
         # Update library’s user_dir
         self.library.user_dir = config['user_dir']
