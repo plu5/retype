@@ -1,6 +1,6 @@
 import logging
 
-from retype.extras.utils import spacerstrip
+from retype.extras.space import nrspacerstrip
 
 logger = logging.getLogger(__name__)
 
@@ -51,7 +51,7 @@ class HighlightingService(object):
         self.updateHighlighting()
 
         # Next line / chapter, skipping trailing spaces if present
-        if text == v.current_line or text == spacerstrip(v.current_line):
+        if text == v.current_line or text == nrspacerstrip(v.current_line):
             self.advanceLine()
 
     def _handleMistakes(self, v, text, end_correctness_index):
@@ -104,7 +104,7 @@ class HighlightingService(object):
         # Compensate
         len_typed = v.cursor_pos - v.persistent_pos
         difference = len(v.current_line) - len_typed
-        v.cursor_pos += difference + 1
+        v.cursor_pos += difference
 
         v.persistent_pos = v.cursor_pos
 

@@ -76,6 +76,7 @@ class CustomisationDialog(QDialog):
         tbox.addItem(self._pathSettings(), "Paths")
         tbox.addItem(self._consoleSettings(), "Console")
         tbox.addItem(self._bookviewSettings(), "Book View")
+        tbox.addItem(self._sdictSettings(), "Line splits")
         tbox.addItem(self._rdictSettings(), "Replacements")
         tbox.addItem(self._windowSettings(), "Window geometry")
 
@@ -154,6 +155,20 @@ class CustomisationDialog(QDialog):
             lyt.addRow(hide_sysconsole_checkbox)
 
         return pcon
+
+    def _sdictSettings(self):
+        psep = QWidget()
+        lyt = QFormLayout(psep)
+        lyt.addRow(descl("Configure substrings that split the text into lines.\
+ The 'keep' argument determines whether the substring still needs to be typed\
+ or gets skipped over."))
+        self.selectors['sdict'] = SDictWidget(
+            deepcopy(self.config_edited['sdict']))
+        self.selectors['sdict'].changed.connect(
+            lambda sdict: self.update("sdict", sdict))
+        lyt.addRow(self.selectors['sdict'])
+
+        return psep
 
     def _rdictSettings(self):
         prep = QWidget()
@@ -506,6 +521,190 @@ class ConsoleFontSelector(QFontComboBox):
         self.setCurrentFont(QFont(font))
 
 
+class ListView(QListView):
+    def __init__(self, *args):
+        QListView.__init__(self, *args)
+
+    def sizeHint(self):
+        size = QListView.sizeHint(self)
+        size.setHeight(10)
+        return size
+
+
+class SDictModel(QAbstractListModel):
+    TEMPLATE = '''<p><b>Substring:</b> <code>'<u style="color:blue">{0}</u>' ({1})</code><br>
+Keep: <code><b>{2}</b></code></p>'''
+    INVALID_TEMPLATE = '<div style="color:red">' + TEMPLATE + '</div>'
+    changed = pyqtSignal(dict)
+
+    def __init__(self, sdict, parent=None):
+        QAbstractListModel.__init__(self, parent)
+        self.sdict = sdict
+        self.order = list(sdict)
+
+    def rowCount(self, parent):
+        return len(self.sdict)
+
+    def data(self, index, role):
+        row = index.row()
+        if row < 0 or row >= len(self.order):
+            return None
+
+        substring = self.order[row]
+        escaped_unicode = str(substring.encode("unicode_escape")
+                              .decode("latin1"))
+
+        if role == Qt.ItemDataRole.DisplayRole:
+            if substring == '' or not self.sdict[substring]:
+                return self.INVALID_TEMPLATE.format(
+                    substring, escaped_unicode, self.sdict[substring]['keep'])
+            return self.TEMPLATE.format(
+                substring, escaped_unicode, self.sdict[substring]['keep'])
+        elif role == Qt.ItemDataRole.EditRole:
+            return (substring, self.sdict[substring]['keep'])
+
+        return None
+
+    def insertRows(self, position=None, rows=1, parent=QModelIndex()):
+        if position is None:
+            position = len(self.order)
+        self.beginInsertRows(QModelIndex(), position, position+rows-1)
+        for row in range(rows):
+            if '' in self.sdict:
+                break
+            self.order.insert(position + row, "")
+            self.sdict[''] = {'keep': True}
+            self.changed.emit(self.sdict)
+        self.endInsertRows()
+        return True
+
+    def removeRows(self, position, rows, parent):
+        self.beginRemoveRows(QModelIndex(), position, position+rows-1)
+        for row in range(rows):
+            del self.sdict[self.order[position + row]]
+            del self.order[position + row]
+            self.changed.emit(self.sdict)
+        self.endRemoveRows()
+        return True
+
+    def flags(self, index):
+        if not index.isValid():
+            return Qt.ItemFlag.ItemIsEnabled
+        return (QAbstractListModel.flags(self, index) |
+                Qt.ItemFlag.ItemIsEditable)
+
+    def setData(self, index, data, role):
+        if index.isValid() and role == Qt.ItemDataRole.EditRole:
+            del self.sdict[self.order[index.row()]]
+            self.order[index.row()] = data[0]
+            self.sdict[data[0]] = data[1]
+            self.dataChanged.emit(index, index, [role])
+            self.changed.emit(self.sdict)
+            return True
+        return False
+
+
+class SDictEntryEditor(QWidget):
+    def __init__(self, substr, keep, parent=None):
+        QWidget.__init__(self, parent)
+
+        lyt = QFormLayout(self)
+        self.substr_e = QLineEdit(substr)
+        self.keep_e = QCheckBox()
+        self.keep_e.setChecked(keep)
+        lyt.addRow("Substring:", self.substr_e)
+        lyt.addRow("Keep:", self.keep_e)
+
+        # Background
+        self.setStyleSheet("background-color:#CDE8FF")
+        self.setAttribute(Qt.WA_StyledBackground, True)
+
+        lyt.setContentsMargins(0, 0, 0, 0)
+        lyt.setSpacing(1)
+
+    def substr(self):
+        return self.substr_e.text()
+
+    def keep(self):
+        return {'keep': self.keep_e.isChecked()}
+
+
+class SDictDelegate(Delegate):
+    def __init__(self, parent=None):
+        Delegate.__init__(self, parent)
+
+    def createEditor(self, parent, option, index):
+        data = index.data(Qt.ItemDataRole.EditRole)
+        return SDictEntryEditor(*data, parent)
+
+    def setModelData(self, editor, model, index):
+        substr = editor.substr()
+        keep = editor.keep()
+
+        model.setData(index, [substr, keep], Qt.ItemDataRole.EditRole)
+
+
+class SDictWidget(QWidget):
+    changed = pyqtSignal(dict)
+
+    def __init__(self, sdict, parent=None):
+        QWidget.__init__(self, parent)
+
+        lyt = QFormLayout(self)
+        lyt.setContentsMargins(0, 0, 0, 0)
+        self.view = ListView()
+        self.view.setItemDelegate(SDictDelegate())
+        self.setModel(sdict)
+        lyt.addRow(self.view)
+
+        pbuttons = QWidget()
+        pbl = QHBoxLayout(pbuttons)
+        add_btn = QPushButton("Add")
+        add_btn.clicked.connect(self.addEntry)
+        pbl.addWidget(add_btn)
+        remove_btn = QPushButton("Remove")
+        remove_btn.clicked.connect(self.removeEntry)
+        pbl.addWidget(remove_btn)
+        modify_btn = QPushButton("Modify")
+        modify_btn.clicked.connect(self.modifyEntry)
+        pbl.addWidget(modify_btn)
+        pbl.setContentsMargins(0, 0, 0, 0)
+        lyt.addRow(pbuttons)
+
+    def setModel(self, sdict):
+        self.model = SDictModel(sdict)
+        self.model.changed.connect(lambda sdict: self.changed.emit(sdict))
+        self.view.setModel(self.model)
+
+    def addEntry(self):
+        self.model.insertRows()
+        row = self.model.rowCount(QModelIndex())-1
+        index = self.model.index(row, 0)
+        self.view.selectionModel().setCurrentIndex(
+            index, QItemSelectionModel.ClearAndSelect)
+        self.view.edit(index)
+
+    def selectedRowIndex(self):
+        selectionModel = self.view.selectionModel()
+        if selectionModel.hasSelection():
+            index = selectionModel.selectedRows()[0]
+            return index
+        return False
+
+    def removeEntry(self):
+        index = self.selectedRowIndex()
+        if index:
+            self.model.removeRows(index.row(), 1, QModelIndex())
+
+    def modifyEntry(self):
+        index = self.selectedRowIndex()
+        if index:
+            self.view.edit(index)
+
+    def set_(self, sdict):
+        self.setModel(sdict)
+
+
 class RDictModel(QAbstractListModel):
     TEMPLATE = '''<p><b>Substring:</b> <code>'<u style="color:blue">{0}</u>' ({1})</code><br>
 Replacements list: <code><b>{2}</b></code></p>'''
@@ -634,7 +833,7 @@ class RDictWidget(QWidget):
 
         lyt = QFormLayout(self)
         lyt.setContentsMargins(0, 0, 0, 0)
-        self.view = QListView()
+        self.view = ListView()
         self.view.setItemDelegate(RDictDelegate())
         self.setModel(rdict)
         lyt.addRow(self.view)

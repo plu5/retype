@@ -5,7 +5,7 @@ from lxml.html import fromstring, builder, tostring, xhtml_to_html
 from ebooklib import epub
 from qt import QTextBrowser
 
-from retype.extras.utils import isspaceorempty
+from retype.extras.space import isspaceorempty
 from retype.extras.hashing import generate_file_md5
 
 logger = logging.getLogger(__name__)

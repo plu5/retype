@@ -63,7 +63,7 @@ Attempting to load config from: {}".format(user_dir, custom_path))
 
     def __getitem__(self, key, default=None):
         r = self.config.get(key, default_config.get(key, default))
-        if type(r) == dict and key != 'rdict':
+        if type(r) == dict and key not in ['sdict', 'rdict']:
             return ConfigGroup(key, r)
         return r
 

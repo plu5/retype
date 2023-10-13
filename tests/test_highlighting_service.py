@@ -2,6 +2,7 @@ import sys
 from PyQt5.Qt import (QObject, pyqtSignal, QTextCursor, QTextCharFormat,
                       QApplication, QTextBrowser)
 
+from retype.extras import splittext
 from retype.console import HighlightingService
 
 
@@ -47,7 +48,9 @@ class FakeBookView(QObject):
         self.cursor_pos = 0
         self.line_pos = 0
         self.persistent_pos = 0
-        self.tobetyped_list = self.display.toPlainText().splitlines()
+        self.tobetyped_list = splittext(
+            self.display.toPlainText(),
+            {'\n': {'keep': False}}, True, True, '\r')
         self._setLine(self.line_pos)
         self.progress = 0
 
