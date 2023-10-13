@@ -1,6 +1,6 @@
 import logging
 
-from retype.extras.space import nrspacerstrip
+from retype.extras.space import nrspacerstrip, endsinn
 
 logger = logging.getLogger(__name__)
 
@@ -19,23 +19,31 @@ def compareStrings(str1, str2):
 
 
 class HighlightingService(object):
-    def __init__(self, console, book_view):
+    def __init__(self, console, book_view, enter_newline=False):
         self._console = console
         self.book_view = book_view
         self._console.textChanged.connect(self._handleHighlighting)
+        self.enter_newline = enter_newline
+        if enter_newline:
+            self._console.submitted.connect(self.handleSubmit)
         self.wrong = False
         self.wrong_start = None
         self.wrong_end = None
         self.wrong_text = ""
 
-    def _handleHighlighting(self, text):
-        v = self.book_view
-
+    def valid(self, v):
         if not v.isVisible() or v.progress == 100:
-            return
+            return False
         # In case there is no book loaded / variables not been initialised
         if any([getattr(v, 'persistent_pos', False) is False,
                 v.persistent_pos is None]):
+            return False
+        return True
+
+    def _handleHighlighting(self, text):
+        v = self.book_view
+
+        if not self.valid(v):
             return
 
         # Remove highlighting if things were deleted
@@ -50,8 +58,13 @@ class HighlightingService(object):
 
         self.updateHighlighting()
 
+        self._maybeAdvance(v, text, self.enter_newline)
+
+    def _maybeAdvance(self, v, text, require_enter=False):
         # Next line / chapter, skipping trailing spaces if present
         if text == v.current_line or text == nrspacerstrip(v.current_line):
+            if require_enter and endsinn(v.current_line):
+                return
             self.advanceLine()
 
     def _handleMistakes(self, v, text, end_correctness_index):
@@ -124,6 +137,14 @@ error: {}'.format(v.line_pos, len(v.tobetyped_list), e))
         self._console.clear()
         v.display.centreAroundCursor()
         v.updateProgress()
+
+    def handleSubmit(self, text):
+        v = self.book_view
+
+        if not self.valid(v):
+            return
+
+        self._maybeAdvance(v, text)
 
     def updateHighlighting(self):
         v = self.book_view
