@@ -37,11 +37,13 @@ class Console(LineEdit):
         self._font.setFamily(value)
         self.setFont(self._font)
 
-    def initServices(self, book_view, switchView, loadBook, customise, about):
+    def initServices(self, book_view, switchView, loadBook, customise, about,
+                     enter_newline):
         self.command_service = CommandService(
             self, book_view, switchView, loadBook, self._prompt, customise,
             about)
-        self.highlighting_service = HighlightingService(self, book_view)
+        self.highlighting_service = HighlightingService(
+            self, book_view, enter_newline)
 
     def _handleReturnPressed(self):
         self.submitted.emit(self.text())

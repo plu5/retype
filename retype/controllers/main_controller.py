@@ -150,7 +150,8 @@ class MainController(QObject):
                                   self.switchViewRequested,
                                   self.loadBookRequested,
                                   self.customisationDialogRequested,
-                                  self.aboutDialogRequested)
+                                  self.aboutDialogRequested,
+                                  self.config.get('enter_newline', False))
 
     def saveConfig(self, config):
         self.config.save(config)
@@ -170,6 +171,10 @@ class MainController(QObject):
 
         # Update rdict
         self.views[View.book_view].setRdict(config['rdict'])
+
+        # Update newline_enter
+        self.console.highlighting_service.enter_newline =\
+            config['enter_newline']
 
         # Update library’s user_dir
         self.library.user_dir = config['user_dir']

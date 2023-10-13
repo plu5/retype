@@ -30,20 +30,26 @@ def isspaceorempty(s, orgarbage=False):
 def spacerstrip(s):
     def _spacerstrip(s):
         return s.rstrip().rstrip(''.join(effectively_space))
-    s = _spacerstrip(s)
-    while s != _spacerstrip(s):
-        s = _spacerstrip(s)
-    return s
+    ns = _spacerstrip(s)
+    while ns != _spacerstrip(ns):
+        ns = _spacerstrip(ns)
+    return ns
 
 
 def nspacerstrip(s):
+    ns = s
     if len(s) and s[-1] == '\n':
-        s = spacerstrip(s[0:-1])
-    return s
+        ns = spacerstrip(s[0:-1])
+    return ns
 
 
 def nrspacerstrip(s):
-    s = nspacerstrip(s)
-    while len(s) and s[-1] == '\r':
-        s = s[0:-1]
-    return s
+    ns = nspacerstrip(s)
+    while len(ns) and ns[-1] == '\r':
+        ns = s[0:-1]
+    return ns
+
+def endsinn(s):
+    if len(s) and s[-1] == '\n':
+        return True
+    return False
