@@ -45,8 +45,8 @@ default_config = {
     },
     "bookview": {
         "save_font_size_on_quit": True,
-        "font_size": 12,
-        "font": "Default"
+        "font_size": 16,
+        "font": "Georgia"
     },
     "window": {
         "x": None,
