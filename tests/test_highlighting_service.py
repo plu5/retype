@@ -19,6 +19,7 @@ followed by a line of just spaces</body></html>'''
 
 class FakeConsole(QObject):
     textChanged = pyqtSignal(str)
+    submitted = pyqtSignal(str)
 
     def __init__(self):
         QObject.__init__(self)
