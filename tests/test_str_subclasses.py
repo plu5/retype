@@ -201,6 +201,17 @@ class TestManifoldStr:
         assert ms[:-1] == "dome tex"
         assert ms[-4:-1] == "bex"
 
+    def test_getitem_one_space_rep_newline(self):
+        ms = ManifoldStr(' \n', {' ': ['.']})
+        assert ms[0] == ' '
+
+    def test_getitem_two_spaces_rep_newline(self):
+        ms = ManifoldStr('  \n', {' ': ['.']})
+        assert ms[-1] == '\n'
+        assert ms[0] == ' '
+        assert ms[0:2] == ' .'
+        assert ms[1:3][0] == ' '
+
     def test_with_compareStrings(self):
         string = "thou art an eternal babbler; and, though void of wit,\
  your bluntness often occasions smarting"
@@ -254,3 +265,11 @@ class TestManifoldStr:
     def test_discworld(self):
         ms = ManifoldStr("A Discworld® Novel", {"®": {'r', 'R'}})
         assert ms == "A Discworldr Novel"
+
+    def test_strip_space_rep_newline(self):
+        ms = ManifoldStr('  \n', {' ': ['.']})
+        assert ms.strip(' ') == '\n'
+
+    def test_strip_space_rep_a(self):
+        ms = ManifoldStr('  a', {' ': ['.']})
+        assert ms.strip() == 'a'

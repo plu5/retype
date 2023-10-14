@@ -244,7 +244,10 @@ class ManifoldStr(UserString):
     def __getitem__(self, i):
         if isinstance(i, int):
             if i < 0:
-                return self.__getitem__(len(self.data) + i)
+                ni = len(self.data) + i
+                if ni < 0:
+                    raise IndexError('list index out of range')
+                return self.__getitem__(ni)
             elif i in self.manifold:
                 if len(self.manifold[i]) > 1:
                     return self.manifold[i][0]
@@ -277,7 +280,9 @@ class ManifoldStr(UserString):
                             new_manifold[index] = substring_by_stop[:stop-k]
                     if k < start:
                         substring_by_start = self.manifold[k]
-                        new_manifold[index] = substring_by_start[start-k:]
+                        s = substring_by_start[start-k:]
+                        if len(s):
+                            new_manifold[index] = s
                         break
                 return ManifoldStr.by_parts(self.data[start:stop],
                                             self.rdict,
@@ -290,7 +295,7 @@ class ManifoldStr(UserString):
 
     def __repr__(self):
         return (f'{self.__class__.__name__}'
-                f'(\'{self.base}\', {self.rdict})')
+                f'({repr(self.base)}, {self.rdict})')
 
     def strip(self, chars=" ", directions=[1, -1]):
         new = deepcopy(self)
@@ -305,7 +310,7 @@ class ManifoldStr(UserString):
                 raise ValueError("each direction is expected to be 1 or -1, \
 not {}".format(i))
             for char in chars:
-                while new and new[k] == char:
+                while len(new) and new[k] == char:
                     new = new[sl]
                     if new is None:
                         new = ''
