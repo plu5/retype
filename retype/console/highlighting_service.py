@@ -23,9 +23,7 @@ class HighlightingService(object):
         self._console = console
         self.book_view = book_view
         self._console.textChanged.connect(self._handleHighlighting)
-        self.enter_newline = enter_newline
-        if enter_newline:
-            self._console.submitted.connect(self.handleSubmit)
+        self.setEnterNewline(enter_newline)
         self.wrong = False
         self.wrong_start = None
         self.wrong_end = None
@@ -137,6 +135,17 @@ error: {}'.format(v.line_pos, len(v.tobetyped_list), e))
         self._console.clear()
         v.display.centreAroundCursor()
         v.updateProgress()
+
+    def setEnterNewline(self, enter_newline):
+        self.enter_newline = enter_newline
+        if enter_newline:
+            self._console.submitted.connect(self.handleSubmit)
+        else:
+            try:
+                self._console.submitted.disconnect(self.handleSubmit)
+            except TypeError:
+                # Occurs when not previously connected
+                pass
 
     def handleSubmit(self, text):
         v = self.book_view

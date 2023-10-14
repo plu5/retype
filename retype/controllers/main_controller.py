@@ -172,9 +172,9 @@ class MainController(QObject):
         # Update rdict
         self.views[View.book_view].setRdict(config['rdict'])
 
-        # Update newline_enter
-        self.console.highlighting_service.enter_newline =\
-            config['enter_newline']
+        # Update enter_newline
+        self.console.highlighting_service.setEnterNewline(
+            config['enter_newline'])
 
         # Update library’s user_dir
         self.library.user_dir = config['user_dir']
