@@ -967,7 +967,9 @@ class WindowGeometrySelector(QWidget):
 
     def setSelectorsValuesByWindow(self):
         values = self.valuesByWindow()
-        self.set_(values)
+        self.dims.update(values)
+        self.set_(self.dims)
+        self.changed.emit(self.dims)
 
     def connectSelector(self, name, signal):
         signal.connect(lambda val: self.updateDim(name, val))
