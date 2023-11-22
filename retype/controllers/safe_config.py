@@ -4,6 +4,7 @@ import logging
 from copy import deepcopy
 
 from retype.constants import default_config
+from retype.extras.dict import SafeDict
 
 logger = logging.getLogger(__name__)
 
@@ -15,6 +16,8 @@ class SafeConfig:
         self.base_config_abs_path = os.path.join(
             self.default_user_dir, self.config_rel_path)
         self.config = self.raw = self.load(self.base_config_abs_path)
+        self.safe_dict = SafeDict(self.config, default_config,
+                                  ['rdict', 'sdict'])
 
     def isPathDefaultUserDir(self, path):
         return os.path.abspath(path) == \
@@ -47,6 +50,7 @@ Attempting to load config from: {}".format(user_dir, custom_path))
 
     def populate(self, config_dict):
         self.config = self.raw = config_dict
+        self.safe_dict.raw = self.raw
 
     def save(self):
         user_dir = self.raw['user_dir']
@@ -65,23 +69,7 @@ Attempting to load config from: {}".format(user_dir, custom_path))
                 logger.error(f'Unable to find dconfig {path}')
 
     def __getitem__(self, key, default=None):
-        r = self.config.get(key, default_config.get(key, default))
-        if type(r) == dict and key not in ['sdict', 'rdict']:
-            return ConfigGroup(key, r)
-        return r
-
-    def get(self, key, default=None):
-        return self.__getitem__(key, default)
-
-
-class ConfigGroup():
-    def __init__(self, name, group):
-        self.name = name
-        self.group = group
-
-    def __getitem__(self, key, default=None):
-        return self.group.get(
-            key, default_config[self.name].get(key, default))
+        return self.safe_dict.__getitem__(key, default)
 
     def get(self, key, default=None):
         return self.__getitem__(key, default)
