@@ -173,9 +173,9 @@ class CustomisationDialog(QDialog):
             "Newline characters advance automatically\n\
 (if off, requires pressing Enter at the end of a line)")
         enter_newline_checkbox.setChecked(
-            self.config_edited.get('enter_newline', False))
+            not self.config_edited.get('enter_newline', False))
         enter_newline_checkbox.stateChanged.connect(
-            lambda t: self.update("enter_newline", t))
+            lambda t: self.update("enter_newline", not t))
         self.selectors['enter_newline'] = enter_newline_checkbox
         lyt.addRow(enter_newline_checkbox)
 
