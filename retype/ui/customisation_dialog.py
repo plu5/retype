@@ -10,12 +10,13 @@ from qt import (QWidget, QFormLayout, QVBoxLayout, QLabel, QLineEdit,
                 QModelIndex, QItemSelectionModel, QMessageBox, QDialog, QSize,
                 QFont, QFontComboBox)
 
-from retype.extras.dict import update
+from retype.extras.dict import SafeDict
 from retype.constants import default_config, iswindows
 
 logger = logging.getLogger(__name__)
 
 DEFAULTS = default_config
+NESTED_RAW_DICT_KEYS = ['rdict', 'sdict']
 
 
 def hline():
@@ -51,11 +52,11 @@ class CustomisationDialog(QDialog):
                  getBookViewFontSize, parent=None):
         QDialog.__init__(self, parent, Qt.WindowType.WindowCloseButtonHint)
         # The base config (no uncommitted modifications)
-        self.config = deepcopy(DEFAULTS)
-        update(self.config, config)
+        self.config = SafeDict(deepcopy(DEFAULTS), {}, NESTED_RAW_DICT_KEYS)
+        self.config.update(config)
         # The config with uncommitted modifications (any modifications will be
         #  applied to this one)
-        self.config_edited = deepcopy(self.config)
+        self.config_edited = self.config.deepcopy()
 
         self.saveConfig = saveConfig
         self.prevView = prevView
@@ -98,7 +99,8 @@ class CustomisationDialog(QDialog):
         self.revert_btn.clicked.connect(self.revert)
         self.restore_btn = btnbox.button(StandardButton.RestoreDefaults)
         self.restore_btn.clicked.connect(self.restoreDefaults)
-        self.restore_btn.setEnabled(self.config != DEFAULTS)
+        self.restore_btn.setEnabled(self.config.raw != DEFAULTS)
+
 
     def _pathSettings(self):
         plib = QWidget()
@@ -215,10 +217,11 @@ class CustomisationDialog(QDialog):
 
     def update(self, name, new_value):
         self.config_edited[name] = new_value
-        logger.debug("config_edited updated to: {}".format(self.config_edited))
+        logger.debug("config_edited updated to: {}".format(
+            self.config_edited.raw))
 
-        self.revert_btn.setEnabled(self.config_edited != self.config)
-        self.restore_btn.setEnabled(self.config_edited != DEFAULTS)
+        self.revert_btn.setEnabled(self.config_edited.raw != self.config.raw)
+        self.restore_btn.setEnabled(self.config_edited.raw != DEFAULTS)
 
     def accept(self):
         # User dir validation
@@ -249,9 +252,9 @@ class CustomisationDialog(QDialog):
             return
 
         # Save
-        self.saveConfig.emit(self.config_edited)
+        self.saveConfig.emit(self.config_edited.raw)
         # Update base config
-        self.config = deepcopy(self.config_edited)
+        self.config = self.config_edited.deepcopy()
 
         self.revert_btn.setEnabled(False)
 
@@ -260,13 +263,14 @@ class CustomisationDialog(QDialog):
             selector.set_(config[key])
 
     def restoreDefaults(self):
-        self.config_edited = deepcopy(default_config)
+        self.config_edited = SafeDict(
+            deepcopy(DEFAULTS), {}, NESTED_RAW_DICT_KEYS)
         self.setSelectors(self.config_edited)
 
         self.restore_btn.setEnabled(False)
 
     def revert(self):
-        self.config_edited = deepcopy(self.config)
+        self.config_edited = self.config.deepcopy()
         self.setSelectors(self.config_edited)
 
         self.revert_btn.setEnabled(False)
@@ -293,7 +297,7 @@ class CustomisationDialog(QDialog):
             shouldSave = True
 
         if shouldSave:
-            self.saveConfig.emit(self.config)
+            self.saveConfig.emit(self.config.raw)
 
 
 class CheckBox(QCheckBox):
@@ -301,12 +305,13 @@ class CheckBox(QCheckBox):
 
     def __init__(self, desc, parent=None):
         QCheckBox.__init__(self, desc, parent)
+        self.default_value = False
 
     def value(self):
         return self.isChecked()
 
     def set_(self, value):
-        self.setChecked(value)
+        self.setChecked(value or self.default_value)
 
 
 class PathSelector(QWidget):
@@ -969,14 +974,14 @@ class WindowGeometrySelector(QWidget):
         values = self.valuesByWindow()
         self.dims.update(values)
         self.set_(self.dims)
-        self.changed.emit(self.dims)
+        self.changed.emit(self.dims.raw)
 
     def connectSelector(self, name, signal):
         signal.connect(lambda val: self.updateDim(name, val))
 
     def updateDim(self, name, val):
         self.dims[name] = val
-        self.changed.emit(self.dims)
+        self.changed.emit(self.dims.raw)
 
     def set_(self, dims):
         for key, selector in self.selectors.items():
@@ -1021,7 +1026,7 @@ class BookViewSettingsWidget(QWidget):
 
     def updateSetting(self, name, val):
         self.settings[name] = val
-        self.changed.emit(self.settings)
+        self.changed.emit(self.settings.raw)
 
     def setSaveFontSizeOnQuit(self, state):
         self.font_size_selector.setDisabled(True if state else False)

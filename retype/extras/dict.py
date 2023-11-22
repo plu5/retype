@@ -1,4 +1,5 @@
 import collections.abc
+from copy import deepcopy
 
 
 def update(source, overrides):
@@ -17,30 +18,62 @@ def update(source, overrides):
 
 
 class SafeDict:
-    def __init__(self, base_dict, fallback_dict={}, parent_keys=[]):
+    def __init__(self, base_dict, fallback_dict={}, nested_raw_dict_keys=[]):
         self.raw = base_dict
         self.fallback = fallback_dict
-        self.parent_keys = parent_keys
+        self.nested_raw_dict_keys = nested_raw_dict_keys
 
     def __getitem__(self, key, default=None):
         r = self.raw.get(key, self.fallback.get(key, default))
-        if type(r) == dict and key not in self.parent_keys:
+        if type(r) == dict and key not in self.nested_raw_dict_keys:
             return _NestedSafeDictGroup(key, r, self.fallback)
         return r
 
+    def __setitem__(self, key, value):
+        if type(value) == dict and key in self.nested_raw_dict_keys:
+            self.raw.setdefault(key, _NestedSafeDictGroup(
+                key, value, self.fallback))
+        else:
+            self.raw[key] = value
+
     def get(self, key, default=None):
         return self.__getitem__(key, default)
+
+    def update(self, overrides):
+        self.raw = update(self.raw, overrides)
+
+    def deepcopy(self):
+        return SafeDict(deepcopy(self.raw), self.fallback,
+                        self.nested_raw_dict_keys)
+
+    def values(self):
+        return self.raw.values()
+
+    def items(self):
+        return self.raw.items()
 
 
 class _NestedSafeDictGroup:
     def __init__(self, name, group, fallback_dict={}):
         self.name = name
-        self.group = group
+        self.raw = self.group = group
         self.fallback = fallback_dict
 
     def __getitem__(self, key, default=None):
         return self.group.get(
-            key, self.fallback[self.name].get(key, default))
+            key, self.fallback.get(self.name, {}).get(key, default))
+
+    def __setitem__(self, key, value):
+        self.raw[key] = value
 
     def get(self, key, default=None):
         return self.__getitem__(key, default)
+
+    def update(self, overrides):
+        self.raw = update(self.raw, overrides)
+
+    def values(self):
+        return self.raw.values()
+
+    def items(self):
+        return self.raw.items()
