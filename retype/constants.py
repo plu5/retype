@@ -56,7 +56,7 @@ default_config = {
         "save_on_quit": True,
         "save_splitters_on_quit": True
     },
-    "enter_newline": False
+    "auto_newline": True
 }
 
 if iswindows:

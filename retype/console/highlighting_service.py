@@ -19,11 +19,11 @@ def compareStrings(str1, str2):
 
 
 class HighlightingService(object):
-    def __init__(self, console, book_view, enter_newline=False):
+    def __init__(self, console, book_view, auto_newline=True):
         self._console = console
         self.book_view = book_view
         self._console.textChanged.connect(self._handleHighlighting)
-        self.setEnterNewline(enter_newline)
+        self.setAutoNewline(auto_newline)
         self.wrong = False
         self.wrong_start = None
         self.wrong_end = None
@@ -56,7 +56,7 @@ class HighlightingService(object):
 
         self.updateHighlighting()
 
-        self._maybeAdvance(v, text, self.enter_newline)
+        self._maybeAdvance(v, text, not self.auto_newline)
 
     def _maybeAdvance(self, v, text, require_enter=False):
         # Next line / chapter, skipping trailing spaces if present
@@ -136,16 +136,16 @@ error: {}'.format(v.line_pos, len(v.tobetyped_list), e))
         v.display.centreAroundCursor()
         v.updateProgress()
 
-    def setEnterNewline(self, enter_newline):
-        self.enter_newline = enter_newline
-        if enter_newline:
-            self._console.submitted.connect(self.handleSubmit)
-        else:
+    def setAutoNewline(self, auto_newline):
+        self.auto_newline = auto_newline
+        if auto_newline:
             try:
                 self._console.submitted.disconnect(self.handleSubmit)
             except TypeError:
                 # Occurs when not previously connected
                 pass
+        else:
+            self._console.submitted.connect(self.handleSubmit)
 
     def handleSubmit(self, text):
         v = self.book_view

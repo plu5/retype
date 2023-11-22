@@ -151,7 +151,7 @@ class MainController(QObject):
                                   self.loadBookRequested,
                                   self.customisationDialogRequested,
                                   self.aboutDialogRequested,
-                                  self.config.get('enter_newline', False))
+                                  self.config.get('auto_newline', False))
 
     def saveConfig(self, config_dict):
         self.config.populate(config_dict)
@@ -174,9 +174,9 @@ class MainController(QObject):
         # Update rdict
         self.views[View.book_view].setRdict(config['rdict'])
 
-        # Update enter_newline
-        self.console.highlighting_service.setEnterNewline(
-            config['enter_newline'])
+        # Update auto_newline
+        self.console.highlighting_service.setAutoNewline(
+            config['auto_newline'])
 
         # Update library’s user_dir
         self.library.user_dir = config['user_dir']
