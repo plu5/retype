@@ -45,11 +45,14 @@ Attempting to load config from: {}".format(user_dir, custom_path))
                 f'Config path {path} not found.\n'
                 'This is normal if the config file has not been created yet.')
 
-    def save(self, config):
-        user_dir = config['user_dir']
+    def populate(self, config_dict):
+        self.config = self.raw = config_dict
+
+    def save(self):
+        user_dir = self.raw['user_dir']
         path = os.path.join(user_dir, self.config_rel_path)
         with open(path, 'w') as f:
-            json.dump(config, f, indent=2)
+            json.dump(self.raw, f, indent=2)
         if not self.isPathDefaultUserDir(user_dir):
             path = os.path.join(self.default_user_dir, self.config_rel_path)
             if os.path.exists(path):

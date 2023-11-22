@@ -153,8 +153,10 @@ class MainController(QObject):
                                   self.aboutDialogRequested,
                                   self.config.get('enter_newline', False))
 
-    def saveConfig(self, config):
-        self.config.save(config)
+    def saveConfig(self, config_dict):
+        self.config.populate(config_dict)
+        self.config.save()
+        config = self.config
 
         # Repopulate library if paths changed
         if config['library_paths'] != self.library.library_paths:
