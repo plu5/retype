@@ -100,9 +100,8 @@ class BookView(QWidget):
         self._controller = main_controller
         self._library = self._controller.library
         self._console = self._controller.console
-        self.autosave = Autosave()
+        self.autosave = Autosave(self._console)
         self.autosave.save.connect(self.maybeSave)
-        self._console.installEventFilter(self.autosave.signal)
         self.display = BookDisplay(
             bookview_settings['font'], bookview_settings['font_size'], self) 
         self._initUI()
@@ -451,7 +450,7 @@ class BookView(QWidget):
         self._setLine(self.line_pos)
 
     def maybeSave(self):
-        if self.book:
+        if self.book and self.book.dirty:
             logger.debug(f"Saving progress in '{self.book.title}'")
             data = {'persistent_pos': self.persistent_pos,
                     'chapter_pos': self.chapter_pos,

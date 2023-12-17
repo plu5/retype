@@ -1,33 +1,31 @@
-from qt import QObject, QTimer, pyqtSignal, QEvent
+from qt import QObject, QTimer, pyqtSignal
 
 
 class IdleSignal(QObject):
     idle = pyqtSignal()
 
-    def __init__(self, interval):
+    def __init__(self, console, interval):
         super().__init__()
         self.timer = QTimer()
         self.timer.setInterval(interval)
         self.timer.timeout.connect(self.emitIdle)
-        self.timer.start()
+        console.textEdited.connect(self.onUpdate)
 
     def emitIdle(self):
         self.idle.emit()
         self.timer.stop()
 
-    def eventFilter(self, obj, event):
-        if event.type() in [QEvent.KeyPress, QEvent.MouseMove]:
-            self.timer.start()
-        return super().eventFilter(obj, event)
+    def onUpdate(self):
+        self.timer.start()
 
 
 class Autosave(QObject):
     save = pyqtSignal()
 
-    def __init__(self, on=True, interval=5000):
+    def __init__(self, console, on=True, interval=5000):
         super().__init__()
         self.on = on
-        self.signal = IdleSignal(interval)
+        self.signal = IdleSignal(console, interval)
         self.signal.idle.connect(self.maybeEmitSave)
 
     def maybeEmitSave(self):
