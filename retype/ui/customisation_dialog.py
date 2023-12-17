@@ -151,7 +151,7 @@ class CustomisationDialog(QDialog):
                 "Hide System Console window on UI load (Windows-only)")
             hide_sysconsole_checkbox.setChecked(
                 self.config_edited.get('hide_sysconsole', True))
-            hide_sysconsole_checkbox.stateChanged.connect(
+            hide_sysconsole_checkbox.changed.connect(
                 lambda t: self.update("hide_sysconsole", t))
             self.selectors['hide_sysconsole'] = hide_sysconsole_checkbox
             lyt.addRow(hide_sysconsole_checkbox)
@@ -175,8 +175,8 @@ class CustomisationDialog(QDialog):
             "Newline characters advance automatically\n\
 (if off, requires pressing Enter at the end of a line)")
         auto_newline_checkbox.setChecked(self.config_edited['auto_newline'])
-        auto_newline_checkbox.stateChanged.connect(
-            lambda t: self.update("auto_newline", not t))
+        auto_newline_checkbox.changed.connect(
+            lambda t: self.update("auto_newline", t))
         self.selectors['auto_newline'] = auto_newline_checkbox
         lyt.addRow(auto_newline_checkbox)
 
@@ -305,12 +305,14 @@ class CheckBox(QCheckBox):
     def __init__(self, desc, parent=None):
         QCheckBox.__init__(self, desc, parent)
         self.default_value = False
+        self.stateChanged.connect(lambda t: self.changed.emit(bool(t)))
 
     def value(self):
         return self.isChecked()
 
     def set_(self, value):
         self.setChecked(value or self.default_value)
+        self.changed.emit(value)
 
 
 class PathSelector(QWidget):
@@ -625,7 +627,7 @@ class SDictEntryEditor(QWidget):
 
         lyt = QFormLayout(self)
         self.substr_e = QLineEdit(substr)
-        self.keep_e = QCheckBox()
+        self.keep_e = CheckBox()
         self.keep_e.setChecked(keep)
         lyt.addRow("Substring:", self.substr_e)
         lyt.addRow("Keep:", self.keep_e)
@@ -914,14 +916,14 @@ class WindowGeometrySelector(QWidget):
 
         self.selectors = {}
 
-        self.selectors['save_splitters_on_quit'] = QCheckBox(
+        self.selectors['save_splitters_on_quit'] = CheckBox(
             "Save state of splitters on quit")
-        self.selectors['save_splitters_on_quit'].stateChanged.connect(
+        self.selectors['save_splitters_on_quit'].changed.connect(
             lambda state: self.updateDim('save_splitters_on_quit', state))
 
-        self.selectors['save_on_quit'] = QCheckBox(
+        self.selectors['save_on_quit'] = CheckBox(
             "Save window size and position on quit")
-        self.selectors['save_on_quit'].stateChanged.connect(self.setSaveOnQuit)
+        self.selectors['save_on_quit'].changed.connect(self.setSaveOnQuit)
 
         lyt.addRow(self.selectors['save_splitters_on_quit'])
         lyt.addRow(self.selectors['save_on_quit'])
@@ -1000,9 +1002,8 @@ class BookViewSettingsWidget(QWidget):
         self.settings = bookview_settings
         self.selectors = {}
 
-        save_font_size_checkbox = QCheckBox("Save font size on quit")
-        save_font_size_checkbox.stateChanged.connect(
-            self.setSaveFontSizeOnQuit)
+        save_font_size_checkbox = CheckBox("Save font size on quit")
+        save_font_size_checkbox.changed.connect(self.setSaveFontSizeOnQuit)
         self.selectors['save_font_size_on_quit'] = save_font_size_checkbox
 
         self.font_size_selector = pxspinbox(self.settings['font_size'], " pt")
