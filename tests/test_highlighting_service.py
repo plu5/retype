@@ -1,6 +1,4 @@
-import sys
-from PyQt5.Qt import (QObject, pyqtSignal, QTextCursor, QTextCharFormat,
-                      QApplication, QTextBrowser)
+from qt import QObject, pyqtSignal, QTextCursor, QTextCharFormat, QTextBrowser
 
 from retype.extras import splittext
 from retype.console import HighlightingService
@@ -91,11 +89,6 @@ class FakeBookView(QObject):
 
     def updateHighlightCursor(self):
         pass
-
-
-# This is here just to be able to use QTextBrowser, as without a
-#  QApplication Qt doesn’t let you instantiate QWidgets.
-app = QApplication(sys.argv)
 
 
 def _setup(book_view_content=SAMPLE_CONTENT):

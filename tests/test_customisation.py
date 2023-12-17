@@ -1,16 +1,11 @@
-import sys
-from qt import pyqtSignal, QObject, QApplication
+from qt import pyqtSignal, QObject
+
 from retype.ui import CustomisationDialog
 from retype.constants import default_config
 
 
 class FakeWindow(QObject):
     closing = pyqtSignal()
-
-
-# This is here to be able to use CustomisationDialog, as without a
-#  QApplication Qt doesn’t let you instantiate QWidgets.
-app = QApplication(sys.argv)
 
 
 def _setup():
