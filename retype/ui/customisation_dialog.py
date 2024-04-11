@@ -8,15 +8,22 @@ from qt import (QWidget, QFormLayout, QVBoxLayout, QLabel, QLineEdit,
                 QAbstractListModel, Qt, QStyledItemDelegate, QStyle,
                 QApplication, QRectF, QTextDocument, QFileDialog, pyqtSignal,
                 QModelIndex, QItemSelectionModel, QMessageBox, QDialog, QSize,
-                QFont, QFontComboBox)
+                QFont, QFontComboBox, QComboBox, QPainter, QBrush,
+                QColorDialog, QColor)
 
-from retype.extras.dict import SafeDict
+from retype.extras.dict import SafeDict, update
 from retype.constants import default_config, iswindows
+from retype.services.theme import Theme, populateThemes, valuesFromQss
+from retype.extras.qss import serialiseValuesDict
+from retype.resource_handler import getStylePath
+from retype.extras.widgets import AdjustedTabWidget
+from retype.extras.camel import spacecamel
 
 logger = logging.getLogger(__name__)
 
 DEFAULTS = default_config
 NESTED_RAW_DICT_KEYS = ['rdict', 'sdict']
+THEME_MODIFICATIONS_FILENAME = '__current__.qss'
 
 
 def hline():
@@ -70,11 +77,15 @@ class CustomisationDialog(QDialog):
     def sizeHint(self):
         return QSize(400, 500)
 
+    def getUserDir(self):
+        return self.config['user_dir']
+
     def _initUI(self):
         self.selectors = {}
 
         tbox = QToolBox()
         tbox.addItem(self._pathSettings(), "Paths")
+        tbox.addItem(self._themeSettings(), "Theme")
         tbox.addItem(self._consoleSettings(), "Console")
         tbox.addItem(self._bookviewSettings(), "Book View")
         tbox.addItem(self._sdictSettings(), "Line splits")
@@ -101,7 +112,6 @@ class CustomisationDialog(QDialog):
         self.restore_btn.clicked.connect(self.restoreDefaults)
         self.restore_btn.setEnabled(self.config.raw != DEFAULTS)
 
-
     def _pathSettings(self):
         plib = QWidget()
         lyt = QFormLayout(plib)
@@ -123,6 +133,42 @@ class CustomisationDialog(QDialog):
         lyt.addRow(self.selectors['library_paths'])
 
         return plib
+
+    def _themeSettings(self):
+        pth = QWidget()
+        lyt = QFormLayout(pth)
+
+        preset_lyt = QHBoxLayout()
+        themes = QComboBox()
+        themes.setInsertPolicy(QComboBox.InsertPolicy.InsertAlphabetically)
+        preset_lyt.addWidget(themes, 1)
+        apply_btn = QPushButton("Apply")
+        apply_btn.setToolTip("Apply selected preset")
+        preset_lyt.addWidget(apply_btn)
+        export_btn = QPushButton("Export")
+        export_btn.setToolTip("Export saved modifications as new preset")
+        preset_lyt.addWidget(export_btn)
+        lyt.addRow(QLabel("Preset:"), preset_lyt)
+        lyt.addRow(descl("To import a preset, place the qss file in the\
+ 'style' subfolder in either the user dir or application folder, and restart\
+ retype."))
+        lyt.addRow(hline())
+
+        user_dir = self.getUserDir()
+        populateThemes([getStylePath(), getStylePath(user_dir)])
+        for t in Theme.themes:
+            if t != THEME_MODIFICATIONS_FILENAME.rstrip('.qss'):
+                themes.addItem(t)
+
+        t = ThemeWidget(user_dir)
+        self.theme = t
+        self.theme.changed.connect(self.themeUpdate)
+        lyt.addRow(self.theme)
+
+        apply_btn.clicked.connect(lambda: t.applyTheme(themes.currentText()))
+        export_btn.clicked.connect(lambda: t.exportCurrent(self.getUserDir()))
+
+        return pth
 
     def _consoleSettings(self):
         pcon = QWidget()
@@ -222,6 +268,22 @@ class CustomisationDialog(QDialog):
         self.revert_btn.setEnabled(self.config_edited.raw != self.config.raw)
         self.restore_btn.setEnabled(self.config_edited.raw != DEFAULTS)
 
+    def themeUpdate(self):
+        revert = restore = False
+
+        if self.theme.committed is False:
+            revert = True
+        else:
+            revert = self.config_edited.raw != self.config.raw
+
+        if self.theme.isDefault() is False:
+            restore = True
+        else:
+            restore = self.config_edited.raw != DEFAULTS
+
+        self.revert_btn.setEnabled(revert)
+        self.restore_btn.setEnabled(restore)
+
     def accept(self):
         # User dir validation
         if not os.path.exists(self.config_edited['user_dir']):
@@ -255,6 +317,9 @@ class CustomisationDialog(QDialog):
         # Update base config
         self.config = self.config_edited.deepcopy()
 
+        # Save theme
+        self.theme.saveCurrent(getStylePath(self.getUserDir()))
+
         self.revert_btn.setEnabled(False)
 
     def setSelectors(self, config):
@@ -266,11 +331,15 @@ class CustomisationDialog(QDialog):
             deepcopy(DEFAULTS), {}, NESTED_RAW_DICT_KEYS)
         self.setSelectors(self.config_edited)
 
+        self.theme.restoreDefaults()
+
         self.restore_btn.setEnabled(False)
 
     def revert(self):
         self.config_edited = self.config.deepcopy()
         self.setSelectors(self.config_edited)
+
+        self.theme.revert()
 
         self.revert_btn.setEnabled(False)
 
@@ -1043,3 +1112,299 @@ class BookViewSettingsWidget(QWidget):
                 continue
             value = settings[key]
             selector.setValue(value)
+
+
+class _CEdit(QWidget):
+    changed = pyqtSignal()
+
+    def __init__(self, c, parent=None):
+        QWidget.__init__(self, parent)
+        self.current_c = self.committed_c = c
+
+    def set_(self, c):
+        self.current_c = c
+        self.update()
+        self.changed.emit()
+
+    def revert(self):
+        self.set_(self.committed_c)
+
+    def commitCurrent(self):
+        self.committed_c = self.current_c
+
+    def paintEvent(self, event=None):
+        painter = QPainter(self)
+        painter.setBrush(QBrush(self.current_c))
+        painter.drawRect(self.rect())
+
+    def mouseReleaseEvent(self, e):
+        res = QColorDialog.getColor(self.current_c)
+        if res.isValid():
+            self.set_(res)
+
+
+class CEdit(QWidget):
+    changed = pyqtSignal()
+
+    def __init__(self, c, parent=None):
+        QWidget.__init__(self, parent)
+        self.committed = True
+        self.inner = _CEdit(c)
+        self.lyt = QHBoxLayout(self)
+        self.lyt.addWidget(self.inner)
+        self.btn = QToolButton()
+        self.lyt.addWidget(self.btn)
+        self.btn.setArrowType(Qt.ArrowType.LeftArrow)
+        self.lyt.setContentsMargins(0, 0, 0, 0)
+        self.btn.setFixedSize(16, 13)
+        self.btn.setToolTip("Revert")
+        self.btn.hide()
+        self.inner.changed.connect(self.handleChange)
+        self.btn.clicked.connect(self.inner.revert)
+
+    def set_(self, c):
+        self.inner.set_(c)
+
+    def revert(self):
+        self.inner.revert()
+
+    @property
+    def current_c(self):
+        return self.inner.current_c
+
+    def commitCurrent(self):
+        self.inner.commitCurrent()
+        self.committed = True
+        self.btn.hide()
+
+    def handleChange(self):
+        if self.inner.current_c == self.inner.committed_c:
+            self.committed = True
+            self.btn.hide()
+        else:
+            self.committed = False
+            self.btn.show()
+        self.changed.emit()
+
+
+class ThemeSelectorWidget(QWidget):
+    changed = pyqtSignal()
+
+    def __init__(self, selector_name, values, parent=None):
+        QWidget.__init__(self, parent)
+        self.committed = True
+        self.selector_name = selector_name
+        self.values = values
+        self.cedits = {}
+        self._populateCedits()
+
+    def _populateCedits(self):
+        for prop_name, value in self.values.items():
+            cedit = CEdit(QColor(value))
+            self.cedits[prop_name] = cedit
+            cedit.changed.connect(self._ceditChanged)
+
+    def _ceditChanged(self):
+        all_committed = True
+        for cedit in self.cedits.values():
+            if cedit.committed is False:
+                self.committed = False
+                all_committed = False
+                break
+        if all_committed is True:
+            self.committed = True
+        self.changed.emit()
+
+    def revert(self):
+        for cedit in self.cedits.values():
+            if cedit.committed is False:
+                cedit.revert()
+
+    def set_(self, values):
+        for prop_name, value in values.items():
+            cedit = self.cedits.get(prop_name)
+            if (cedit):
+                cedit.set_(QColor(value))
+            else:
+                logger.error('Missing cedit for {prop_name} in\
+ {self.selector_name}')
+
+    def get(self):
+        values = {}
+        for prop_name, cedit in self.cedits.items():
+            values[prop_name] = cedit.current_c.name()
+        return values
+
+
+class ThemeCategoryWidget(QWidget):
+    def __init__(self, parent=None):
+        QWidget.__init__(self, parent)
+        self.lyt = QFormLayout(self)
+
+    def addSelectorWidget(self, widget):
+        self.lyt.addRow(QLabel(f'<b>{widget.selector_name}</b>'))
+        for prop_name, cedit in widget.cedits.items():
+            self.lyt.addRow(prop_name, cedit)
+
+
+class ThemeWidget(QWidget):
+    changed = pyqtSignal()
+
+    def __init__(self, user_dir, parent=None):
+        QWidget.__init__(self, parent)
+        self.committed = True
+        self.selector_widgets = {}
+        self.cat_widgets = {}
+        self.default_values = Theme.getValuesDict()
+        self.values = self._loadValues(getStylePath(user_dir))
+        self.lyt = QVBoxLayout(self)
+        self.lyt.setContentsMargins(0, 0, 0, 0)
+        self.tabw = AdjustedTabWidget()
+        self.lyt.addWidget(self.tabw)
+        self._populateWidgets()
+
+    def _loadValues(self, path):
+        values = deepcopy(self.default_values)
+        file_path = os.path.join(path, THEME_MODIFICATIONS_FILENAME)
+        if os.path.exists(file_path):
+            try:
+                with open(file_path, 'r') as f:
+                    qss = f.read()
+                    v = valuesFromQss(self.default_values, qss)
+                    # Merge with default values (fallback for any missing)
+                    update(values, v)
+                    # Update colours in application
+                    Theme.set_(values)
+            except OSError as e:
+                logger.error(f'Failed to open current theme file in {path}')
+                logger.error(f'{type(e)}: {e}')
+        else:
+            logger.debug(f'Current theme {file_path} not found. This is normal\
+ on first launch or if it has not been saved yet. Falling back to default\
+ values.')
+        return values
+
+    def _populateWidgets(self):
+        for name, v in self.values.items():
+            selector_widget = ThemeSelectorWidget(name, v)
+            selector_widget.changed.connect(self._selectorWidgetChanged)
+            self.selector_widgets[name] = selector_widget
+            cat_name = self.friendlyCatName(name)
+            cat = self.cat_widgets.get(cat_name)
+            if (cat):
+                cat.addSelectorWidget(selector_widget)
+            else:
+                cat_widget = ThemeCategoryWidget()
+                cat_widget.addSelectorWidget(selector_widget)
+                self.cat_widgets[cat_name] = cat_widget
+                self.tabw.addTab(cat_widget, cat_name)
+
+    def _selectorWidgetChanged(self):
+        all_committed = True
+        for s in self.selector_widgets.values():
+            if s.committed is False:
+                self.committed = False
+                all_committed = False
+                break
+        if all_committed is True:
+            self.committed = True
+        self.changed.emit()
+
+    def friendlyCatName(self, name):
+        return spacecamel(name.split('.')[0])
+
+    def get(self):
+        values = {}
+        for name, widget in self.selector_widgets.items():
+            values[name] = widget.get()
+        return values
+
+    def applyTheme(self, name):
+        values = {}
+        t = Theme.themes.get(name)
+        if t:
+            values = t.get('values', {})
+        else:
+            logger.warn('Unable to find values for theme {name}')
+        for name, widget in self.selector_widgets.items():
+            v = values.get(name, {})
+            widget.set_(v)
+
+    def isDefault(self):
+        res = True
+        values = self.get()
+        for selector_name, props in self.default_values.items():
+            for prop_name, value in props.items():
+                v = values.get(selector_name, {}).get(prop_name)
+                if v:
+                    res = QColor(v) == QColor(value)
+                else:
+                    logger.warn(f'Theme values asymmetry in {selector_name}\
+ / {prop_name}')
+                    res = False
+                if res is False:
+                    return res
+        return res
+
+    def revert(self):
+        for s in self.selector_widgets.values():
+            if s.committed is False:
+                s.revert()
+
+    def restoreDefaults(self):
+        for selector_name, props in self.default_values.items():
+            for prop_name, value in props.items():
+                s = self.selector_widgets.get(selector_name)
+                if s:
+                    cedit = s.cedits.get(prop_name)
+                    if cedit:
+                        cedit.set_(QColor(value))
+                    else:
+                        logger.error('restoreDefaults: Missing cedit for\
+ {prop_name} in {selector_name}')
+                else:
+                    logger.error('restoreDefaults: Missing selector widget for\
+ {selector_name}')
+
+    def _save(self, file_path, qss):
+        try:
+            os.makedirs(os.path.dirname(file_path), exist_ok=True)
+            with open(file_path, 'w', encoding='utf-8') as f:
+                logger.debug(f'Saving theme: {file_path}')
+                f.write(qss)
+        except OSError as e:
+            logger.error('Failed to save theme to file {file_path}')
+            logger.error(f'{type(e)}: {e}')
+
+    def saveCurrent(self, path):
+        # Get values dict
+        values = {}
+        for name, widget in self.selector_widgets.items():
+            values[name] = widget.get()
+            # Commit all the cedits
+            for cedit in widget.cedits.values():
+                cedit.commitCurrent()
+        # Serialise
+        res = serialiseValuesDict(values)
+        # Write to file in path
+        file_path = os.path.join(path, THEME_MODIFICATIONS_FILENAME)
+        self._save(file_path, res)
+        # Update colours in application
+        Theme.set_(values)
+
+    def exportCurrent(self, user_dir):
+        # Get values dict
+        values = self.get()
+        # Serialise
+        res = serialiseValuesDict(values)
+        # Save dialog
+        path = getStylePath(user_dir)
+        if not os.path.exists(path):
+            path = getStylePath()
+        file_path = QFileDialog.getSaveFileName(
+            self, 'Export as new theme preset', path, 'Theme preset (*.qss)'
+        )[0]
+        if len(file_path) == 0:
+            return
+        # Write to file in path
+        self._save(file_path, res)

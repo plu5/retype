@@ -52,6 +52,7 @@ Dependencies
 - Python 3.7 or higher
 - ``PyQt5``
 - ``ebooklib``
+- ``tinycss2``
 
 **Optional:**
 

@@ -2,12 +2,13 @@ from qt import (QWidget, QPainter, QColor, Qt, QPixmap, QPoint, QPolygon,
                 QLabel, pyqtSignal, QFrame)
 
 from retype.layouts import RowLayout
+from retype.services.theme import theme, C, Theme
 
 
 class Separator(QWidget):
-    def __init__(self, colour, padding=0, facing_right=True):
+    def __init__(self, c, padding=0, facing_right=True):
         super().__init__()
-        self.colour = colour
+        self.c = c
         self.start = padding
         width = 8 + padding * 2
         self._pixmap = QPixmap(width, 16)
@@ -17,8 +18,8 @@ class Separator(QWidget):
 
     def pixmap(self):
         qp = QPainter(self._pixmap)
-        qp.setPen(self.colour)
-        qp.setBrush(self.colour)
+        qp.setPen(self.c.bg())
+        qp.setBrush(self.c.bg())
 
         s = self.start
         if self.facing_right:
@@ -103,13 +104,20 @@ class WidgetsGroup(QFrame):
         self.setStyleSheet(self.old_stylesheet)
 
 
+@theme('BookView.Modeline.OuterSegment',
+       C(fg='black', bg='#FFD700', sel_bg='white'))
+@theme('BookView.Modeline.MidSegment',
+       C(fg='black', bg='#CDAD00', sel_bg='white'))
+@theme('BookView.Modeline.InnerSegment',
+       C(fg='yellow', bg='#8B7500', sel='brown', sel_bg='white'))
 class Modeline(QWidget):
     repainted = pyqtSignal()
 
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setMinimumHeight(16)
-        self.setStyleSheet("*[css_~='hover']:hover{background: white}")
+
+        self.c_outer, self.c_mid, self.c_inner = self._loadTheme()
 
         # Dynamic
         self.title = QLabel("")
@@ -130,9 +138,6 @@ class Modeline(QWidget):
         self.pos_sep = QLabel(":")
         self.chap_pre = QLabel("c:")
         self.chap_sep = QLabel("/")
-        self.colour1 = QColor(255, 215, 0)
-        self.colour2 = QColor(205, 173, 0)
-        self.colour3 = QColor(139, 117, 0)
 
         def makeGroup(*widgets, tooltip):
             return WidgetsGroup(*widgets, css_="hover", tooltip=tooltip,
@@ -146,8 +151,6 @@ class Modeline(QWidget):
 
         p_group = makeGroup(self.progress, QLabel("%"),
                             tooltip="Progress percentage")
-        p_group.setStyleSheet("QLabel{color: yellow}")
-        p_group.setHoverStyle("QLabel{color: brown}")
 
         self.c_group = makeGroup(self.chap_pre, self.chap_pos,
                                  self.chap_sep, self.chap_total,
@@ -167,10 +170,10 @@ class Modeline(QWidget):
         self.push_to_right = Spacer(100, self)
 
         self.separators = [
-            Separator(self.colour1, self.padding),
-            Separator(self.colour2, self.padding),
-            Separator(self.colour3, self.padding, False),
-            Separator(self.colour2, self.padding, False)
+            Separator(self.c_outer, self.padding),
+            Separator(self.c_mid, self.padding),
+            Separator(self.c_inner, self.padding, False),
+            Separator(self.c_mid, self.padding, False)
         ]
         self.elements = [
             # line:char
@@ -186,6 +189,27 @@ class Modeline(QWidget):
         ]
         for element in self.elements:
             self.layout_.addWidget(element)
+
+        self.widgets_by_segment = ([l_group, self.c_group],
+                                   [self.t_group, self.v_group],
+                                   [p_group])
+        self.c = (self.c_outer, self.c_mid, self.c_inner)
+
+        self.c_inner.changed.connect(self.themeUpdate)
+        self.themeUpdate()
+
+    def _loadTheme(self):
+        return (Theme.get('BookView.Modeline.OuterSegment'),
+                Theme.get('BookView.Modeline.MidSegment'),
+                Theme.get('BookView.Modeline.InnerSegment'))
+
+    def themeUpdate(self):
+        for widgets, c in zip(self.widgets_by_segment, self.c):
+            for w in widgets:
+                w.setStyleSheet(f"QLabel{{color: {c.fg().name()}}}\
+ *[css_~='hover']:hover{{background: {c.sel_bg().name()}}}")
+                w.setHoverStyle(f'QLabel{{color: {c.sel().name()}}}')
+        self.update()
 
     def update_(self, title=None, cursor_pos=None, line_pos=None,
                 chap_pos=None, viewed_chap_pos=None, chap_total=None,
@@ -208,7 +232,7 @@ class Modeline(QWidget):
             self.push_to_right.width = self.c_group.rect().width() + \
                 self.v_group.rect().width() + 50
 
-        self.repaint()
+        self.update()
 
     def paintEvent(self, e):
         width = self.size().width()
@@ -218,13 +242,13 @@ class Modeline(QWidget):
         qp.begin(self)
 
         # Main rect
-        qp.setPen(self.colour1)
-        qp.setBrush(self.colour1)
+        qp.setPen(self.c_outer.bg())
+        qp.setBrush(self.c_outer.bg())
         qp.drawRect(0, 0, width, height)
 
         for separator in reversed(self.separators):
-            qp.setPen(separator.colour)
-            qp.setBrush(separator.colour)
+            qp.setPen(separator.c.bg())
+            qp.setBrush(separator.c.bg())
             qp.drawRect(0, 0, separator.pos().x() + self.padding, 16)
 
         qp.end()

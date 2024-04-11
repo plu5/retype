@@ -1,0 +1,106 @@
+BookView.Modeline.InnerSegment {
+  color: #ffff00;
+  background-color: #795f00;
+  selection-color: #a52a2a;
+  selection-background-color: #ffffff;
+}
+
+BookView.Modeline.MidSegment {
+  color: #aaaaaa;
+  background-color: #594900;
+  selection-background-color: #ffffff;
+}
+
+BookView.Modeline.OuterSegment {
+  color: #aaaaaa;
+  background-color: #483c00;
+  selection-background-color: #ffffff;
+}
+
+BookView.StatsDock.Grid {
+  color: #b3b3b3;
+}
+
+BookView.StatsDock.Text {
+  color: #ffffff;
+}
+
+BookView.StatsDock.Main {
+  color: #827a6c;
+  background-color: #0d0d0c;
+}
+
+BookView.BookDisplay.Cursor {
+  color: #ff0000;
+}
+
+BookView.BookDisplay {
+  color: #ffffff;
+  background-color: #0d0d0c;
+  border-left-color: #000000;
+  border-right-color: #000000;
+  border-top-color: #000000;
+  border-bottom-color: #000000;
+  selection-background-color: #808080;
+}
+
+BookView.Highlighting.Mistake {
+  color: #ffffff;
+  background-color: #ff0000;
+}
+
+BookView.Highlighting.Unhighlight {
+  color: #ffffff;
+  background-color: #000000;
+}
+
+BookView.Highlighting.Highlight {
+  color: #ffffff;
+  background-color: #757500;
+}
+
+ShelfView.Top {
+  border-top-color: #000000;
+  border-bottom-color: #555555;
+}
+
+ShelfView.Shelf {
+  color: #424242;
+  background-color: #000000;
+  border-left-color: #555555;
+  border-right-color: #555555;
+  border-top-color: #7e7e7e;
+  border-bottom-color: #3e3e3e;
+}
+
+ShelfView.Background {
+  background-color: #2b2b28;
+  outline-color: #555555;
+  border-left-color: #000000;
+  border-right-color: #000000;
+}
+
+ShelfView.IDNDisplay {
+  color: #acacac;
+}
+
+ShelfView.ProgressBar:complete {
+  color: #008000;
+}
+
+ShelfView.ProgressBar {
+  color: #ffff00;
+  background-color: #000000;
+}
+
+Console {
+  color: #bebebe;
+  background-color: #333333;
+  border-left-color: #000000;
+  border-right-color: #000000;
+  border-top-color: #4a4a4a;
+  border-bottom-color: #000000;
+  selection-color: #333333;
+  selection-background-color: #ffffff;
+}
+
