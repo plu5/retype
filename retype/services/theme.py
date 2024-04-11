@@ -85,9 +85,13 @@ class Theme:
 def getThemeValues(name, path):
     values = {}
     if os.path.exists(path):
-        with open(path, 'r') as f:
-            qss = f.read()
-            values = valuesFromQss(Theme.getValuesDict(), qss)
+        try:
+            with open(path, 'r') as f:
+                qss = f.read()
+                values = valuesFromQss(Theme.getValuesDict(), qss)
+        except OSError as e:
+            logger.error(f'Failed to open theme file {name} in {path}')
+            logger.error(f'{type(e)}: {e}')
     else:
         logger.warn(f'Theme {name} in path {path} not found.')
     return values

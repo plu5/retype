@@ -1266,13 +1266,17 @@ class ThemeWidget(QWidget):
         values = deepcopy(self.default_values)
         file_path = os.path.join(path, THEME_MODIFICATIONS_FILENAME)
         if os.path.exists(file_path):
-            with open(file_path, 'r') as f:
-                qss = f.read()
-                v = valuesFromQss(self.default_values, qss)
-                # Merge with default values (fallback for any missing)
-                update(values, v)
-                # Update colours in application
-                Theme.set_(values)
+            try:
+                with open(file_path, 'r') as f:
+                    qss = f.read()
+                    v = valuesFromQss(self.default_values, qss)
+                    # Merge with default values (fallback for any missing)
+                    update(values, v)
+                    # Update colours in application
+                    Theme.set_(values)
+            except OSError as e:
+                logger.error(f'Failed to open current theme file in {path}')
+                logger.error(f'{type(e)}: {e}')
         else:
             logger.debug(f'Current theme {file_path} not found. This is normal\
  on first launch or if it has not been saved yet. Falling back to default\
@@ -1362,9 +1366,14 @@ class ThemeWidget(QWidget):
  {selector_name}')
 
     def _save(self, file_path, qss):
-        with open(file_path, 'w', encoding='utf-8') as f:
-            logger.debug(f'Saving theme: {file_path}')
-            f.write(qss)
+        try:
+            os.makedirs(os.path.dirname(file_path), exist_ok=True)
+            with open(file_path, 'w', encoding='utf-8') as f:
+                logger.debug(f'Saving theme: {file_path}')
+                f.write(qss)
+        except OSError as e:
+            logger.error('Failed to save theme to file {file_path}')
+            logger.error(f'{type(e)}: {e}')
 
     def saveCurrent(self, path):
         # Get values dict
