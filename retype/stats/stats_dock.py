@@ -1,10 +1,14 @@
 from math import floor
 from time import time
-from qt import QWidget, QPainter, Qt, QSize, QColor, QFontMetricsF
+from qt import QWidget, QPainter, Qt, QSize, QFontMetricsF
 
 from retype.ui.painting import rectPixmap, textPixmap, linePixmap, Font
+from retype.services.theme import theme, C, Theme
 
 
+@theme('BookView.StatsDock.Main', C(fg='white', bg='#CDCDC1'))
+@theme('BookView.StatsDock.Text', C(fg='black'))
+@theme('BookView.StatsDock.Grid', C(fg='gray'))
 class StatsDock(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -20,10 +24,16 @@ class StatsDock(QWidget):
         self.wpm_pb = 0
         self.wpms = []
 
-        self.background_colour = QColor('#CDCDC1')
-        self.foreground_colour = QColor('white')
-        self.text_colour = QColor('black')
-        self.grid_colour = QColor('gray')
+        self.main_c, self.text_c, self.grid_c = self._loadTheme()
+        self.main_c.changed.connect(self.themeUpdate)
+
+    def _loadTheme(self):
+        return (Theme.get('BookView.StatsDock.Main'),
+                Theme.get('BookView.StatsDock.Text'),
+                Theme.get('BookView.StatsDock.Grid'))
+
+    def themeUpdate(self):
+        self.update()
 
     def connectConsole(self, console):
         self._hs = console.highlighting_service
@@ -93,7 +103,7 @@ class StatsDock(QWidget):
         draw = qp.drawPixmap
 
         # Background
-        qp.fillRect(0, 0, w, h, self.background_colour)
+        qp.fillRect(0, 0, w, h, self.main_c.bg())
 
         # WPM rects
         i = 0
@@ -101,7 +111,7 @@ class StatsDock(QWidget):
             rect_h = floor(wpm * factor)
             draw(i, h - rect_h,
                  rectPixmap(self.rect_w, wpm * factor,
-                            self.background_colour, self.foreground_colour))
+                            self.main_c.bg(), self.main_c.fg()))
             i += self.rect_w
 
         # Gridlines
@@ -109,7 +119,7 @@ class StatsDock(QWidget):
         while i < self.wpm_pb:
             y = h - (i * factor)
             qp.drawPixmap(0, y,
-                          linePixmap(w, 0, self.grid_colour, 1,
+                          linePixmap(w, 0, self.grid_c.fg(), 1,
                                      style=Qt.PenStyle.DashLine))
             i += 50
 
@@ -121,10 +131,10 @@ class StatsDock(QWidget):
         cur_txt = "Current: {} WPM".format(self.wpm)
         draw(2, 2,
              textPixmap(pb_txt, fm.horizontalAdvance(pb_txt), font_h,
-                        font, self.text_colour))
+                        font, self.text_c.fg()))
         cur_w = fm.horizontalAdvance(cur_txt)
         draw(w - cur_w - 2, 2,
-             textPixmap(cur_txt, cur_w, font_h, font, self.text_colour))
+             textPixmap(cur_txt, cur_w, font_h, font, self.text_c.fg()))
 
         qp.end()
 

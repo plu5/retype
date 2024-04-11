@@ -25,8 +25,8 @@ def getLibraryPath():
     return os.path.join(root_path, 'library')
 
 
-def getStylePath():
-    return os.path.join(root_path, 'style')
+def getStylePath(user_dir=None):
+    return os.path.join(user_dir if user_dir else root_path, 'style')
 
 
 def getIconsPath():

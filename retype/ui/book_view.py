@@ -1,6 +1,6 @@
 import logging
 from qt import (QWidget, QVBoxLayout, QTextBrowser, QTextDocument, QUrl,
-                QTextCursor, QTextCharFormat, QColor, QPainter, QPixmap,
+                QTextCursor, QTextCharFormat, QPainter, QPixmap,
                 QToolBar, QFont, QKeySequence, Qt, QApplication, pyqtSignal,
                 QSplitter, QSize)
 
@@ -9,10 +9,15 @@ from retype.ui.modeline import Modeline
 from retype.services import Autosave
 from retype.stats import StatsDock
 from retype.resource_handler import getIcon
+from retype.services.theme import theme, C, Theme
 
 logger = logging.getLogger(__name__)
 
 
+@theme('BookView.BookDisplay',
+       C(fg='black', bg='#F6F1DE', sel_bg='grey', t_border='white',
+         b_border='white', l_border='white', r_border='white'))
+@theme('BookView.BookDisplay.Cursor', C(fg='red'))
 class BookDisplay(QTextBrowser):
     keyPressed = pyqtSignal(object)
 
@@ -25,6 +30,19 @@ class BookDisplay(QTextBrowser):
         self._font_size = font_size
         self._font_family = font_family
         self.updateFont()
+
+        self.c_display, self.c_cursor = self._loadTheme()
+        self.c_display.changed.connect(self.themeUpdate)
+        self.themeUpdate()
+
+    def _loadTheme(self):
+        return (Theme.get('BookView.BookDisplay'),
+                Theme.get('BookView.BookDisplay.Cursor'))
+
+    def themeUpdate(self):
+        qss = Theme.getQss('BookView.BookDisplay').replace(
+            'BookView.BookDisplay', 'QTextBrowser')
+        self.setStyleSheet(qss)
 
     def setCursor(self, cursor):
         self.cursor = cursor
@@ -55,7 +73,7 @@ class BookDisplay(QTextBrowser):
     def paintEvent(self, e):
         QTextBrowser.paintEvent(self, e)
         qp = QPainter(self.viewport())
-        qp.setPen(QColor('red'))
+        qp.setPen(self.c_cursor.fg())
         qp.drawRect(self.cursorRect(self.cursor))
         qp.end()
 
@@ -91,6 +109,9 @@ class BookDisplay(QTextBrowser):
         QTextBrowser.wheelEvent(self, e)
 
 
+@theme('BookView.Highlighting.Highlight', C(fg='black', bg='yellow'))
+@theme('BookView.Highlighting.Unhighlight', C(fg='black', bg='white'))
+@theme('BookView.Highlighting.Mistake', C(fg='white', bg='red'))
 class BookView(QWidget):
     def __init__(self, main_win, main_controller, sdict, rdict,
                  bookview_settings=None, parent=None):
@@ -103,7 +124,7 @@ class BookView(QWidget):
         self.autosave = Autosave(self._console)
         self.autosave.save.connect(self.maybeSave)
         self.display = BookDisplay(
-            bookview_settings['font'], bookview_settings['font_size'], self) 
+            bookview_settings['font'], bookview_settings['font_size'], self)
         self._initUI()
 
         self.sdict = sdict
@@ -119,13 +140,26 @@ class BookView(QWidget):
         self.chapter_lens = None
         self.total_len = None
 
+        self.c = self._loadTheme()
+
         self.highlight_format = QTextCharFormat()
-        self.highlight_format.setBackground(QColor('yellow'))
         self.unhighlight_format = QTextCharFormat()
-        self.unhighlight_format.setBackground(QColor('white'))
         self.mistake_format = QTextCharFormat()
-        self.mistake_format.setBackground(QColor('red'))
-        self.mistake_format.setForeground(QColor('white'))
+        self.formats = (self.highlight_format, self.unhighlight_format,
+                        self.mistake_format)
+
+        self.c[0].changed.connect(self.themeUpdate)
+        self.themeUpdate()
+
+    def _loadTheme(self):
+        return (Theme.get('BookView.Highlighting.Highlight'),
+                Theme.get('BookView.Highlighting.Unhighlight'),
+                Theme.get('BookView.Highlighting.Mistake'))
+
+    def themeUpdate(self):
+        for f, c in zip(self.formats, self.c):
+            f.setForeground(c.fg())
+            f.setBackground(c.bg())
 
     def _initUI(self):
         self.display.anchorClicked.connect(self.anchorClicked)

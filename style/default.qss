@@ -47,3 +47,111 @@ QToolBar {
 QToolButton {
   padding: 2px;
 }
+
+/* retype-specific selectors */
+
+BookView.Modeline.InnerSegment {
+  color: #ffff00;
+  background-color: #8b7500;
+  selection-color: #a52a2a;
+  selection-background-color: #ffffff;
+}
+
+BookView.Modeline.MidSegment {
+  color: #000000;
+  background-color: #cdad00;
+  selection-background-color: #ffffff;
+}
+
+BookView.Modeline.OuterSegment {
+  color: #000000;
+  background-color: #ffd700;
+  selection-background-color: #ffffff;
+}
+
+BookView.StatsDock.Grid {
+  color: #808080;
+}
+
+BookView.StatsDock.Text {
+  color: #000000;
+}
+
+BookView.StatsDock.Main {
+  color: #ffffff;
+  background-color: #cdcdc1;
+}
+
+BookView.BookDisplay.Cursor {
+  color: #ff0000;
+}
+
+BookView.BookDisplay {
+  color: #000000;
+  background-color: #f6f1de;
+  border-left-color: #ffffff;
+  border-right-color: #ffffff;
+  border-top-color: #ffffff;
+  border-bottom-color: #ffffff;
+  selection-background-color: #808080;
+}
+
+BookView.Highlighting.Mistake {
+  color: #ffffff;
+  background-color: #ff0000;
+}
+
+BookView.Highlighting.Unhighlight {
+  color: #000000;
+  background-color: #ffffff;
+}
+
+BookView.Highlighting.Highlight {
+  color: #000000;
+  background-color: #ffff00;
+}
+
+ShelfView.Top {
+  border-top-color: #a1a0a0;
+  border-bottom-color: #555555;
+}
+
+ShelfView.Shelf {
+  color: #b5b5b5;
+  background-color: #a9a9a9;
+  border-left-color: #555555;
+  border-right-color: #555555;
+  border-top-color: #cacaca;
+  border-bottom-color: #555555;
+}
+
+ShelfView.Background {
+  background-color: #f0f0f0;
+  outline-color: #555555;
+  border-left-color: #a9a9a9;
+  border-right-color: #a9a9a9;
+}
+
+ShelfView.IDNDisplay {
+  color: #808080;
+}
+
+ShelfView.ProgressBar:complete {
+  color: #008000;
+}
+
+ShelfView.ProgressBar {
+  color: #ffff00;
+  background-color: #000000;
+}
+
+Console {
+  color: #333333;
+  background-color: #bebebe;
+  border-left-color: #ffffff;
+  border-right-color: #ffffff;
+  border-top-color: #4a4a4a;
+  border-bottom-color: #ffffff;
+  selection-color: #333333;
+  selection-background-color: #ffffff;
+}

@@ -5,17 +5,35 @@ from qt import (QWidget, QVBoxLayout, QPainter, Qt, QColor, QEvent, QPixmap,
 from retype.layouts import ShelvesWidget
 from retype.ui import Cover
 from retype.ui.painting import rectPixmap, linePixmap, textPixmap, Font
+from retype.services.theme import theme, C, Theme
 
 logger = logging.getLogger(__name__)
 
 
+@theme('ShelfView.Background',
+       C(bg='#F0F0F0', outline='#555', l_border='#A9A9A9', r_border='#A9A9A9'))
+@theme('ShelfView.Shelf',
+       C(fg='#B5B5B5', bg='#A9A9A9', t_border='#CACACA', l_border='#555',
+         r_border='#555', b_border='#555'))
+@theme('ShelfView.Top',
+       C(t_border='#A1A0A0', b_border='#555'))
 class ShelfView(QWidget):
     def __init__(self, main_win, main_controller, parent=None):
         super().__init__(parent)
         self.parent = parent
         self._controller = main_controller
         self._library = self._controller.library
+        self.c_background, self.c_shelf, self.c_top = self._loadTheme()
+        self.c_background.changed.connect(self.themeUpdate)
         self._initUI()
+
+    def _loadTheme(self):
+        return (Theme.get('ShelfView.Background'),
+                Theme.get('ShelfView.Shelf'),
+                Theme.get('ShelfView.Top'))
+
+    def themeUpdate(self):
+        self.update()
 
     def _initUI(self):
         self.cell_dimensions = (150, 200, 232)  # min width, max width, height
@@ -52,18 +70,30 @@ class ShelfView(QWidget):
             deepness = 10
             inset = 4
             front_h = 10
-            shadow_colour = QColor('darkGray')
-            line_colour = QColor('#555')
-            light_colour = QColor('#B5B5B5')
-            highlight_colour = QColor('#CACACA')
+
+            outline_colour = self.c_background.outline()
+            background_colour = self.c_background.bg()
+            border_left_colour = self.c_background.l_border()
+            border_right_colour = self.c_background.r_border()
+            shelf_colour = self.c_shelf.fg()
+            shelf_background_colour = self.c_shelf.bg()
+            shelf_border_top_colour = self.c_shelf.t_border()
+            shelf_border_left_colour = self.c_shelf.l_border()
+            shelf_border_right_colour = self.c_shelf.r_border()
+            shelf_border_bottom_colour = self.c_shelf.b_border()
+            top_border_top_colour = self.c_top.t_border()
+            top_border_bottom_colour = self.c_top.b_border()
 
             qp = QPainter(watched)
             draw = qp.drawPixmap
 
-            draw(*o, rectPixmap(10, h, shadow_colour, shadow_colour))
-            draw(w - 11, 0, rectPixmap(10, h, shadow_colour, shadow_colour))
-            draw(10, 0, rectPixmap(2, h, line_colour))
-            draw(w - 13, 0, rectPixmap(2, h, line_colour))
+            draw(*o, rectPixmap(w, h, background_colour, background_colour))
+            draw(*o, rectPixmap(10, h, border_left_colour, border_left_colour))
+            draw(w - 11, 0, rectPixmap(
+                10, h, border_right_colour, border_right_colour))
+            outline = rectPixmap(2, h, outline_colour, background_colour)
+            draw(10, 0, outline)
+            draw(w - 13, 0, outline)
 
             def shelf():
                 pixmap = QPixmap(w, h)
@@ -71,20 +101,22 @@ class ShelfView(QWidget):
                 qp = QPainter(pixmap)
                 draw = qp.drawPixmap
                 # Top
-                draw(0, 3, rectPixmap(w, deepness, shadow_colour,
-                                      shadow_colour))
+                draw(0, 3, rectPixmap(w, deepness, shelf_background_colour,
+                                      shelf_background_colour))
                 # Front
-                draw(inset, deepness + 3, rectPixmap(w - 10, 10, light_colour,
-                                                     light_colour))
+                draw(inset, deepness + 3, rectPixmap(w - 10, 10, shelf_colour,
+                                                     shelf_colour))
                 # Front outline
-                draw(12, 0, rectPixmap(w - 25, 2, line_colour, QColor('white')))
+                draw(12, 0, rectPixmap(w - 25, 2,
+                                       outline_colour, background_colour))
                 draw(inset, deepness + 3,
-                     linePixmap(w - 7, 0, highlight_colour, 4))
+                     linePixmap(w - 7, 0, shelf_border_top_colour, 4))
                 draw(inset, deepness + 3 + front_h,
-                     linePixmap(w - 7, 0, line_colour, 4))
-                sideline = linePixmap(0, 11, line_colour, 4)
-                draw(3, deepness + 3, sideline)
-                draw(w - 5, deepness + 3, sideline)
+                     linePixmap(w - 7, 0, shelf_border_bottom_colour, 4))
+                draw(3, deepness + 3,
+                     linePixmap(0, 11, shelf_border_left_colour, 4))
+                draw(w - 5, deepness + 3,
+                     linePixmap(0, 11, shelf_border_right_colour, 4))
                 return pixmap
 
             shelf_pixmap = shelf()
@@ -95,9 +127,10 @@ class ShelfView(QWidget):
                 shelf_y += self.shelf_height
 
             # The rectangles at the very top
-            c = QColor('#A1A0A0')
-            draw(*o, rectPixmap(w, 20, c, c))
-            draw(0, 20, rectPixmap(w, 3, line_colour, line_colour))
+            draw(*o, rectPixmap(
+                w, 20, top_border_top_colour, top_border_top_colour))
+            draw(0, 20, rectPixmap(
+                w, 3, top_border_bottom_colour, top_border_bottom_colour))
 
             return True
         return super().eventFilter(watched, event)
@@ -128,11 +161,16 @@ class ShelfItem(QWidget):
         self.loadBook.emit(self.book.idn)
 
 
+@theme('ShelfView.IDNDisplay', C(fg='gray'))
 class IDNDisplay(QWidget):
     def __init__(self, idn, w):
         super().__init__()
         self.idn = idn
         self.w = w
+        self.c = self._loadTheme()
+
+    def _loadTheme(self):
+        return Theme.get('ShelfView.IDNDisplay')
 
     def pixmap(self, idn):
         (w, h) = (self.w, 10)
@@ -141,7 +179,7 @@ class IDNDisplay(QWidget):
         qp = QPainter(pixmap)
         font = Font.GENERAL
         qp.drawPixmap(0, -3,
-                      textPixmap(str(idn), w, 20, font, QColor('gray'),
+                      textPixmap(str(idn), w, 20, font, self.c.fg(),
                                  Qt.AlignmentFlag.AlignHCenter))
         return pixmap
 
@@ -153,21 +191,25 @@ class IDNDisplay(QWidget):
         return QSize(self.w, 10)
 
 
+@theme('ShelfView.ProgressBar', C(fg='yellow', bg='black'))
+@theme('ShelfView.ProgressBar:complete', C(fg='green'))
 class ProgressBar(QWidget):
     def __init__(self, w, progress):
         super().__init__()
         self.w = w
         self.h = 2
         self.progress = progress
-        self.progress_colour = QColor('yellow')
-        self.complete_colour = QColor('green')
-        self.background_colour = QColor('black')
+        self.c, self.c_complete = self._loadTheme()
+
+    def _loadTheme(self):
+        return (Theme.get('ShelfView.ProgressBar'),
+                Theme.get('ShelfView.ProgressBar:complete'))
 
     def pixmap(self):
         (w, h) = (self.w, self.h)
-        (pc, bc) = (self.progress_colour, self.background_colour)
+        (pc, bc) = (self.c.fg(), self.c.bg())
         if self.progress == 100:
-            pc = self.complete_colour
+            pc = self.c_complete.fg()
 
         progress = self.progress / 100
         pixmap = QPixmap(self.w, h)

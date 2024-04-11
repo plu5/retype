@@ -1,9 +1,14 @@
 from qt import pyqtSignal, Qt, QSizePolicy
 
 from retype.ui import LineEdit
+from retype.services.theme import theme, C, Theme
 from retype.console import CommandService, HighlightingService
 
 
+@theme('Console',
+       C(fg='#333', bg='#BEBEBE', sel='#333', sel_bg='white',
+         t_border='#4A4A4A', b_border='white', l_border='white',
+         r_border='white'))
 class Console(LineEdit):
     submitted = pyqtSignal(str)
 
@@ -17,6 +22,14 @@ class Console(LineEdit):
         self._font = self.font()
         self._font_family = self.font_family = font_family
         self._prompt = prompt
+
+        Theme.get('Console').changed.connect(self.themeUpdate)
+        self.themeUpdate()
+
+    def themeUpdate(self):
+        qss = Theme.getQss('Console').replace(
+            'Console', '*[accessibleName="console"]')
+        self.setStyleSheet(qss)
 
     @property
     def prompt(self):
