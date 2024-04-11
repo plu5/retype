@@ -40,7 +40,7 @@ class MainWin(QMainWindow):
 
     def _initQss(self):
         QDir.addSearchPath('style', getStylePath())
-        qss_file = QFile('style:default.qss')
+        qss_file = QFile('style:0_default.qss')
         qss_file.open(QFile.ReadOnly | QFile.Text)
         self.setStyleSheet(str(qss_file.readAll(), 'utf-8'))
 

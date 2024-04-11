@@ -140,6 +140,7 @@ class CustomisationDialog(QDialog):
 
         preset_lyt = QHBoxLayout()
         themes = QComboBox()
+        themes.setInsertPolicy(QComboBox.InsertPolicy.InsertAlphabetically)
         preset_lyt.addWidget(themes, 1)
         apply_btn = QPushButton("Apply")
         apply_btn.setToolTip("Apply selected preset")
