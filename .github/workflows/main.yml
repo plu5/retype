@@ -21,6 +21,18 @@ on:
         required: false
         default: true
         description: If releasing, whether release should be marked prerelease
+      build_linux:
+        type: boolean
+        required: false
+        default: true
+      build_macos:
+        type: boolean
+        required: false
+        default: true
+      build_windows:
+        type: boolean
+        required: false
+        default: true
   push:
     paths: ['retype/__init__.py'] # VERSION_FILE
 
@@ -37,6 +49,7 @@ jobs:
       release: ${{ steps.a.outputs.release }}
       annotation: ${{ steps.a.outputs.annotation }}
       prerelease: ${{ steps.a.outputs.prerelease }}
+      os: ${{ steps.a.outputs.os }}
     steps:
       - uses: actions/checkout@v3
 
@@ -56,22 +69,34 @@ jobs:
           fi
           echo -e "version=$VERSION\nrelease=$RELEASE\nprerelease=$PRERELEASE" >> $GITHUB_OUTPUT
 
+          arr=()
+          if [ -n "${{ inputs.build_linux }}" ]; then
+            [ ${{ inputs.build_linux }} = 'true' ] && arr+=('ubuntu-latest')
+            [ ${{ inputs.build_macos }} = 'true' ] && arr+=('macos-latest')
+            [ ${{ inputs.build_windows }} = 'true' ] && arr+=('windows-latest')
+          else
+            arr=('ubuntu-latest' 'macos-latest' 'windows-latest')
+          fi
+          s=$(printf ",\"%s\"" "${arr[@]}")
+          echo os=[${s:1}] >> $GITHUB_OUTPUT
+
   build:
     needs: data
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        include:
-          - os: ubuntu-latest
-            artifact: './dist/retype-hacky'
-            name: linux
-          - os: macos-latest
-            artifact: './retype.dmg'
-            name: macos
-          - os: windows-latest
-            artifact: './dist/retype-hacky'
-            name: windows
+        os: ${{ fromJson(needs.data.outputs.os) }}
     steps:
+      - name: Get name and artifact path for current OS
+        id: os
+        run: |
+          output="name=failed"
+          [ ${{ matrix.os }} = 'ubuntu-latest' ] && output="name=linux\nartifact=./dist/retype-hacky" 
+          [ ${{ matrix.os }} = 'macos-latest' ] && output="name=macos\nartifact=./retype.dmg"
+          [ ${{ matrix.os }} = 'windows-latest' ] && output="name=windows\nartifact=./dist/retype-hacky"
+          echo -e $output >> $GITHUB_OUTPUT
+        shell: bash
+
       - uses: actions/checkout@v3
 
       - name: 1U. Image cache
@@ -190,8 +215,8 @@ jobs:
       - name: F. Upload the build artifacts
         uses: actions/upload-artifact@v3
         with:
-          name: retype-${{ needs.data.outputs.version }}-${{ matrix.name }}
-          path: ${{ matrix.artifact }}
+          name: retype-${{ needs.data.outputs.version }}-${{ steps.os.outputs.name }}
+          path: ${{ steps.os.outputs.artifact }}
           if-no-files-found: error
           retention-days: 1
 
