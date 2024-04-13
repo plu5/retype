@@ -28,7 +28,7 @@ elif islinux:
         'libmount', 'libQt5WebSockets', 'libfontconfig', 'libblkid',
         'libxkbcommon', 'libmircommon', '_multibytecodec', '_asyncio',
         'libpng16', 'libatk', 'libatspi', 'libk5crypto',
-        'libglapi', 'libexpat', 'libgraphite', 'libselinux', 'liblzma', '_sha',
+        'libglapi', 'libexpat', 'libgraphite', 'libselinux', 'liblzma',
         'libxcb', '_csv', 'libz', 'libboost', 'libgcc', '_heapq',
         'libpangoft2', 'mmap', 'libgpg', 'libXext', 'libwayland', '_random',
         'libXi', 'termios', '_multiprocessing', '_bisect', 'libgbm', 'grp',
