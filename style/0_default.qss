@@ -7,12 +7,6 @@
   selection-color: #333;
 }
 
-QTextBrowser {
-  background-color: #F6F1DE;
-  border: 1px outset white;
-  selection-background-color: grey;
-}
-
 QScrollArea {
   background: transparent;
   border: 0px;
