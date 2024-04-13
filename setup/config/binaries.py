@@ -21,7 +21,7 @@ elif islinux:
         'libQt5WaylandClient', '_decimal', 'libgio-2.0', 'libstdc++', 'libX11',
         'unicodedata', 'pyexpat', 'libglib-2.0', 'libcairo', 'libgcrypt',
         'libepoxy', 'libgdk', 'libkrb5', 'libQt5QmlModels', 'objectify', 'sax',
-        'libfreetype', 'libpixman', '_blake2', 'libmirclient', '_pickle',
+        'libfreetype', 'libpixman', 'libmirclient', '_pickle',
         '_datetime', '_ctypes', 'libsystemd', '_sha3', 'libharfbuzz',
         'libmirprotobuf', 'libssl', 'libpcre', '_ssl', '_json', 'libgobject',
         '_codecs', 'libprotobuf', 'libpango', 'libdbus', 'libgssapi',
