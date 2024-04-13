@@ -21,14 +21,14 @@ elif islinux:
         'libQt5WaylandClient', '_decimal', 'libgio-2.0', 'libstdc++', 'libX11',
         'unicodedata', 'pyexpat', 'libglib-2.0', 'libcairo', 'libgcrypt',
         'libepoxy', 'libgdk', 'libkrb5', 'libQt5QmlModels', 'objectify', 'sax',
-        'libfreetype', 'libpixman', '_blake2', 'libmirclient', '_pickle',
-        '_datetime', '_ctypes', 'libsystemd', '_sha3', 'libharfbuzz',
+        'libfreetype', 'libpixman', 'libmirclient', '_pickle',
+        '_datetime', '_ctypes', 'libsystemd', 'libharfbuzz',
         'libmirprotobuf', 'libssl', 'libpcre', '_ssl', '_json', 'libgobject',
         '_codecs', 'libprotobuf', 'libpango', 'libdbus', 'libgssapi',
         'libmount', 'libQt5WebSockets', 'libfontconfig', 'libblkid',
         'libxkbcommon', 'libmircommon', '_multibytecodec', '_asyncio',
         'libpng16', 'libatk', 'libatspi', 'libk5crypto',
-        'libglapi', 'libexpat', 'libgraphite', 'libselinux', 'liblzma', '_sha',
+        'libglapi', 'libexpat', 'libgraphite', 'libselinux', 'liblzma',
         'libxcb', '_csv', 'libz', 'libboost', 'libgcc', '_heapq',
         'libpangoft2', 'mmap', 'libgpg', 'libXext', 'libwayland', '_random',
         'libXi', 'termios', '_multiprocessing', '_bisect', 'libgbm', 'grp',
@@ -50,10 +50,10 @@ libfcitxplatforminputcontextplugin.so'}
 elif ismacos:
     to_exclude = {
         'libcrypto', 'libncursesw', 'libssl', 'QtNetwork', 'QtQml', 'QtQuick',
-        'QtSvg', 'QtWebSockets', 'objectify', 'sax', '_bisect', '_blake2',
+        'QtSvg', 'QtWebSockets', 'objectify', 'sax', '_bisect',
         '_bz2', '_codecs', '_ctypes', '_datetime', '_heapq',
         '_json', '_lzma', '_multibyte', '_opcode', '_pickle',
-        '_random', '_scproxy', '_sha', '_socket', '_ssl', '_uuid', 'grp',
+        '_random', '_scproxy', '_socket', '_ssl', '_uuid', 'grp',
         'pyexpat', 'readline', 'resource', 'termios', 'unicodedata',
     }
 
