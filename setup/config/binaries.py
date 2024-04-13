@@ -22,7 +22,7 @@ elif islinux:
         'unicodedata', 'pyexpat', 'libglib-2.0', 'libcairo', 'libgcrypt',
         'libepoxy', 'libgdk', 'libkrb5', 'libQt5QmlModels', 'objectify', 'sax',
         'libfreetype', 'libpixman', 'libmirclient', '_pickle',
-        '_datetime', '_ctypes', 'libsystemd', '_sha3', 'libharfbuzz',
+        '_datetime', '_ctypes', 'libsystemd', 'libharfbuzz',
         'libmirprotobuf', 'libssl', 'libpcre', '_ssl', '_json', 'libgobject',
         '_codecs', 'libprotobuf', 'libpango', 'libdbus', 'libgssapi',
         'libmount', 'libQt5WebSockets', 'libfontconfig', 'libblkid',
