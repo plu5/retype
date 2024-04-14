@@ -33,8 +33,8 @@ class MainController(QObject):
             self.config['prompt'], self.config['console_font'])
         self._window = MainWin(self.console, self.getGeometry(self.config))
         if iswindows:
+            self.sysconsole_visible = True
             self._window.opened.connect(self.maybeHideConsoleWindow)
-            self.console_status = None
 
         self._view = None
         self._prev_view = None
@@ -209,17 +209,23 @@ class MainController(QObject):
         def hideConsoleWindow(self, show=False):
             try:
                 from win32gui import ShowWindow
-                from win32console import GetConsoleWindow
-                from win32con import SW_HIDE, SW_SHOW
-                action = SW_SHOW if show else SW_HIDE
-                ShowWindow(GetConsoleWindow(), action)
-                self.console_status = show
+                from win32con import SW_HIDE, SW_RESTORE
+                from win32console import (GetConsoleWindow,
+                                          GetConsoleProcessList)
+                con = GetConsoleWindow()
+                if con == 0:
+                    logger.info("No attached console window")
+                    return
+                if len(GetConsoleProcessList()) == 1:
+                    ShowWindow(con, SW_RESTORE if show else SW_HIDE)
+                    self.sysconsole_visible = show
+                else:
+                    logger.info("retype does not own the attached console")
             except ImportError:
                 logger.info("No pywin32")
 
         def toggleConsoleWindow(self):
-            if self.console_status is not None:
-                self.hideConsoleWindow(not self.console_status)
+            self.hideConsoleWindow(not self.sysconsole_visible)
 
         def maybeHideConsoleWindow(self):
             hide = self.config['hide_sysconsole']
