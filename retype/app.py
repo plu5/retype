@@ -45,6 +45,10 @@ def _configLog(level):
     logging.basicConfig(
         format='{asctime}.{msecs:.0f} [{name}] {levelname}: {message}',
         level=level, style='{', datefmt='%H:%M:%S')
+    # Turn third-party warnings into DEBUG-level logs
+    logging.captureWarnings(True)
+    logging.getLogger('py.warnings').addFilter(
+        lambda record: logging.getLevelName(level) == logging.DEBUG)
 
 
 if __name__ == '__main__':
