@@ -2,7 +2,26 @@
  on their size, accounting for spacing and contents margins. Similar to the way
  items on a menu or toolbar are positioned."""
 
-from qt import QRect, QPoint, QSize, QLayout, Qt
+from math import floor
+from qt import QRect, QPoint, QSize, QLayout, Qt, QSizePolicy
+
+
+def _isExpanding(policy):
+    return policy in [
+        QSizePolicy.Policy.Expanding, QSizePolicy.Policy.MinimumExpanding]
+
+
+def _calcItemGeom(item, x, y, height):
+    v = _isExpanding(item.widget().sizePolicy().verticalPolicy())
+    y_gap_to_centre = 0 if v else (height / 2) - (item.sizeHint().height() / 2)
+    size = item.sizeHint()
+    if v:
+        size.setHeight(height)
+        # Using heightForWidth to get width for height instead. Which is maybe
+        #  improper but i don't know how else to do it
+        if item.hasHeightForWidth():
+            size.setWidth(item.heightForWidth(height))
+    return QRect(QPoint(x, y + y_gap_to_centre), size)
 
 
 class RowLayout(QLayout):
@@ -70,17 +89,41 @@ If dry_run, only do the calculations and return the resulting width."""
         (x, y) = (rect.x(), rect.y())
         height = rect.height()
 
-        # This variable is used to “move right” as we place each item in
-        #  the row. as each item is placed its width + spacing is added to it,
-        #  and then it is used to place the next one.
-        added_width = 0
-        for item in self.item_list:
-            if not dry_run:
-                y_gap_to_centre = (height / 2) - (item.sizeHint().height() / 2)
-                item.setGeometry(QRect(
-                    QPoint(x + added_width,
-                           y + y_gap_to_centre),
-                    item.sizeHint()))
-            added_width += item.sizeHint().width() + self.spacing()
+        expand_horizontally = []
+        saved_x = 0
 
-        return added_width - self.spacing()
+        for i in range(len(self.item_list)):
+            item = self.item_list[i]
+            if _isExpanding(item.widget().sizePolicy().horizontalPolicy()):
+                expand_horizontally.append(i)
+                if len(expand_horizontally) == 1:
+                    saved_x = x
+            item_rect = _calcItemGeom(item, x, y, height)
+            if not dry_run:
+                # Once we have any widgets that have to expand horizontally,
+                #  we are going to have to setGeometry on all those items
+                #  and the ones that follow the second loop, so avoid calling
+                #  it twice
+                if not len(expand_horizontally):
+                    item.setGeometry(item_rect)
+            x += item_rect.width() + self.spacing()
+
+        total_width = x - self.spacing()
+
+        # Account for expanding horizontal size policy; expand items if we
+        #  have width left
+        if len(expand_horizontally):
+            left = rect.width() - total_width
+            each = 0 if left <= 0 else floor(left / len(expand_horizontally))
+            x = saved_x
+            for i in range(expand_horizontally[0], len(self.item_list)):
+                item = self.item_list[i]
+                item_rect = _calcItemGeom(item, x, y, height)
+                if i in expand_horizontally and each > 0:
+                    item_rect.setWidth(each)
+                if not dry_run:
+                    item.setGeometry(item_rect)
+                x += item_rect.width() + self.spacing()
+        total_width -= self.spacing()
+
+        return total_width

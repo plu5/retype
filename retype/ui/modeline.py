@@ -1,85 +1,74 @@
+from math import floor
 from qt import (QWidget, QPainter, QColor, Qt, QPixmap, QPoint, QPolygon,
-                QLabel, pyqtSignal, QFrame)
+                QLabel, pyqtSignal, QFrame, QSize, QSizePolicy)
 
 from retype.layouts import RowLayout
 from retype.services.theme import theme, C, Theme
 
 
 class Separator(QWidget):
-    def __init__(self, c, padding=0, facing_right=True):
+    def __init__(self, c, facing_right=True):
         super().__init__()
         self.c = c
-        self.start = padding
-        width = 8 + padding * 2
-        self._pixmap = QPixmap(width, 16)
-        self._pixmap.fill(QColor('transparent'))
-        self.setMinimumSize(width, 16)
         self.facing_right = facing_right
+        self.setSizePolicy(QSizePolicy.Policy.Preferred,
+                           QSizePolicy.Policy.Expanding)
+        self._calc(self.width(), self.height())
 
-    def pixmap(self):
-        qp = QPainter(self._pixmap)
+    def hasHeightForWidth(self):
+        return True
+
+    def heightForWidth(self, height):
+        """Despite the name, this returns width for height"""
+        return height / 2
+
+    def sizeHint(self):
+        """Minimum"""
+        h = 4
+        return QSize(self.heightForWidth(h), h)
+
+    def _calc(self, width, height):
+        half = floor((height - 1) / 2)
+        chupchik = (height - 2 * half) - 1
+        return (height, half, chupchik)
+
+    def pixmap(self, width, height):
+        p = QPixmap(width, height)
+        p.fill(QColor('transparent'))
+        qp = QPainter(p)
         qp.setPen(self.c.bg())
         qp.setBrush(self.c.bg())
 
-        s = self.start
+        h, half, chupchik = self._calc(width, height)
         if self.facing_right:
-            points = [QPoint(s, 0), QPoint(s, 2),
-                      QPoint(s + 7, 9), QPoint(s, 16)]
+            points = [QPoint(0, 0), QPoint(0, chupchik),
+                      QPoint(half, chupchik + half), QPoint(0, h)]
         else:
-            points = [QPoint(s, 0), QPoint(s + 7, 0), QPoint(s + 7, 2),
-                      QPoint(s, 9), QPoint(s + 7, 16), QPoint(s, 16)]
+            points = [QPoint(0, 0), QPoint(half, 0),
+                      QPoint(half, chupchik), QPoint(0, half + chupchik),
+                      QPoint(half, h - 1), QPoint(0, h - 1)]
         qp.drawPolygon(QPolygon(points))
 
-        return self._pixmap
+        return p
 
     def paintEvent(self, e):
         qp = QPainter()
         qp.begin(self)
-        qp.drawPixmap(0, 0, self.pixmap())
+        qp.drawPixmap(0, 0, self.pixmap(self.width(), self.height()))
         qp.end()
 
 
-class Spacer(QWidget):
-    """Either a fixed-width spacer with width `width', or a spacer that will
- fill the width of the parent minus `width'. For the latter pass parent with a
- repainted signal for when it should be updated (for example, emit it on
- paintEvent)."""
-    def __init__(self, width=30, parent=None):
-        super().__init__(parent)
-        self.p = parent
-        self.width = width
-        if self.p and hasattr(self.p, 'repainted'):
-            self.p.repainted.connect(self.update_)
-        else:
-            self.setFixedWidth(self.width)
-
-    def update_(self):
-        if not self.p:
-            return
-        pwidth = self.p.size().width()
-        pheight = self.p.size().height()
-        x = self.pos().x()
-
-        width = pwidth - x - self.width
-        height = pheight
-
-        if width > 0:
-            self.setFixedWidth(width)
-        if height > 0:
-            self.setFixedHeight(height)
-
-
 class WidgetsGroup(QFrame):
-    def __init__(self, *widgets, css_=None, tooltip=None, cursor=None,
-                 height=16):
+    def __init__(self, *widgets, css_=None, tooltip=None, cursor=None):
         super().__init__()
         self.layout_ = RowLayout(self)
         self.layout_.setContentsMargins(0, 0, 0, 0)
         self.layout_.setSpacing(0)
+        self.setSizePolicy(QSizePolicy.Policy.Preferred,
+                           QSizePolicy.Policy.Expanding)
 
         self.hover_css = ''
 
-        self.setMinimumHeight(height)
         if css_:
             self.setProperty("css_", css_)
         if tooltip:
@@ -163,17 +152,19 @@ class Modeline(QWidget):
 
         self.layout_ = RowLayout(self)
         self.layout_.setContentsMargins(0, self.padding, 0, 0)
-        self.layout_.setSpacing(0)
+        self.layout_.setSpacing(self.padding)
 
         # A spacer which serves to push the left-facing end separators to the
         #  right
-        self.push_to_right = Spacer(100, self)
+        self.push_to_right = QWidget()
+        self.push_to_right.setSizePolicy(
+            QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
 
         self.separators = [
-            Separator(self.c_outer, self.padding),
-            Separator(self.c_mid, self.padding),
-            Separator(self.c_inner, self.padding, False),
-            Separator(self.c_mid, self.padding, False)
+            Separator(self.c_outer),
+            Separator(self.c_mid),
+            Separator(self.c_inner, False),
+            Separator(self.c_mid, False)
         ]
         self.elements = [
             # line:char
@@ -181,7 +172,7 @@ class Modeline(QWidget):
             # title
             self.t_group, self.separators[1],
             # progress %
-            Spacer(self.padding / 2), p_group,
+            p_group,
             self.push_to_right,
             # chapter/total, viewed_chapter/total
             self.separators[2], self.v_group,
@@ -249,7 +240,7 @@ class Modeline(QWidget):
         for separator in reversed(self.separators):
             qp.setPen(separator.c.bg())
             qp.setBrush(separator.c.bg())
-            qp.drawRect(0, 0, separator.pos().x() + self.padding, 16)
+            qp.drawRect(0, 0, separator.pos().x(), height)
 
         qp.end()
         self.repainted.emit()
