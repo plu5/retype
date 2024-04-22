@@ -3,20 +3,22 @@ import logging
 from copy import deepcopy
 from base64 import b64encode
 from qt import (QWidget, QFormLayout, QVBoxLayout, QLabel, QLineEdit,
-                QHBoxLayout, QFrame, QPushButton, QToolBox, QCheckBox,
+                QHBoxLayout, QFrame, QPushButton, QCheckBox,
                 QSpinBox, QListView, QToolButton, QDialogButtonBox,
                 QAbstractListModel, Qt, QStyledItemDelegate, QStyle,
                 QApplication, QRectF, QTextDocument, QFileDialog, pyqtSignal,
                 QModelIndex, QItemSelectionModel, QMessageBox, QDialog, QSize,
                 QFont, QFontComboBox, QComboBox, QPainter, QBrush,
-                QColorDialog, QColor)
+                QColorDialog, QColor, QTreeView, QStandardItemModel,
+                QAbstractItemView, QItemDelegate, QStandardItem, QSizePolicy)
 
 from retype.extras.dict import SafeDict, update
 from retype.constants import default_config, iswindows
 from retype.services.theme import Theme, populateThemes, valuesFromQss
 from retype.extras.qss import serialiseValuesDict
 from retype.resource_handler import getStylePath
-from retype.extras.widgets import AdjustedTabWidget
+from retype.extras.widgets import (ScrollTabWidget, AdjustedStackedWidget,
+                                   WrappedLabel, MinWidget)
 from retype.extras.camel import spacecamel
 
 logger = logging.getLogger(__name__)
@@ -49,9 +51,7 @@ def npxspinbox(value):
 
 
 def descl(text):
-    desc = QLabel(text)
-    desc.setWordWrap(True)
-    return desc
+    return WrappedLabel(text)
 
 
 class CustomisationDialog(QDialog):
@@ -75,7 +75,7 @@ class CustomisationDialog(QDialog):
         self.setWindowTitle("Customise retype")
 
     def sizeHint(self):
-        return QSize(400, 500)
+        return QSize(500, 500)
 
     def getUserDir(self):
         return self.config['user_dir']
@@ -83,17 +83,18 @@ class CustomisationDialog(QDialog):
     def _initUI(self):
         self.selectors = {}
 
-        tbox = QToolBox()
-        tbox.addItem(self._pathSettings(), "Paths")
-        tbox.addItem(self._themeSettings(), "Theme")
-        tbox.addItem(self._consoleSettings(), "Console")
-        tbox.addItem(self._bookviewSettings(), "Book View")
-        tbox.addItem(self._sdictSettings(), "Line splits")
-        tbox.addItem(self._rdictSettings(), "Replacements")
-        tbox.addItem(self._windowSettings(), "Window geometry")
+        catw = CategorisedWidget()
+        catw.add("Filesystem", "Paths", self._pathSettings())
+        catw.add("User interface", "Theme", self._themeSettings())
+        catw.add("User interface", "Console", self._consoleSettings())
+        catw.add("User interface", "Book View", self._bookviewSettings())
+        catw.add("User interface", "Window geometry", self._windowSettings())
+        catw.add("Behaviour", "Line splits", self._sdictSettings())
+        catw.add("Behaviour", "Replacements", self._rdictSettings())
+        catw.postAddingCategories()
 
         lyt = QVBoxLayout(self)
-        lyt.addWidget(tbox)
+        lyt.addWidget(catw)
         lyt.addWidget(hline())
         self.revert_btn = QPushButton("Revert")
         self.revert_btn.setToolTip("Revert changes")
@@ -140,7 +141,6 @@ class CustomisationDialog(QDialog):
 
         preset_lyt = QHBoxLayout()
         themes = QComboBox()
-        themes.setInsertPolicy(QComboBox.InsertPolicy.InsertAlphabetically)
         preset_lyt.addWidget(themes, 1)
         apply_btn = QPushButton("Apply")
         apply_btn.setToolTip("Apply selected preset")
@@ -159,6 +159,7 @@ class CustomisationDialog(QDialog):
         for t in Theme.themes:
             if t != THEME_MODIFICATIONS_FILENAME.rstrip('.qss'):
                 themes.addItem(t)
+        themes.model().sort(0)
 
         t = ThemeWidget(user_dir)
         self.theme = t
@@ -171,7 +172,7 @@ class CustomisationDialog(QDialog):
         return pth
 
     def _consoleSettings(self):
-        pcon = QWidget()
+        pcon = MinWidget(200, height=False)
         lyt = QFormLayout(pcon)
 
         # prompt
@@ -194,7 +195,7 @@ class CustomisationDialog(QDialog):
         if iswindows:
             lyt.addRow(hline())
             hide_sysconsole_checkbox = CheckBox(
-                "Hide System Console window on UI load (Windows-only)")
+                "Hide System Console window on UI load\n(Windows-only)")
             hide_sysconsole_checkbox.setChecked(
                 self.config_edited.get('hide_sysconsole', True))
             hide_sysconsole_checkbox.changed.connect(
@@ -202,6 +203,7 @@ class CustomisationDialog(QDialog):
             self.selectors['hide_sysconsole'] = hide_sysconsole_checkbox
             lyt.addRow(hide_sysconsole_checkbox)
 
+        pcon.setMinimumWidth(50)
         return pcon
 
     def _sdictSettings(self):
@@ -1113,6 +1115,12 @@ class BookViewSettingsWidget(QWidget):
             value = settings[key]
             selector.setValue(value)
 
+    def minimumSizeHint(self):
+        return QSize(100, 100)
+
+    def sizeHint(self):
+        return self.minimumSizeHint()
+
 
 class _CEdit(QWidget):
     changed = pyqtSignal()
@@ -1259,7 +1267,7 @@ class ThemeWidget(QWidget):
         self.values = self._loadValues(getStylePath(user_dir))
         self.lyt = QVBoxLayout(self)
         self.lyt.setContentsMargins(0, 0, 0, 0)
-        self.tabw = AdjustedTabWidget()
+        self.tabw = ScrollTabWidget()
         self.lyt.addWidget(self.tabw)
         self._populateWidgets()
 
@@ -1408,3 +1416,112 @@ class ThemeWidget(QWidget):
             return
         # Write to file in path
         self._save(file_path, res)
+
+    def minimumSizeHint(self):
+        return QSize(100, 100)
+
+    def sizeHint(self):
+        return self.minimumSizeHint()
+
+
+class CategoriesDelegate(QItemDelegate):
+    def __init__(self, parent=None):
+        QItemDelegate.__init__(self, parent)
+        self.row_height = 24
+
+    def drawDisplay(self, painter, option, rect, text):
+        newoption = option
+        if not option.state & QStyle.StateFlag.State_Enabled:  # Sections
+            painter.fillRect(rect, option.palette.window().color().darker(106))
+            painter.setPen(option.palette.window().color().darker(130))
+            if rect.top():
+                painter.drawLine(rect.topRight(), rect.topLeft())
+            painter.drawLine(rect.bottomRight(), rect.bottomLeft())
+
+            newoption.displayAlignment = Qt.AlignmentFlag.AlignCenter
+
+            # Fake enabled state
+            newoption.state |= newoption.state | QStyle.StateFlag.State_Enabled
+        else:
+            option.font.setWeight(QFont.Bold)
+
+        QItemDelegate.drawDisplay(self, painter, newoption, rect, text)
+
+    def sizeHint(self, option, index):
+        size = QItemDelegate.sizeHint(self, option, index)
+        size.setHeight(self.row_height)
+        return size
+
+
+class CategoriesTree(QTreeView):
+    def __init__(self, parent=None):
+        QWidget.__init__(self, parent)
+        self.setContentsMargins(0, 0, 0, 0)
+        self.setIndentation(0)
+        self.setHeaderHidden(True)
+        self.setRootIsDecorated(False)
+        self.setItemsExpandable(False)
+        self.header().setVisible(False)
+        self.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
+        self.setItemDelegate(CategoriesDelegate(self))
+
+        self.model = QStandardItemModel(self)
+        self.setModel(self.model)
+
+        self.data_role = Qt.ItemDataRole.UserRole
+
+        self.setSizePolicy(QSizePolicy.Policy.Fixed,
+                           QSizePolicy.Policy.Preferred)
+
+    def sizeHint(self):
+        size = QTreeView.sizeHint(self)
+        size.setWidth(130)
+        return size
+
+    def addSection(self, name):
+        section = QStandardItem(name)
+        section.setFlags(Qt.ItemFlag.NoItemFlags)
+        self.model.appendRow(section)
+        return section
+
+    def addCategory(self, section, name, data=None):
+        category = QStandardItem(f'  {name}')
+        if data is not None:
+            category.setData(data, self.data_role)
+        section.appendRow(category)
+        category.setFlags(Qt.ItemFlag.ItemIsEnabled |
+                          Qt.ItemFlag.ItemIsSelectable)
+
+    def postAddingCategories(self):
+        self.expandAll()
+        self.setCurrentIndex(self.model.index(0, 0, self.model.index(0, 0)))
+        self.setFocus(Qt.FocusReason.NoFocusReason)
+
+    def dataFromIndex(self, index):
+        return self.model.itemFromIndex(index).data(self.data_role)
+
+
+class CategorisedWidget(QWidget):
+    def __init__(self, parent=None):
+        QWidget.__init__(self, parent)
+        self.tree = CategoriesTree()
+        self.stack = AdjustedStackedWidget()
+        self.sections = {}
+        self.tree.selectionModel().currentChanged.connect(self.switchCategory)
+        lyt = QHBoxLayout(self)
+        lyt.addWidget(self.tree)
+        lyt.addWidget(self.stack)
+        lyt.setContentsMargins(0, 0, 0, 0)
+
+    def add(self, section_name, category_name, widget):
+        if section_name not in self.sections:
+            self.sections[section_name] = self.tree.addSection(section_name)
+        self.tree.addCategory(
+            self.sections[section_name], category_name, widget)
+        self.stack.addWidget(widget)
+
+    def postAddingCategories(self):
+        self.tree.postAddingCategories()
+
+    def switchCategory(self, index):
+        self.stack.setCurrentWidget(self.tree.dataFromIndex(index))
