@@ -111,3 +111,22 @@ Adapted from musicamante https://stackoverflow.com/a/70757504/18396947"""
     def hasHeightForWidth(self):
         """Without this, the sizeHint seems to be ignored"""
         return False
+
+
+class MinWidget(QWidget):
+    def __init__(self, min=100, width=True, height=True, parent=None):
+        QWidget.__init__(self, parent)
+        self.min = min
+        self.width = width
+        self.height = height
+
+    def minimumSizeHint(self):
+        size = QWidget.minimumSizeHint(self)
+        if self.width:
+            size.setWidth(self.min)
+        if self.height:
+            size.setHeight(self.min)
+        return size
+
+    def sizeHint(self):
+        return self.minimumSizeHint()

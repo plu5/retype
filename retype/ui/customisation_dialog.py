@@ -18,7 +18,7 @@ from retype.services.theme import Theme, populateThemes, valuesFromQss
 from retype.extras.qss import serialiseValuesDict
 from retype.resource_handler import getStylePath
 from retype.extras.widgets import (ScrollTabWidget, AdjustedStackedWidget,
-                                   WrappedLabel)
+                                   WrappedLabel, MinWidget)
 from retype.extras.camel import spacecamel
 
 logger = logging.getLogger(__name__)
@@ -172,7 +172,7 @@ class CustomisationDialog(QDialog):
         return pth
 
     def _consoleSettings(self):
-        pcon = QWidget()
+        pcon = MinWidget(200, height=False)
         lyt = QFormLayout(pcon)
 
         # prompt
@@ -195,7 +195,7 @@ class CustomisationDialog(QDialog):
         if iswindows:
             lyt.addRow(hline())
             hide_sysconsole_checkbox = CheckBox(
-                "Hide System Console window on UI load (Windows-only)")
+                "Hide System Console window on UI load\n(Windows-only)")
             hide_sysconsole_checkbox.setChecked(
                 self.config_edited.get('hide_sysconsole', True))
             hide_sysconsole_checkbox.changed.connect(
@@ -203,6 +203,7 @@ class CustomisationDialog(QDialog):
             self.selectors['hide_sysconsole'] = hide_sysconsole_checkbox
             lyt.addRow(hide_sysconsole_checkbox)
 
+        pcon.setMinimumWidth(50)
         return pcon
 
     def _sdictSettings(self):
@@ -1114,6 +1115,12 @@ class BookViewSettingsWidget(QWidget):
             value = settings[key]
             selector.setValue(value)
 
+    def minimumSizeHint(self):
+        return QSize(100, 100)
+
+    def sizeHint(self):
+        return self.minimumSizeHint()
+
 
 class _CEdit(QWidget):
     changed = pyqtSignal()
@@ -1409,6 +1416,12 @@ class ThemeWidget(QWidget):
             return
         # Write to file in path
         self._save(file_path, res)
+
+    def minimumSizeHint(self):
+        return QSize(100, 100)
+
+    def sizeHint(self):
+        return self.minimumSizeHint()
 
 
 class CategoriesDelegate(QItemDelegate):
