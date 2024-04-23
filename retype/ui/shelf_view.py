@@ -1,6 +1,6 @@
 import logging
 from qt import (QWidget, QVBoxLayout, QPainter, Qt, QColor, QEvent, QPixmap,
-                QSize)
+                QSize, QFont, QFontMetrics)
 
 from retype.layouts import ShelvesWidget
 from retype.ui import Cover
@@ -165,30 +165,60 @@ class ShelfItem(QWidget):
 class IDNDisplay(QWidget):
     def __init__(self, idn, w):
         super().__init__()
-        self.idn = idn
-        self.w = w
+        self._idn = idn
+        self._font = Font.GENERAL
+        self._w = w
+        self._h = 0
         self.c = self._loadTheme()
+        self._pixmap = self.pixmap()
+
+    def regenPixmap(self):
+        self._pixmap = self.pixmap()
+
+    @property
+    def idn(self):
+        return self._idn
+
+    @idn.setter
+    def idn(self, value):
+        self._idn = value
+        self.regenPixmap()
+
+    @property
+    def font(self):
+        return self._font
+
+    @font.setter
+    def font(self, value):
+        self._font = value
+        self.regenPixmap()
+
+    @property
+    def w(self):
+        return self._w
+
+    @w.setter
+    def w(self, value):
+        self._w = value
+        self.regenPixmap()
 
     def _loadTheme(self):
         return Theme.get('ShelfView.IDNDisplay')
 
-    def pixmap(self, idn):
-        (w, h) = (self.w, 10)
-        pixmap = QPixmap(w, h)
-        pixmap.fill(QColor('transparent'))
-        qp = QPainter(pixmap)
-        font = Font.GENERAL
-        qp.drawPixmap(0, -3,
-                      textPixmap(str(idn), w, 20, font, self.c.fg(),
-                                 Qt.AlignmentFlag.AlignHCenter))
-        return pixmap
+    def pixmap(self):
+        font = self._font.toQFont()
+        fm = QFontMetrics(font)
+        self._h = fm.height()
+        (w, h) = (self._w, self._h)
+        return textPixmap(str(self._idn), w, h, font, self.c.fg(),
+                          Qt.AlignmentFlag.AlignHCenter)
 
     def paintEvent(self, e):
         qp = QPainter(self)
-        qp.drawPixmap(0, 0, self.pixmap(self.idn))
+        qp.drawPixmap(0, 0, self._pixmap)
 
     def sizeHint(self):
-        return QSize(self.w, 10)
+        return QSize(self._w, self._h)
 
 
 @theme('ShelfView.ProgressBar', C(fg='yellow', bg='black'))
