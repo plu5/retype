@@ -52,14 +52,27 @@ def rectPixmap(w, h, fg=white, bg=transparent):
 
 
 def textPixmap(text, w, h, font, fg=white,
-               alignment=center | wordwrap):
+               alignment=center | wordwrap, bounding_rect=None):
     pixmap = QPixmap(w, h)
     pixmap.fill(transparent)
-    qp = QPainter(pixmap)
+    # On some versions of Qt there is a last optional argument to drawText to
+    #  give the bounding rect, but my version doesn't, so draw it in an inner
+    #  pixmap.
+    qp = inner_pixmap = None
+    if bounding_rect:
+        inner_pixmap = QPixmap(w, h)
+        inner_pixmap.fill(transparent)
+        qp = QPainter(inner_pixmap)
+    else:
+        qp = QPainter(pixmap)
+        bounding_rect = QRectF(0, 0, w, h)
     font = font.toQFont() if type(font) == Font else font
     qp.setFont(font)
     qp.setPen(fg)
-    qp.drawText(QRectF(0, 0, w, h), alignment, text)
+    qp.drawText(bounding_rect, alignment, text)
+    if inner_pixmap:
+        qp = QPainter(pixmap)
+        qp.drawPixmap(0, 0, inner_pixmap)
     return pixmap
 
 
