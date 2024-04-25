@@ -620,7 +620,8 @@ class ListView(QListView):
 
 
 class SDictModel(QAbstractListModel):
-    TEMPLATE = '''<p><b>Substring:</b> <code>'<u style="color:blue">{0}</u>' ({1})</code><br>
+    TEMPLATE = '''<p><b>Substring:</b> <code>'<u style="color:palette(link)">\
+{0}</u>' ({1})</code><br>
 Keep: <code><b>{2}</b></code></p>'''
     INVALID_TEMPLATE = '<div style="color:red">' + TEMPLATE + '</div>'
     changed = pyqtSignal(dict)
@@ -698,7 +699,7 @@ class SDictEntryEditor(QWidget):
 
         lyt = QFormLayout(self)
         self.substr_e = QLineEdit(substr)
-        self.keep_e = CheckBox()
+        self.keep_e = CheckBox('')
         self.keep_e.setChecked(keep)
         lyt.addRow("Substring:", self.substr_e)
         lyt.addRow("Keep:", self.keep_e)
@@ -794,7 +795,8 @@ class SDictWidget(QWidget):
 
 
 class RDictModel(QAbstractListModel):
-    TEMPLATE = '''<p><b>Substring:</b> <code>'<u style="color:blue">{0}</u>' ({1})</code><br>
+    TEMPLATE = '''<p><b>Substring:</b> <code>'<u style="color:palette(link)">\
+{0}</u>' ({1})</code><br>
 Replacements list: <code><b>{2}</b></code></p>'''
     INVALID_TEMPLATE = '<div style="color:red">' + TEMPLATE + '</div>'
     changed = pyqtSignal(dict)
