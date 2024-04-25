@@ -30,7 +30,7 @@ class SafeDict:
         return r
 
     def __setitem__(self, key, value):
-        if type(value) == dict and key in self.nested_raw_dict_keys:
+        if type(value) == dict and key not in self.nested_raw_dict_keys:
             self.raw.setdefault(key, _NestedSafeDictGroup(
                 key, value, self.fallback))
         else:
