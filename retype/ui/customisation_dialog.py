@@ -14,7 +14,8 @@ from qt import (QWidget, QFormLayout, QVBoxLayout, QLabel, QLineEdit,
 
 from retype.extras.dict import SafeDict, update
 from retype.constants import default_config, iswindows
-from retype.services.theme import Theme, populateThemes, valuesFromQss
+from retype.services.theme import (Theme, populateThemes, valuesFromQss, theme,
+                                   C)
 from retype.extras.qss import serialiseValuesDict
 from retype.resource_handler import getStylePath
 from retype.extras.widgets import (ScrollTabWidget, AdjustedStackedWidget,
@@ -620,7 +621,8 @@ class ListView(QListView):
 
 
 class SDictModel(QAbstractListModel):
-    TEMPLATE = '''<p><b>Substring:</b> <code>'<u style="color:blue">{0}</u>' ({1})</code><br>
+    TEMPLATE = '''<p><b>Substring:</b> <code>'<u style="color:palette(link)">\
+{0}</u>' ({1})</code><br>
 Keep: <code><b>{2}</b></code></p>'''
     INVALID_TEMPLATE = '<div style="color:red">' + TEMPLATE + '</div>'
     changed = pyqtSignal(dict)
@@ -692,19 +694,24 @@ Keep: <code><b>{2}</b></code></p>'''
         return False
 
 
+@theme('CustomisationDialog.SDict.EntryEditor', C(fg='black', bg='#CDE8FF'))
 class SDictEntryEditor(QWidget):
+    selector = 'CustomisationDialog.SDict.EntryEditor'
+
     def __init__(self, substr, keep, parent=None):
         QWidget.__init__(self, parent)
 
         lyt = QFormLayout(self)
         self.substr_e = QLineEdit(substr)
-        self.keep_e = CheckBox()
+        self.keep_e = CheckBox('')
         self.keep_e.setChecked(keep)
         lyt.addRow("Substring:", self.substr_e)
         lyt.addRow("Keep:", self.keep_e)
 
-        # Background
-        self.setStyleSheet("background-color:#CDE8FF")
+        # Note: No need to connect to selector change; this editor gets created
+        #  and destroyed each time it opens/closes, it does not persist
+        self.themeUpdate()
+
         self.setAttribute(Qt.WA_StyledBackground, True)
 
         lyt.setContentsMargins(0, 0, 0, 0)
@@ -715,6 +722,10 @@ class SDictEntryEditor(QWidget):
 
     def keep(self):
         return {'keep': self.keep_e.isChecked()}
+
+    def themeUpdate(self):
+        qss = Theme.getQss(self.selector).replace(self.selector, 'QWidget')
+        self.setStyleSheet(qss)
 
 
 class SDictDelegate(Delegate):
@@ -794,7 +805,8 @@ class SDictWidget(QWidget):
 
 
 class RDictModel(QAbstractListModel):
-    TEMPLATE = '''<p><b>Substring:</b> <code>'<u style="color:blue">{0}</u>' ({1})</code><br>
+    TEMPLATE = '''<p><b>Substring:</b> <code>'<u style="color:palette(link)">\
+{0}</u>' ({1})</code><br>
 Replacements list: <code><b>{2}</b></code></p>'''
     INVALID_TEMPLATE = '<div style="color:red">' + TEMPLATE + '</div>'
     changed = pyqtSignal(dict)
@@ -866,7 +878,10 @@ Replacements list: <code><b>{2}</b></code></p>'''
         return False
 
 
+@theme('CustomisationDialog.RDict.EntryEditor', C(fg='black', bg='#CDE8FF'))
 class RDictEntryEditor(QWidget):
+    selector = 'CustomisationDialog.RDict.EntryEditor'
+
     def __init__(self, substr, reps, parent=None):
         QWidget.__init__(self, parent)
 
@@ -876,8 +891,10 @@ class RDictEntryEditor(QWidget):
         lyt.addRow("Substring:", self.substr_e)
         lyt.addRow("Replacements (separated by ,):", self.reps_e)
 
-        # Background
-        self.setStyleSheet("background-color:#CDE8FF")
+        # Note: No need to connect to selector change; this editor gets created
+        #  and destroyed each time it opens/closes, it does not persist
+        self.themeUpdate()
+
         self.setAttribute(Qt.WA_StyledBackground, True)
 
         lyt.setContentsMargins(0, 0, 0, 0)
@@ -888,6 +905,10 @@ class RDictEntryEditor(QWidget):
 
     def reps(self):
         return self.reps_e.text().split(',')
+
+    def themeUpdate(self):
+        qss = Theme.getQss(self.selector).replace(self.selector, 'QWidget')
+        self.setStyleSheet(qss)
 
 
 class RDictDelegate(Delegate):
