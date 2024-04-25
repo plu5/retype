@@ -70,7 +70,19 @@ class TestLibraryControllerSaveFunction:
         m_jsondump.assert_called_once_with(save, ANY, indent=2)
         assert book.save_data == data
 
-    def test_save_file_does_not_exist(
+    def test_save_file_does_not_exist_and_user_dir_does(
+            self, m_jsondump, m_open, m_exists):
+        (library, book, data, save) = _setup()
+
+        m_exists.side_effect = [True, False]
+
+        library.save(book, data)
+
+        m_jsondump.assert_called_once_with(
+            {book.checksum: data}, ANY, indent=2)
+        assert book.save_data == data
+
+    def test_user_dir_does_not_exist(
             self, m_jsondump, m_open, m_exists):
         (library, book, data, save) = _setup()
 
@@ -78,8 +90,7 @@ class TestLibraryControllerSaveFunction:
 
         library.save(book, data)
 
-        m_jsondump.assert_called_once_with(
-            {book.checksum: data}, ANY, indent=2)
+        m_jsondump.assert_not_called()
         assert book.save_data == data
 
 

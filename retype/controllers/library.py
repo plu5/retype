@@ -69,6 +69,12 @@ class LibraryController(object):
         book_view.display.centreAroundCursor()
 
     def save(self, book, data):
+        book.save_data = data
+
+        if not os.path.exists(self._user_dir):
+            logger.error(f'Unable to find user_dir {self._user_dir}')
+            return
+
         self.addFriendlyName(data, book.path)
         key = book.checksum
         save = self.save_file_contents
@@ -79,8 +85,6 @@ class LibraryController(object):
 
         with open(self.save_abs_path, 'w', encoding='utf-8') as f:
             json.dump(save, f, indent=2)
-
-        book.save_data = data
 
     def migrateV1Save(self, save):
         book_checksum_list = []

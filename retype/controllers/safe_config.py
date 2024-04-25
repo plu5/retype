@@ -54,6 +54,10 @@ Attempting to load config from: {}".format(user_dir, custom_path))
 
     def save(self):
         user_dir = self.raw['user_dir']
+        if not os.path.exists(user_dir):
+            logger.error(f'Unable to find user_dir {user_dir}')
+            return
+
         path = os.path.join(user_dir, self.config_rel_path)
         with open(path, 'w') as f:
             json.dump(self.raw, f, indent=2)
