@@ -704,8 +704,7 @@ class SDictEntryEditor(QWidget):
         lyt.addRow("Substring:", self.substr_e)
         lyt.addRow("Keep:", self.keep_e)
 
-        # Background
-        self.setStyleSheet("background-color:#CDE8FF")
+        self.setStyleSheet("color:black;background-color:#CDE8FF")
         self.setAttribute(Qt.WA_StyledBackground, True)
 
         lyt.setContentsMargins(0, 0, 0, 0)
@@ -878,8 +877,7 @@ class RDictEntryEditor(QWidget):
         lyt.addRow("Substring:", self.substr_e)
         lyt.addRow("Replacements (separated by ,):", self.reps_e)
 
-        # Background
-        self.setStyleSheet("background-color:#CDE8FF")
+        self.setStyleSheet("color:black;background-color:#CDE8FF")
         self.setAttribute(Qt.WA_StyledBackground, True)
 
         lyt.setContentsMargins(0, 0, 0, 0)
