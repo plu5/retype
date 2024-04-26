@@ -21,6 +21,7 @@ from retype.resource_handler import getStylePath
 from retype.extras.widgets import (ScrollTabWidget, AdjustedStackedWidget,
                                    WrappedLabel, MinWidget)
 from retype.extras.camel import spacecamel
+from retype.services.icon_set import Icons
 
 logger = logging.getLogger(__name__)
 
@@ -86,6 +87,7 @@ class CustomisationDialog(QDialog):
 
         catw = CategorisedWidget()
         catw.add("Filesystem", "Paths", self._pathSettings())
+        catw.add("User interface", "Icons", self._iconsSettings())
         catw.add("User interface", "Theme", self._themeSettings())
         catw.add("User interface", "Console", self._consoleSettings())
         catw.add("User interface", "Book View", self._bookviewSettings())
@@ -135,6 +137,24 @@ class CustomisationDialog(QDialog):
         lyt.addRow(self.selectors['library_paths'])
 
         return plib
+
+    def _iconsSettings(self):
+        pic = QWidget()
+        lyt = QFormLayout(pic)
+        icon_sets = QComboBox()
+        lyt.addRow("Icon set:", icon_sets)
+        lyt.addRow(descl("To import an icon set, place the folder in the\
+ 'style/icons' subfolder in either the user dir or application folder, and\
+ restart retype. Missing icons will fall back to the default set."))
+        lyt.addRow(descl("Changing icon set requires restarting retype for the\
+ change to take effect."))
+        for s in Icons.icon_sets:
+            icon_sets.addItem(s)
+        icon_sets.model().sort(0)
+        icon_sets.setCurrentText(self.config_edited['icon_set'])
+        icon_sets.currentTextChanged.connect(
+            lambda t: self.update('icon_set', t))
+        return pic
 
     def _themeSettings(self):
         pth = QWidget()

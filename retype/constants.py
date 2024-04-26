@@ -15,6 +15,7 @@ ismacos = 'darwin' in platform.lower()
 default_config = {
     "user_dir": root_path,
     "library_paths": [getLibraryPath()],
+    "icon_set": "0_default",
     "prompt": ">",
     "console_font": "Default",
     "sdict": {
