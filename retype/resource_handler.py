@@ -2,6 +2,8 @@ import os
 import sys
 from qt import QIcon
 
+from retype.services.icon_set import Icons
+
 
 def __getRoot():
     root = ''
@@ -29,12 +31,12 @@ def getStylePath(user_dir=None):
     return os.path.join(user_dir if user_dir else root_path, 'style')
 
 
-def getIconsPath():
-    return os.path.join(getStylePath(), 'icons')
+def getIconsPath(user_dir=None):
+    return os.path.join(getStylePath(user_dir), 'icons')
 
 
 def getIcon(icon_name, extension='png'):
-    return QIcon(os.path.join(getIconsPath(), icon_name + f'.{extension}'))
+    return QIcon(Icons.getIconPath(f'{icon_name}.{extension}'))
 
 
 def getIncludePath():

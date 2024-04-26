@@ -100,7 +100,7 @@ def getThemeValues(name, path):
 def populateThemes(paths):
     Theme.themes = {}
     for path in paths:
-        for root, dirs, files in os.walk(path):
+        for root, _, files in os.walk(path):
             for f in files:
                 if f.lower().endswith('.qss'):
                     p = os.path.join(root, f)
@@ -108,6 +108,7 @@ def populateThemes(paths):
                     if name not in Theme.themes:
                         values = getThemeValues(name, p)
                         Theme.themes[name] = {'path': p, 'values': values}
+            break  # do not recurse
 
 
 def selectorsToValuesDict(selectors):

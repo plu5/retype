@@ -8,6 +8,8 @@ from retype.ui import (MainWin, ShelfView, BookView, CustomisationDialog,
 from retype.controllers import SafeConfig, MenuController, LibraryController
 from retype.console import Console
 from retype.constants import iswindows
+from retype.services.icon_set import Icons
+from retype.resource_handler import getIconsPath
 
 logger = logging.getLogger(__name__)
 
@@ -29,6 +31,11 @@ class MainController(QObject):
     def __init__(self):
         super().__init__()
         self.config = SafeConfig()
+
+        Icons.populateSets(
+            [getIconsPath(), getIconsPath(self.config['user_dir'])])
+        Icons.setIconSet()  # defaults
+        Icons.setIconSet(self.config['icon_set'])  # user
 
         self.console = Console(
             self.config['prompt'], self.config['console_font'])
