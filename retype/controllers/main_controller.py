@@ -1,6 +1,7 @@
+import os
 import logging
 from enum import Enum
-from qt import QObject, pyqtSignal, QUrl, QDesktopServices
+from qt import QObject, pyqtSignal, QUrl, QDesktopServices, QMessageBox
 
 from retype.ui import (MainWin, ShelfView, BookView, CustomisationDialog,
                        AboutDialog)
@@ -53,6 +54,7 @@ class MainController(QObject):
         self.setViewByEnum(View.shelf_view)
         self._connectConsole()
         self._populateLibrary()
+        self._verifyUserDir()
 
     def _instantiateViews(self):
         self.views[View.shelf_view] = ShelfView(self._window, self)
@@ -152,6 +154,20 @@ class MainController(QObject):
                                   self.customisationDialogRequested,
                                   self.aboutDialogRequested,
                                   self.config.get('auto_newline', False))
+
+    def _verifyUserDir(self):
+        user_dir = self.config['user_dir']
+        if not os.path.exists(user_dir):
+            msg = QMessageBox(
+                QMessageBox.Icon.Warning, 'retype', f'User dir \'{user_dir}\'\
+ cannot be found.\nretype will not be able to save and load progress and\
+ configuration.')
+            msg.addButton(QMessageBox.StandardButton.Ignore)
+            change_btn = msg.addButton(
+                'Change', QMessageBox.ButtonRole.ActionRole)
+            msg.exec()
+            if msg.clickedButton() == change_btn:
+                self.showCustomisationDialog()
 
     def saveConfig(self, config_dict):
         self.config.populate(config_dict)
