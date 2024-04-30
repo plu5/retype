@@ -176,11 +176,12 @@ class CustomisationDialog(QDialog):
         lyt.addRow(hline())
 
         user_dir = self.getUserDir()
-        populateThemes([getStylePath(), getStylePath(user_dir)])
+        populateThemes([getStylePath(user_dir), getStylePath()])
         for t in Theme.themes:
             if t != THEME_MODIFICATIONS_FILENAME.rstrip('.qss'):
                 themes.addItem(t)
         themes.model().sort(0)
+        themes.setCurrentIndex(0)
 
         t = ThemeWidget(user_dir)
         self.theme = t
