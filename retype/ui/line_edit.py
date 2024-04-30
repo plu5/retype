@@ -89,6 +89,7 @@ class LineEdit(QWidget):
 
 class _LineEdit(QPlainTextEdit):
     returnPressed = pyqtSignal()
+    overtype_changed = pyqtSignal(bool)
 
     def __init__(self, wrapper, *args):
         super().__init__(*args)
