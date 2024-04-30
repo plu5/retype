@@ -12,7 +12,7 @@ NOTE:
 * Unimplemented signals: editingFinished, inputRejected"""
 
 import sys
-from qt import (QPlainTextEdit, QWidget, QSizePolicy, QKeySequence,
+from qt import (QPlainTextEdit, QWidget, QKeySequence,
                 pyqtSlot, pyqtSignal, QFocusEvent, QShortcut, QTextOption,
                 QTextCursor, Qt, QVBoxLayout,
                 # for the demo only:
@@ -35,6 +35,7 @@ class LineEdit(QWidget):
         self.edit.cursorPositionChanged.connect(
             self._emitCursorPositionChanged)
         self._oldPos = self.edit.textCursor().position()
+        self.passed = False
         layout = QVBoxLayout(self)
         layout.setSpacing(0)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -51,7 +52,9 @@ class LineEdit(QWidget):
         super().setSizePolicy(hsp, vsp)
 
     def keyPressEvent(self, e):
-        self.edit.keyPressEvent(e)
+        if not self.passed:
+            self.edit.transferFocus(e)
+        self.passed = False
 
     def text(self):
         return self.edit.toPlainText()
@@ -179,7 +182,18 @@ class _LineEdit(QPlainTextEdit):
             self.returnPressed.emit()
         if e.text():
             self._isUserModified = True
+        self.wrapper.passed = True
+        self.wrapper.keyPressEvent(e)
         super().keyPressEvent(e)
+
+    def transferFocus(self, e):
+        """Like setFocus, except you can also pass a keyPress event from
+ another widget. Only does so if no modifier keys (excluding Shift) are
+ held."""
+        if e.modifiers() in [Qt.KeyboardModifier.NoModifier,
+                             Qt.KeyboardModifier.ShiftModifier]:
+            self.setFocus()
+            self.keyPressEvent(e)
 
 
 # demo
