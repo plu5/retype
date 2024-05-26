@@ -11,7 +11,7 @@ class Icons:
              'documentation.png': '', 'door.png': '', 'issue.png': '',
              'open_book.png': '', 'retype.ico': '', 'retype.png': '',
              'shelf_view.png': '', 'skip.png': '', 't-down.png': '',
-             't-up.png': ''}
+             't-up.png': '', 'typespeed.png': '', 'steno.png': ''}
     icon_sets = {}
 
     def getIconPath(name):

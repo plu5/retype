@@ -41,6 +41,18 @@ commands_info = {
         'args': 'POS [m / move ?]',
         # 'func': self.setChapter
     },
+    'typespeed':
+    {
+        'desc': 'Launch Typespeed game',
+        'aliases': ['typespeed'],
+        'args': None
+    },
+    'steno':
+    {
+        'desc': 'Launch Learn Stenography game',
+        'aliases': ['steno', 'stenography'],
+        'args': None
+    },
     'customise':
     {
         'desc': 'Open customisation dialog',
@@ -186,3 +198,9 @@ class CommandService(object):
 
     def help_(self):
         self.about_signal.emit('Console commands')
+
+    def typespeed(self):
+        self.switchView.emit(3)
+
+    def steno(self):
+        self.switchView.emit(4)

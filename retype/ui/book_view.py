@@ -20,6 +20,7 @@ logger = logging.getLogger(__name__)
 @theme('BookView.BookDisplay.Cursor', C(fg='red'))
 class BookDisplay(QTextBrowser):
     keyPressed = pyqtSignal(object)
+    fontChanged = pyqtSignal()
 
     def __init__(self, font_family, font_size=12, parent=None):
         super().__init__(parent)
@@ -51,6 +52,7 @@ class BookDisplay(QTextBrowser):
         self.font.setPixelSize(self.font_size)
         self.setFont(self.font)
         self.document().setDefaultFont(self.font)
+        self.fontChanged.emit()
 
     @property
     def font_size(self):
@@ -113,7 +115,7 @@ class BookDisplay(QTextBrowser):
 @theme('BookView.Highlighting.Unhighlight', C(fg='black', bg='white'))
 @theme('BookView.Highlighting.Mistake', C(fg='white', bg='red'))
 class BookView(QWidget):
-    def __init__(self, main_win, main_controller, sdict, rdict,
+    def __init__(self, main_win, main_controller, sdict={}, rdict={},
                  bookview_settings=None, parent=None):
         super().__init__(parent)
         self._main_win = main_win
@@ -180,7 +182,7 @@ class BookView(QWidget):
 
         self._main_win.denoteSplitter('bookview', self.splitter)
 
-        self.stats_dock = StatsDock()
+        self.stats_dock = StatsDock(self)
         self.splitter.addWidget(self.stats_dock)
         self._main_win.maybeRestoreSplitterState('bookview')
 
@@ -262,6 +264,7 @@ class BookView(QWidget):
 
         self.pchap_action = actions['pchap']['action']
         self.nchap_action = actions['nchap']['action']
+        self.skip_action = actions['skip']['action']
 
         self.toolbar.insertSeparator(actions['pos']['action'])
 

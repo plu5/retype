@@ -15,6 +15,7 @@ class MenuController(QObject):
     def _initMenuBar(self):
         self._fileMenu()
         self._viewMenu()
+        self._gamesMenu()
         self._optionsMenu()
         self._helpMenu()
 
@@ -52,6 +53,13 @@ class MenuController(QObject):
             self._addAction(viewMenu, 'Toggle System &Console',
                             lambda: self.controller.toggleConsoleWindow(),
                             icon_name='console')
+
+    def _gamesMenu(self):
+        gamesMenu = self._menu.addMenu('&Games')
+        self._addAction(gamesMenu, '&Typespeed', self.controller.showTypespeed,
+                        icon_name='typespeed')
+        self._addAction(gamesMenu, '&Learn Stenography',
+                        self.controller.showSteno, icon_name='steno')
 
     def _optionsMenu(self):
         optionsMenu = self._menu.addMenu('&Options')

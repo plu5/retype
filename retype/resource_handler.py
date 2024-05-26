@@ -39,6 +39,9 @@ def getIcon(icon_name, extension='png'):
     return QIcon(Icons.getIconPath(f'{icon_name}.{extension}'))
 
 
+def getTypespeedWordsPath(user_dir=None):
+    return os.path.join(getStylePath(user_dir), 'typespeed_words')
+
 def getIncludePath():
     root = temp_path_or_none or root_path
     if os.path.split(root)[1] == 'include':

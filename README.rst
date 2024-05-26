@@ -74,14 +74,16 @@ You can add more library search paths and customise retype’s operation in the 
 
 More information on the user interface and available features can be found in the documentation_.
 
-----------
+-----------------------------
 Influences & acknowledgements
-----------
+-----------------------------
 
 - `QTodoTxt <https://github.com/QTodoTxt/QTodoTxt>`_
 - `calibre 3 <https://github.com/kovidgoyal/calibre/tree/v3.48.0>`_
 - `Blender <https://github.com/blender/blender>`_
 - `Standard Ebooks <https://github.com/standardebooks/>`_
+- `Typespeed <https://typespeed.sourceforge.net/>`_
+- `Steno Jig <https://github.com/joshuagrams/steno-jig>`_
 
 
 .. |version-badge| image:: https://img.shields.io/github/v/release/plu5/retype?color=success&label=stable

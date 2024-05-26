@@ -124,29 +124,33 @@ class Modeline(QWidget):
 
         # Static
         self.padding = 5
+        self.percent = QLabel("%")
         self.pos_sep = QLabel(":")
         self.chap_pre = QLabel("c:")
         self.chap_sep = QLabel("/")
+        self.vchap_pre = QLabel("v:")
+        self.vchap_sep = QLabel("/")
 
         def makeGroup(*widgets, tooltip):
             return WidgetsGroup(*widgets, css_="hover", tooltip=tooltip,
                                 cursor=Qt.CursorShape.WhatsThisCursor)
 
-        l_group = makeGroup(self.line_pos, self.pos_sep, self.cursor_pos,
-                            tooltip="Line and character position of cursor")
+        self.l_group = makeGroup(
+            self.line_pos, self.pos_sep, self.cursor_pos,
+            tooltip="Line and character position of cursor")
 
         self.t_group = makeGroup(self.title, tooltip="?")
         self.title.setStyleSheet("font-weight:bold")
 
-        p_group = makeGroup(self.progress, QLabel("%"),
-                            tooltip="Progress percentage")
+        self.p_group = makeGroup(self.progress, self.percent,
+                                 tooltip="Progress percentage")
 
         self.c_group = makeGroup(self.chap_pre, self.chap_pos,
                                  self.chap_sep, self.chap_total,
                                  tooltip="Chapter position of cursor")
 
-        self.v_group = makeGroup(QLabel("v:"), self.viewed_chap_pos,
-                                 QLabel(self.chap_sep.text()),
+        self.v_group = makeGroup(self.vchap_pre, self.viewed_chap_pos,
+                                 self.vchap_sep,
                                  self.chap_total_dupe,
                                  tooltip="Chapter position of view")
 
@@ -168,11 +172,11 @@ class Modeline(QWidget):
         ]
         self.elements = [
             # line:char
-            l_group, self.separators[0],
+            self.l_group, self.separators[0],
             # title
             self.t_group, self.separators[1],
             # progress %
-            p_group,
+            self.p_group,
             self.push_to_right,
             # chapter/total, viewed_chapter/total
             self.separators[2], self.v_group,
@@ -181,9 +185,9 @@ class Modeline(QWidget):
         for element in self.elements:
             self.layout_.addWidget(element)
 
-        self.widgets_by_segment = ([l_group, self.c_group],
+        self.widgets_by_segment = ([self.l_group, self.c_group],
                                    [self.t_group, self.v_group],
-                                   [p_group])
+                                   [self.p_group])
         self.c = (self.c_outer, self.c_mid, self.c_inner)
 
         self.c_inner.changed.connect(self.themeUpdate)

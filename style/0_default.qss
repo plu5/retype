@@ -131,3 +131,56 @@ Console {
   selection-color: #333333;
   selection-background-color: #ffffff;
 }
+
+CustomisationDialog.SDict.EntryEditor {
+  color: #000000;
+  background-color: #cde8ff;
+}
+
+CustomisationDialog.RDict.EntryEditor {
+  color: #000000;
+  background-color: #cde8ff;
+}
+
+Games.Typespeed {
+  color: #02759f;
+  background-color: #f6f1de;
+}
+
+Games.Typespeed.Rank.high {
+  color: #ff0000;
+}
+
+Games.Typespeed.Rank.midhigh {
+  color: #b37100;
+}
+
+Games.Typespeed.Rank.midlow {
+  color: #008000;
+}
+
+Games.Typespeed.Rank.low {
+  color: #0000ff;
+}
+
+Games.Typespeed.WordUrgency.high {
+  color: #ff0000;
+}
+
+Games.Typespeed.WordUrgency.mid {
+  color: #b37100;
+}
+
+Games.Typespeed.WordUrgency.low {
+  color: #008000;
+}
+
+Games.Steno.Keyboard {
+  background-color: #cdcdc1;
+}
+
+Games.Steno.Keyboard.Key {
+  color: #000000;
+  background-color: #ffffff;
+  selection-color: #808080;
+}
