@@ -10,8 +10,9 @@ from retype.services.theme import theme, C, Theme
 @theme('BookView.StatsDock.Text', C(fg='black'))
 @theme('BookView.StatsDock.Grid', C(fg='gray'))
 class StatsDock(QWidget):
-    def __init__(self, parent=None):
+    def __init__(self, book_view, parent=None):
         super().__init__(parent)
+        self.book_view = book_view
 
         self.connected = False
 
@@ -41,7 +42,7 @@ class StatsDock(QWidget):
         self.connected = True
 
     def onUpdate(self, text):
-        v = self._hs.book_view
+        v = self.book_view
         if not v.isVisible:
             return
 

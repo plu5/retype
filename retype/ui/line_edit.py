@@ -89,6 +89,15 @@ class LineEdit(QWidget):
     def setFont(self, *args):
         self.edit.setFont(*args)
 
+    def textCursor(self):
+        return self.edit.textCursor()
+
+    def setTextCursor(self, *args):
+        self.edit.setTextCursor(*args)
+
+    def moveCursor(self, *args):
+        self.edit.moveCursor(*args)
+
 
 class _LineEdit(QPlainTextEdit):
     returnPressed = pyqtSignal()

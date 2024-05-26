@@ -1,3 +1,4 @@
+from enum import Enum
 from qt import pyqtSignal, Qt, QSizePolicy
 
 from retype.ui import LineEdit
@@ -12,12 +13,20 @@ from retype.console import CommandService, HighlightingService
 class Console(LineEdit):
     submitted = pyqtSignal(str)
 
+    class Ev(Enum):
+        keypress = 0
+        keyrelease = 1
+
     def __init__(self, prompt, font_family=None, parent=None):
         super().__init__(parent)
         self.setAccessibleName("console")
         self.returnPressed.connect(self._handleReturnPressed)
         self.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Preferred)
         self.setMaximumHeight(200)
+        self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
+
+        self._ev_subscribers = {
+            self.Ev.keypress: [], self.Ev.keyrelease: []}
 
         self._font = self.font()
         self._font_family = self.font_family = font_family
@@ -69,7 +78,23 @@ class Console(LineEdit):
             self.command_service.commandHistoryUp()
         if e.key() == Qt.Key.Key_Down:
             self.command_service.commandHistoryDown()
+
         super().keyPressEvent(e)
+
+        for subscriber in self._ev_subscribers.get(self.Ev.keypress):
+            subscriber(e)
+
+    def keyReleaseEvent(self, e):
+        super().keyReleaseEvent(e)
+
+        for subscriber in self._ev_subscribers.get(self.Ev.keyrelease):
+            subscriber(e)
+
+    def subscribe(self, event_type, f):
+        if event_type == self.Ev.keypress:
+            self._ev_subscribers[self.Ev.keypress].append(f)
+        elif event_type == self.Ev.keyrelease:
+            self._ev_subscribers[self.Ev.keyrelease].append(f)
 
     def transferFocus(self, e):
         """Like setFocus, except you can also pass a keyPress event from

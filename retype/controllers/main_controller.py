@@ -5,6 +5,8 @@ from qt import QObject, pyqtSignal, QUrl, QDesktopServices, QMessageBox
 
 from retype.ui import (MainWin, ShelfView, BookView, CustomisationDialog,
                        AboutDialog)
+from retype.games.typespeed import TypespeedView
+from retype.games.steno import StenoView
 from retype.controllers import SafeConfig, MenuController, LibraryController
 from retype.console import Console
 from retype.constants import iswindows
@@ -17,6 +19,8 @@ logger = logging.getLogger(__name__)
 class View(Enum):
     shelf_view = 1
     book_view = 2
+    typespeed_view = 3
+    steno_view = 4
 
 
 class MainController(QObject):
@@ -115,6 +119,10 @@ class MainController(QObject):
         if not view:
             view = View.shelf_view if not self.isVisible(View.shelf_view)\
                 else View.book_view
+        elif view == 3:
+            self.showTypespeed()
+        elif view == 4:
+            self.showSteno()
         self.setViewByEnum(view)
 
     def showCustomisationDialog(self):
@@ -227,6 +235,21 @@ class MainController(QObject):
                 self.config['prompt'], self.library.books, self._window)
         self.about_dialog.show()
         self.about_dialog.setActivePage(page_title)
+
+    def showTypespeed(self):
+        i = View.typespeed_view
+        if not self.views.get(i):
+            self.views[i] = TypespeedView(
+                self._window, self, self.config['bookview'],
+                self.config['user_dir'])
+        self.setView(self._viewFromEnumOrInt(View.typespeed_view))
+
+    def showSteno(self):
+        i = View.steno_view
+        if not self.views.get(i):
+            self.views[i] = StenoView(self._window, self,
+                                      self.config['bookview'])
+        self.setView(self._viewFromEnumOrInt(View.steno_view))
 
     if iswindows:
         def hideConsoleWindow(self, show=False):

@@ -30,7 +30,7 @@ elif islinux:
         'libpng16', 'libatk', 'libatspi', 'libk5crypto',
         'libglapi', 'libexpat', 'libgraphite', 'libselinux', 'liblzma',
         'libxcb', '_csv', 'libz', 'libboost', 'libgcc', '_heapq',
-        'libpangoft2', 'mmap', 'libgpg', 'libXext', 'libwayland', '_random',
+        'libpangoft2', 'mmap', 'libgpg', 'libXext', 'libwayland',
         'libXi', 'termios', '_multiprocessing', '_bisect', 'libgbm', 'grp',
         'libpangocairo', 'resource', '_queue', 'libXrandr', 'libXrender',
         'libXcursor', '_posixshmem', 'libthai', '_statistics', '_opcode',
@@ -53,7 +53,7 @@ elif ismacos:
         'QtSvg', 'QtWebSockets', 'objectify', 'sax', '_bisect',
         '_bz2', '_codecs', '_ctypes', '_datetime', '_heapq',
         '_json', '_lzma', '_multibyte', '_opcode', '_pickle',
-        '_random', '_scproxy', '_socket', '_ssl', '_uuid', 'grp',
+        '_scproxy', '_socket', '_ssl', '_uuid', 'grp',
         'pyexpat', 'readline', 'resource', 'termios', 'unicodedata',
     }
 
