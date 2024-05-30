@@ -13,7 +13,7 @@ from qt import (QWidget, QFormLayout, QVBoxLayout, QLabel, QLineEdit,
                 QAbstractItemView, QItemDelegate, QStandardItem, QSizePolicy)
 
 from retype.extras.dict import SafeDict, update
-from retype.constants import default_config, iswindows
+from retype.constants import default_config, iswindows, default_steno_kdict
 from retype.services.theme import (Theme, populateThemes, valuesFromQss, theme,
                                    C)
 from retype.extras.qss import serialiseValuesDict
@@ -22,11 +22,12 @@ from retype.extras.widgets import (ScrollTabWidget, AdjustedStackedWidget,
                                    WrappedLabel, MinWidget)
 from retype.extras.camel import spacecamel
 from retype.services.icon_set import Icons
+from retype.games.steno import VisualStenoKeyboard
 
 logger = logging.getLogger(__name__)
 
 DEFAULTS = default_config
-NESTED_RAW_DICT_KEYS = ['rdict', 'sdict']
+NESTED_RAW_DICT_KEYS = ['rdict', 'sdict', 'kdict']
 THEME_MODIFICATIONS_FILENAME = '__current__.qss'
 
 
@@ -94,6 +95,7 @@ class CustomisationDialog(QDialog):
         catw.add("User interface", "Window geometry", self._windowSettings())
         catw.add("Behaviour", "Line splits", self._sdictSettings())
         catw.add("Behaviour", "Replacements", self._rdictSettings())
+        catw.add("Games", "Learn Stenography", self._stenoSettings())
         catw.postAddingCategories()
 
         lyt = QVBoxLayout(self)
@@ -283,6 +285,12 @@ class CustomisationDialog(QDialog):
             lambda x: self.update("bookview", x))
 
         return self.selectors['bookview']
+
+    def _stenoSettings(self):
+        w = self.selectors['steno'] = StenoSettingsWidget(
+            self.config_edited['steno'])
+        w.changed.connect(lambda x: self.update("steno", x))
+        return w
 
     def update(self, name, new_value):
         self.config_edited[name] = new_value
@@ -1016,6 +1024,158 @@ class RDictWidget(QWidget):
         self.setModel(rdict)
 
 
+class KDictModel(QAbstractListModel):
+    TEMPLATE = '''<p><b>Steno key: <code>{0}</code></b><br>
+Bindings list: <code><b>{1}</b></code></p>'''
+    INVALID_TEMPLATE = '<div style="color:red">' + TEMPLATE + '</div>'
+    changed = pyqtSignal(dict)
+
+    def __init__(self, kdict, parent=None):
+        QAbstractListModel.__init__(self, parent)
+        self.kdict = kdict
+        self.order = list(kdict)
+
+    def rowCount(self, parent):
+        return len(self.kdict)
+
+    def data(self, index, role):
+        row = index.row()
+        if row < 0 or row >= len(self.order):
+            return None
+
+        substring = self.order[row]
+
+        if role == Qt.ItemDataRole.DisplayRole:
+            if substring == '' or not self.kdict[substring]:
+                return self.INVALID_TEMPLATE.format(
+                    substring, self.kdict[substring])
+            return self.TEMPLATE.format(substring, self.kdict[substring])
+        elif role == Qt.ItemDataRole.EditRole:
+            return (substring, self.kdict[substring])
+
+        return None
+
+    def flags(self, index):
+        if not index.isValid():
+            return Qt.ItemFlag.ItemIsEnabled
+        return (QAbstractListModel.flags(self, index) |
+                Qt.ItemFlag.ItemIsEditable)
+
+    def setData(self, index, data, role):
+        if index.isValid() and role == Qt.ItemDataRole.EditRole:
+            self.kdict[data[0]] = data[1]
+            self.dataChanged.emit(index, index, [role])
+            self.changed.emit(self.kdict)
+            return True
+        return False
+
+
+@theme('CustomisationDialog.KDict.EntryEditor', C(fg='black', bg='#CDE8FF'))
+class KDictEntryEditor(QWidget):
+    selector = 'CustomisationDialog.KDict.EntryEditor'
+
+    def __init__(self, substr, reps, parent=None):
+        QWidget.__init__(self, parent)
+
+        lyt = QFormLayout(self)
+        self.substr_e = QLineEdit(substr)
+        self.reps_e = QLineEdit(','.join(reps))
+        lyt.addRow(QLabel(f"<b>Steno key: <code>{substr}</code></b>"))
+        lyt.addRow("Bindings (separated by ,):", self.reps_e)
+
+        # Note: No need to connect to selector change; this editor gets created
+        #  and destroyed each time it opens/closes, it does not persist
+        self.themeUpdate()
+
+        self.setAttribute(Qt.WA_StyledBackground, True)
+
+        lyt.setContentsMargins(0, 0, 0, 0)
+        lyt.setSpacing(1)
+
+    def substr(self):
+        return self.substr_e.text()
+
+    def reps(self):
+        return self.reps_e.text().split(',')
+
+    def themeUpdate(self):
+        qss = Theme.getQss(self.selector).replace(self.selector, 'QWidget')
+        self.setStyleSheet(qss)
+
+
+class KDictDelegate(Delegate):
+    def __init__(self, parent=None):
+        Delegate.__init__(self, parent)
+
+    def createEditor(self, parent, option, index):
+        data = index.data(Qt.ItemDataRole.EditRole)
+        return KDictEntryEditor(*data, parent)
+
+    def setModelData(self, editor, model, index):
+        substr = editor.substr()
+        reps = editor.reps()
+
+        # remove duplicates
+        reps = list(dict.fromkeys(reps))
+
+        # remove reps that are of incorrect length
+        for i, rep in enumerate(reps):
+            if len(rep) != 1:
+                del reps[i]
+
+        model.setData(index, [substr, reps], Qt.ItemDataRole.EditRole)
+
+
+class KDictWidget(QWidget):
+    changed = pyqtSignal(dict)
+    currentChanged = pyqtSignal(int)
+
+    def __init__(self, kdict, parent=None):
+        QWidget.__init__(self, parent)
+
+        lyt = QFormLayout(self)
+        lyt.setContentsMargins(0, 0, 0, 0)
+        self.view = ListView()
+        self.view.setItemDelegate(KDictDelegate())
+        self.setModel(kdict)
+        lyt.addRow(self.view)
+
+        pbuttons = QWidget()
+        pbl = QHBoxLayout(pbuttons)
+        modify_btn = QPushButton("Modify")
+        modify_btn.clicked.connect(self.modifyEntry)
+        pbl.addWidget(modify_btn)
+        pbl.setContentsMargins(0, 0, 0, 0)
+        lyt.addRow(pbuttons)
+
+    def setModel(self, kdict):
+        self.model = KDictModel(kdict)
+        self.model.changed.connect(lambda kdict: self.changed.emit(kdict))
+        self.view.setModel(self.model)
+        self.view.selectionModel().currentChanged.connect(
+            lambda i: self.currentChanged.emit(i.row()))
+
+    def select(self, index):
+        index = self.model.index(index, 0)
+        self.view.selectionModel().setCurrentIndex(
+            index, QItemSelectionModel.ClearAndSelect)
+
+    def selectedRowIndex(self):
+        selectionModel = self.view.selectionModel()
+        if selectionModel.hasSelection():
+            index = selectionModel.selectedRows()[0]
+            return index
+        return False
+
+    def modifyEntry(self):
+        index = self.selectedRowIndex()
+        if index:
+            self.view.edit(index)
+
+    def set_(self, kdict):
+        self.setModel(kdict)
+
+
 class WindowGeometrySelector(QWidget):
     changed = pyqtSignal(dict)
 
@@ -1156,6 +1316,43 @@ class BookViewSettingsWidget(QWidget):
                 continue
             value = settings[key]
             selector.setValue(value)
+
+    def minimumSizeHint(self):
+        return QSize(100, 100)
+
+    def sizeHint(self):
+        return self.minimumSizeHint()
+
+
+class StenoSettingsWidget(QWidget):
+    changed = pyqtSignal(dict)
+
+    def __init__(self, steno_settings, parent=None):
+        QWidget.__init__(self, parent)
+
+        self.settings = steno_settings
+        self.selectors = {}
+
+        lyt = QFormLayout(self)
+        self.kbd = VisualStenoKeyboard()
+        self.kbd.should_select_key_on_click = True
+        kdictw = self.selectors['kdict'] = KDictWidget(self.settings['kdict'])
+        kdictw.changed.connect(lambda v: self.updateSetting('kdict', v))
+        self.kl = list(default_steno_kdict)
+        self.kbd.keySelected.connect(
+            lambda k: k in self.kl and kdictw.select(self.kl.index(k)))
+        kdictw.currentChanged.connect(lambda i: self.kbd.selectKey(self.kl[i]))
+        lyt.addRow(self.kbd)
+        lyt.addRow(kdictw)
+
+    def updateSetting(self, name, val):
+        self.settings[name] = val
+        self.changed.emit(self.settings.raw)
+
+    def set_(self, settings):
+        for key, selector in self.selectors.items():
+            value = settings[key]
+            selector.set_(value)
 
     def minimumSizeHint(self):
         return QSize(100, 100)
