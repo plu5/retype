@@ -12,6 +12,15 @@ from retype import __version__
 iswindows = platform.lower() in ['win32', 'win64']
 ismacos = 'darwin' in platform.lower()
 
+default_steno_kdict = {
+    'S': ['A', 'Q'], 'K': ['S'], 'W': ['D'], 'R': ['F'],
+    '-R': ['J'], '-B': ['K'], '-G': ['L'], '-S': [';'], '-Z': ["'"],
+    'T': ['W'], 'P': ['E'], 'H': ['R'],
+    '-F': ['U'], '-P': ['I'], '-L': ['O'], '-T': ['P'], '-D': ['['],
+    'A': ['C'], 'O': ['V'], 'E': ['N'], 'U': ['M'],
+    '*': ['G', 'H', 'T', 'Y']
+}
+
 default_config = {
     "user_dir": root_path,
     "library_paths": [getLibraryPath()],
@@ -57,7 +66,10 @@ default_config = {
         "save_on_quit": True,
         "save_splitters_on_quit": True
     },
-    "auto_newline": True
+    "auto_newline": True,
+    "steno": {
+        "kdict": default_steno_kdict
+    }
 }
 
 if iswindows:

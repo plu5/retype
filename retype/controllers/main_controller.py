@@ -205,6 +205,11 @@ class MainController(QObject):
         # Update rdict
         self.views[View.book_view].setRdict(config['rdict'])
 
+        # Update steno kdict
+        steno_view = self.views.get(View.steno_view)
+        if steno_view:
+            steno_view.setKdict(config['steno']['kdict'])
+
         # Update auto_newline
         self.console.highlighting_service.setAutoNewline(
             config['auto_newline'])
@@ -247,8 +252,9 @@ class MainController(QObject):
     def showSteno(self):
         i = View.steno_view
         if not self.views.get(i):
-            self.views[i] = StenoView(self._window, self,
-                                      self.config['bookview'])
+            self.views[i] = StenoView(
+                self._window, self, self.config['bookview'],
+                self.config['steno']['kdict'])
         self.setView(self._viewFromEnumOrInt(View.steno_view))
 
     if iswindows:

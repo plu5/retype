@@ -17,7 +17,7 @@ class SafeConfig:
             self.default_user_dir, self.config_rel_path)
         self.config = self.raw = self.load(self.base_config_abs_path)
         self.safe_dict = SafeDict(self.config, default_config,
-                                  ['rdict', 'sdict'])
+                                  ['rdict', 'sdict', 'kdict'])
 
     def isPathDefaultUserDir(self, path):
         return os.path.abspath(path) == \

@@ -1,7 +1,8 @@
 import random
 from enum import Enum
 from datetime import timedelta
-from qt import QWidget, QSize, QTimer, QPainter, QPixmap, QRect, QTextCursor
+from qt import (QWidget, QSize, QTimer, QPainter, QPixmap, QRect, QTextCursor,
+                pyqtSignal)
 
 from retype.ui import BookView
 from retype.ui.painting import ellipsePixmap, transparent, Font, textPixmap
@@ -37,22 +38,8 @@ stages = {
                       '-B', '-G', '-S', '-Z', '-F', '-P', '-L', '-T', '-D',
                       'E', 'U']}
 }
-keyboard = {'S': ['A', 'Q'], 'K': ['S'], 'W': ['D'], 'R': ['F'],
-            '-R': ['J'], '-B': ['K'], '-G': ['L'], '-S': [';'], '-Z': ["'"],
-            'T': ['W'], 'P': ['E'], 'H': ['R'],
-            '-F': ['U'], '-P': ['I'], '-L': ['O'], '-T': ['P'], '-D': ['['],
-            'A': ['C'], 'O': ['V'], 'E': ['N'], 'U': ['M'],
-            '*': ['G', 'H', 'T', 'Y']}
-translation = {}
+
 num_letters_per_stage = 100
-
-for a, b in keyboard.items():
-    for c in b:
-        s = f'{a} '
-        translation[c] = s
-        translation[c.lower()] = s
-
-trans = str.maketrans(translation)
 
 selectors = {"key": "Games.Steno.Keyboard.Key",
              "main": "Games.Steno.Keyboard"}
@@ -61,11 +48,15 @@ selectors = {"key": "Games.Steno.Keyboard.Key",
 @theme(selectors['key'], C(fg='black', bg='white', sel='gray'))
 @theme(selectors['main'], C(bg='#CDCDC1'))
 class VisualStenoKeyboard(QWidget):
-    def __init__(self, console, parent=None):
+    keySelected = pyqtSignal(str)
+
+    def __init__(self, kdict={}, console=None, parent=None):
         super().__init__(parent)
-        console.subscribe(console.Ev.keypress, self._handleKeyPress)
-        console.subscribe(console.Ev.keyrelease, self._handleKeyRelease)
+        if console:
+            console.subscribe(console.Ev.keypress, self._handleKeyPress)
+            console.subscribe(console.Ev.keyrelease, self._handleKeyRelease)
         self._console = console
+        self.kdict = kdict
         self.keys = [
             {'l': 'S', 'x': 0, 'y': 0, 'r': True, 'dbl': True, 'on': False},
             {'l': 'T', 'x': 1, 'y': 0, 'r': False, 'dbl': False, 'on': False},
@@ -90,7 +81,14 @@ class VisualStenoKeyboard(QWidget):
             {'l': 'E', 'x': 5, 'y': 2, 'r': True, 'dbl': False, 'on': False},
             {'l': 'U', 'x': 6, 'y': 2, 'r': True, 'dbl': False, 'on': False},
         ]
+        for k in self.keys:
+            representation = k['l']
+            if k['x'] > 4 and representation not in ['E', 'U']:
+                representation = '-' + representation
+            k['representation'] = representation
         self.should_enter_key_on_click = False
+        self.should_select_key_on_click = False
+        self.selected_key = None
         self.labels = {}
         self.font = Font.GENERAL.toQFont()
         (self.c_key, self.c) = self._loadTheme()
@@ -103,18 +101,8 @@ class VisualStenoKeyboard(QWidget):
             k['on'] = False
         self.update()
 
-    def _handleHighlighting(self, text):
-        if not len(text):
-            return
-        c = text[-1]
-        if translation.get(c):
-            pass
-
     def _getEquivalents(self, key):
-        label = key['l']
-        if key['x'] > 4 and label not in ['E', 'U']:
-            label = '-' + label
-        return keyboard.get(label)
+        return self.kdict.get(key['representation'])
 
     def _handleKeyPress(self, e):
         if self.isHidden():
@@ -148,6 +136,22 @@ class VisualStenoKeyboard(QWidget):
     def _textPixmap(self, width, height, text, font):
         return textPixmap(text, width, height, font)
 
+    def selectKey(self, representation, emit=False):
+        for k in self.keys:
+            if k['representation'] == representation:
+                if self.selected_key != k:
+                    self.deselectKey()
+                k['on'] = True
+                self.selected_key = k
+                if emit:
+                    self.keySelected.emit(representation)
+                self.update()
+                return
+
+    def deselectKey(self):
+        if self.selected_key:
+            self.selected_key['on'] = False
+
     def mousePressEvent(self, e):
         super().mousePressEvent(e)
         pos = e.localPos()
@@ -159,17 +163,23 @@ class VisualStenoKeyboard(QWidget):
             if loc.contains(pos.x(), pos.y()):
                 k['on'] = True
                 self.update()
-                if self.should_enter_key_on_click:
+                if self._console and self.should_enter_key_on_click:
                     eq = self._getEquivalents(k)
                     eq = eq[0] if eq else ''
                     self._console.setText(self._console.text() + eq)
                     self._console.moveCursor(QTextCursor.MoveOperation.End,
                                              QTextCursor.MoveMode.MoveAnchor)
+                if self.should_select_key_on_click:
+                    if self.selected_key != k:
+                        self.deselectKey()
+                    self.selected_key = k
+                    self.keySelected.emit(k['representation'])
                 return
 
     def mouseReleaseEvent(self, e):
         super().mouseReleaseEvent(e)
-        self.releaseKeys()
+        if not self.should_select_key_on_click:
+            self.releaseKeys()
 
     def paintEvent(self, e):
         w = self.size().width()
@@ -259,21 +269,32 @@ class State(Enum):
 
 
 class StenoView(BookView):
-    def __init__(self, main_win, main_controller, bookview_settings):
+    def __init__(self, main_win, main_controller, bookview_settings, kdict={}):
         super().__init__(main_win, main_controller,
                          bookview_settings=bookview_settings, parent=main_win)
         self._console = main_controller.console
+        self.setKdict(kdict)
         self.wrong_start = None
         self.skip_action.setDisabled(True)
         self._stageSelectionScreen()
         self.return_entry = '0'
-        self.visual_kbd = VisualStenoKeyboard(self._console, self)
+        self.visual_kbd = VisualStenoKeyboard(self.kdict, self._console, self)
         self.stats_dock.deleteLater()
         self.splitter.addWidget(self.visual_kbd)
         self.stage = None
         self.timer = QTimer(self)
         self.timer.timeout.connect(self._tallySeconds)
         self.seconds = 0
+
+    def setKdict(self, kdict):
+        self.kdict = kdict
+        translation = {}
+        for a, b in self.kdict.items():
+            for c in b:
+                s = f'{a} '
+                translation[c] = s
+                translation[c.lower()] = s
+        self.trans = str.maketrans(translation)
 
     def maybeSave(self):
         pass
@@ -355,9 +376,9 @@ class StenoView(BookView):
             if a == '-' and self.cursor_pos + 1 < len(self.current_line):
                 a += self.current_line[self.cursor_pos + 1]
                 increment = 3
-            if len(text) == 1 and a in keyboard:
+            if len(text) == 1 and a in self.kdict:
                 # Match
-                for c in keyboard[a]:
+                for c in self.kdict[a]:
                     if text.upper() == c:
                         self.cursor_pos += increment
                         self._console.clear()
@@ -388,7 +409,7 @@ class StenoView(BookView):
         self.wrong_text = text[end_correctness_index:]
 
         # Show steno chars in wrong text
-        self.wrong_text = self.wrong_text.translate(trans)
+        self.wrong_text = self.wrong_text.translate(self.trans)
 
         # If not (or no longer) wrong, reset wrong-tracking variables and
         #  silently follow the cursor pos.
