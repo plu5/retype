@@ -1,19 +1,19 @@
 BookView.Modeline.InnerSegment {
   color: #ffff00;
-  background-color: #795f00;
+  background-color: #000000;
   selection-color: #a52a2a;
   selection-background-color: #ffffff;
 }
 
 BookView.Modeline.MidSegment {
-  color: #aaaaaa;
-  background-color: #594900;
+  color: #ffffff;
+  background-color: #4f4f4f;
   selection-background-color: #ffffff;
 }
 
 BookView.Modeline.OuterSegment {
-  color: #aaaaaa;
-  background-color: #483c00;
+  color: #000000;
+  background-color: #b3b3b3;
   selection-background-color: #ffffff;
 }
 
@@ -26,8 +26,8 @@ BookView.StatsDock.Text {
 }
 
 BookView.StatsDock.Main {
-  color: #827a6c;
-  background-color: #0d0d0c;
+  color: #626262;
+  background-color: #0d0d0d;
 }
 
 BookView.BookDisplay.Cursor {
@@ -60,24 +60,24 @@ BookView.Highlighting.Highlight {
 }
 
 ShelfView.Top {
-  border-top-color: #000000;
-  border-bottom-color: #555555;
+  border-top-color: #434343;
+  border-bottom-color: #232323;
 }
 
 ShelfView.Shelf {
-  color: #424242;
-  background-color: #000000;
-  border-left-color: #555555;
-  border-right-color: #555555;
-  border-top-color: #7e7e7e;
-  border-bottom-color: #3e3e3e;
+  color: #2b2b2b;
+  background-color: #222222;
+  border-left-color: #1a1a1a;
+  border-right-color: #1a1a1a;
+  border-top-color: #3a3a3a;
+  border-bottom-color: #191919;
 }
 
 ShelfView.Background {
-  background-color: #2b2b28;
-  outline-color: #555555;
-  border-left-color: #000000;
-  border-right-color: #000000;
+  background-color: #000000;
+  outline-color: #222222;
+  border-left-color: #222222;
+  border-right-color: #222222;
 }
 
 ShelfView.IDNDisplay {
@@ -95,10 +95,10 @@ ShelfView.ProgressBar {
 
 Console {
   color: #bebebe;
-  background-color: #333333;
+  background-color: #000000;
   border-left-color: #000000;
   border-right-color: #000000;
-  border-top-color: #4a4a4a;
+  border-top-color: #000000;
   border-bottom-color: #000000;
   selection-color: #333333;
   selection-background-color: #ffffff;
@@ -114,45 +114,50 @@ CustomisationDialog.RDict.EntryEditor {
   background-color: #cde8ff;
 }
 
+CustomisationDialog.KDict.EntryEditor {
+  color: #000000;
+  background-color: #cde8ff;
+}
+
 Games.Typespeed {
-  color: #3a96dd;
-  background-color: #0d0d0c;
+  color: #02759f;
+  background-color: #000000;
 }
 
 Games.Typespeed.Rank.high {
-  color: #c50f1f;
+  color: #ff0000;
 }
 
 Games.Typespeed.Rank.midhigh {
-  color: #c19c00;
+  color: #b37100;
 }
 
 Games.Typespeed.Rank.midlow {
-  color: #13a10e;
+  color: #008000;
 }
 
 Games.Typespeed.Rank.low {
-  color: #0037da;
+  color: #0000ff;
 }
 
 Games.Typespeed.WordUrgency.high {
-  color: #c50f1f;
+  color: #ff0000;
 }
 
 Games.Typespeed.WordUrgency.mid {
-  color: #c19c00;
+  color: #b37100;
 }
 
 Games.Typespeed.WordUrgency.low {
-  color: #13a10e;
+  color: #008000;
 }
 
 Games.Steno.Keyboard {
-  background-color: #0d0d0c;
+  background-color: #0d0d0d;
 }
 
 Games.Steno.Keyboard.Key {
   color: #ffffff;
-  background-color: #827a6c;
-  selection-color: #b8b8b8;
+  background-color: #626262;
+  selection-color: #808080;
 }
