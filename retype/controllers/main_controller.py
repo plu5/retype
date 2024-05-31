@@ -37,9 +37,8 @@ class MainController(QObject):
         self.config = SafeConfig()
 
         Icons.populateSets(
-            [getIconsPath(self.config['user_dir']), getIconsPath()])
-        Icons.setIconSet()  # defaults
-        Icons.setIconSet(self.config['icon_set'])  # user
+            getIconsPath(self.config['user_dir']), fallback=getIconsPath())
+        Icons.setIconSet(self.config['icon_set'])
 
         self.console = Console(
             self.config['prompt'], self.config['console_font'])

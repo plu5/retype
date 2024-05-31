@@ -4,6 +4,8 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+DEFAULT_SET_NAME = '0_default'
+
 
 class Icons:
     icons = {'about.png': '', 'arrow-left.png': '', 'arrow-right.png': '',
@@ -20,9 +22,9 @@ class Icons:
             logger.warn(f'Icon \'{name}\' not set')
         return p
 
-    def setIconSet(name='0_default'):
-        if name in Icons.icon_sets:
-            path = Icons.icon_sets[name]
+    def setIconSet(name=DEFAULT_SET_NAME, path=None):
+        if path or name in Icons.icon_sets:
+            path = path or Icons.icon_sets[name]
             for icon in Icons.icons:
                 p = os.path.join(path, icon)
                 if os.path.exists(p):
@@ -30,15 +32,16 @@ class Icons:
         else:
             logger.warn(f'Unknown icon set \'{name}\'')
 
-    def populateSets(paths):
-        populateIconSets(paths)
+    def populateSets(path, fallback):
+        populateIconSets(path, fallback)
 
 
-def populateIconSets(paths):
+def populateIconSets(path, fallback):
     Icons.icon_sets = {}
-    for path in paths:
+    for path in [path, fallback]:
         for root, dirs, _ in os.walk(path):
             for d in dirs:
                 if d not in Icons.icon_sets:
                     Icons.icon_sets[d] = os.path.join(root, d)
             break  # do not recurse
+    Icons.setIconSet(path=os.path.join(fallback, DEFAULT_SET_NAME))
