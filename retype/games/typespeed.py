@@ -498,7 +498,7 @@ class TypespeedView(BookView):
         self.word_lists = {}
         self.words = []
         self._populateWordLists(
-            [getTypespeedWordsPath(), getTypespeedWordsPath(user_dir)])
+            getTypespeedWordsPath(), getTypespeedWordsPath(user_dir))
         self.game = TypespeedGame(self.display, self._console, self)
         self.game.hide()
         self.game.scoreChanged.connect(self.updateModeline)
@@ -519,9 +519,9 @@ class TypespeedView(BookView):
         super().hideEvent(e)
         self._console.returnPressed.disconnect(self._handleEntry)
 
-    def _populateWordLists(self, paths):
+    def _populateWordLists(self, app_path, user_path):
         self.word_lists = {}
-        for path in paths:
+        for path in [app_path, user_path]:
             for root, _, files in os.walk(path):
                 for f in files:
                     if f not in self.word_lists:
@@ -545,6 +545,9 @@ class TypespeedView(BookView):
                                         continue
                                     filtered_words.append(word)
                                 word_list['words'] = filtered_words
+                                if key in self.word_lists and\
+                                   path == user_path:
+                                    key += ' (user dir)'
                                 self.word_lists[key] = word_list
                         except OSError:
                             logger.error(f'Cannot read word list file {p}')
@@ -552,6 +555,8 @@ class TypespeedView(BookView):
                         except UnicodeDecodeError:
                             logger.error(f'Cannot decode word list file {p}')
                 break  # do not recurse
+        # sort alphabetically
+        self.word_lists = dict(sorted(self.word_lists.items()))
 
     def _stageSelectionScreen(self, ended=False):
         self.state = State.stage_selection

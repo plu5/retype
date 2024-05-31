@@ -97,17 +97,18 @@ def getThemeValues(name, path):
     return values
 
 
-def populateThemes(paths):
+def populateThemes(app_path, user_path):
     Theme.themes = {}
-    for path in paths:
+    for path in [app_path, user_path]:
         for root, _, files in os.walk(path):
             for f in files:
                 if f.lower().endswith('.qss'):
                     p = os.path.join(root, f)
                     name = os.path.splitext(f.lower())[0]
-                    if name not in Theme.themes:
-                        values = getThemeValues(name, p)
-                        Theme.themes[name] = {'path': p, 'values': values}
+                    if name in Theme.themes and path == user_path:
+                        name += ' (user dir)'
+                    values = getThemeValues(name, p)
+                    Theme.themes[name] = {'path': p, 'values': values}
             break  # do not recurse
 
 

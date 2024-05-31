@@ -178,9 +178,10 @@ class CustomisationDialog(QDialog):
         lyt.addRow(hline())
 
         user_dir = self.getUserDir()
-        populateThemes([getStylePath(user_dir), getStylePath()])
+        populateThemes(getStylePath(), getStylePath(user_dir))
+        prefix_to_exclude = THEME_MODIFICATIONS_FILENAME.rsplit('.', 1)[0]
         for t in Theme.themes:
-            if t != THEME_MODIFICATIONS_FILENAME.rstrip('.qss'):
+            if not t.startswith(prefix_to_exclude):
                 themes.addItem(t)
         themes.model().sort(0)
         themes.setCurrentIndex(0)

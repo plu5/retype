@@ -36,12 +36,14 @@ class Icons:
         populateIconSets(path, fallback)
 
 
-def populateIconSets(path, fallback):
+def populateIconSets(app_path, user_path):
     Icons.icon_sets = {}
-    for path in [path, fallback]:
+    for path in [app_path, user_path]:
         for root, dirs, _ in os.walk(path):
             for d in dirs:
-                if d not in Icons.icon_sets:
-                    Icons.icon_sets[d] = os.path.join(root, d)
+                key = d
+                if key in Icons.icon_sets and path == user_path:
+                    key = d + ' (user dir)'
+                Icons.icon_sets[key] = os.path.join(root, d)
             break  # do not recurse
-    Icons.setIconSet(path=os.path.join(fallback, DEFAULT_SET_NAME))
+    Icons.setIconSet(path=os.path.join(app_path, DEFAULT_SET_NAME))
