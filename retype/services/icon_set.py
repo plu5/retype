@@ -38,7 +38,8 @@ class Icons:
 
 def populateIconSets(app_path, user_path):
     Icons.icon_sets = {}
-    for path in [app_path, user_path]:
+    paths = [app_path, user_path] if app_path != user_path else [app_path]
+    for path in paths:
         for root, dirs, _ in os.walk(path):
             for d in dirs:
                 key = d

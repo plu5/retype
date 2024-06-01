@@ -99,7 +99,8 @@ def getThemeValues(name, path):
 
 def populateThemes(app_path, user_path):
     Theme.themes = {}
-    for path in [app_path, user_path]:
+    paths = [app_path, user_path] if app_path != user_path else [app_path]
+    for path in paths:
         for root, _, files in os.walk(path):
             for f in files:
                 if f.lower().endswith('.qss'):

@@ -521,7 +521,8 @@ class TypespeedView(BookView):
 
     def _populateWordLists(self, app_path, user_path):
         self.word_lists = {}
-        for path in [app_path, user_path]:
+        paths = [app_path, user_path] if app_path != user_path else [app_path]
+        for path in paths:
             for root, _, files in os.walk(path):
                 for f in files:
                     if f not in self.word_lists:
