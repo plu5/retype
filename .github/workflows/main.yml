@@ -72,10 +72,10 @@ jobs:
           arr=()
           if [ -n "${{ inputs.build_linux }}" ]; then
             [ ${{ inputs.build_linux }} = 'true' ] && arr+=('ubuntu-latest')
-            [ ${{ inputs.build_macos }} = 'true' ] && arr+=('macos-latest')
+            [ ${{ inputs.build_macos }} = 'true' ] && arr+=('macos-13')
             [ ${{ inputs.build_windows }} = 'true' ] && arr+=('windows-latest')
           else
-            arr=('ubuntu-latest' 'macos-latest' 'windows-latest')
+            arr=('ubuntu-latest' 'macos-13' 'windows-latest')
           fi
           s=$(printf ",\"%s\"" "${arr[@]}")
           echo os=[${s:1}] >> $GITHUB_OUTPUT
@@ -92,7 +92,7 @@ jobs:
         run: |
           output="name=failed"
           [ ${{ matrix.os }} = 'ubuntu-latest' ] && output="name=linux\nartifact=./dist/retype-hacky" 
-          [ ${{ matrix.os }} = 'macos-latest' ] && output="name=macos\nartifact=./retype.dmg"
+          [ ${{ matrix.os }} = 'macos-13' ] && output="name=macos-x86\nartifact=./retype.dmg"
           [ ${{ matrix.os }} = 'windows-latest' ] && output="name=windows\nartifact=./dist/retype-hacky"
           echo -e $output >> $GITHUB_OUTPUT
         shell: bash
@@ -142,7 +142,7 @@ jobs:
             venv/bin/python setup.py b -k hacky
 
       - name: 1M. Setup Python ${{ env.PYTHON_VERSION }}
-        if: matrix.os == 'macos-latest'
+        if: matrix.os == 'macos-13'
         uses: plu5/macos-setup-python-action@main
         with:
           version: ${{ env.PYTHON_VERSION }}
@@ -154,7 +154,7 @@ jobs:
            python-version: ${{ env.PYTHON_VERSION }}
 
       - name: 2MW. Generate Python venv cache
-        if: matrix.os == 'macos-latest' || matrix.os == 'windows-latest'
+        if: matrix.os == 'macos-13' || matrix.os == 'windows-latest'
         id: python_venv_cache
         uses: actions/cache@v3
         with:
@@ -162,7 +162,7 @@ jobs:
           key: venv-${{ env.PYTHON_VERSION }}-${{ hashFiles('requirements.txt') }}-${{ matrix.os }}
 
       - name: 3M. Install dependencies unless cached
-        if: matrix.os == 'macos-latest' && steps.python_venv_cache.outputs.cache-hit != 'true'
+        if: matrix.os == 'macos-13' && steps.python_venv_cache.outputs.cache-hit != 'true'
         run: |
           if [ -d "venv" ]; then rm -rf venv; fi
           python3 -m venv venv
@@ -187,11 +187,11 @@ jobs:
           args: 'apply venv/lib/site-packages'
 
       - name: 4M. Run retype setup script
-        if: matrix.os == 'macos-latest'
+        if: matrix.os == 'macos-13'
         run: venv/bin/python3 setup.py b -k bundle
 
       - name: 5M. Make dmg
-        if: matrix.os == 'macos-latest'
+        if: matrix.os == 'macos-13'
         run: |
           npm install -g appdmg
           appdmg setup/appdmg-config.json retype.dmg
