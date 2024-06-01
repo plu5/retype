@@ -285,6 +285,7 @@ class StenoView(BookView):
         self.timer = QTimer(self)
         self.timer.timeout.connect(self._tallySeconds)
         self.seconds = 0
+        self.started = self.paused = False
 
     def setKdict(self, kdict):
         self.kdict = kdict
@@ -303,21 +304,26 @@ class StenoView(BookView):
         super().showEvent(e)
         self._console.returnPressed.connect(self._handleEntry)
         self._console.textChanged.connect(self._handleHighlighting)
+        if self.paused:
+            self.resume()
 
     def hideEvent(self, e):
         super().hideEvent(e)
         self._console.returnPressed.disconnect(self._handleEntry)
         self._console.textChanged.disconnect(self._handleHighlighting)
+        if self.started:
+            self.pause()
 
     def _tallySeconds(self):
         self.seconds += 1
 
     def _startTimer(self):
         self.seconds = 0
-        self.timer.start(1000)
+        self.resume()
 
     def _stopTimer(self):
         self.timer.stop()
+        self.started = False
 
     def _start(self):
         self._startTimer()
@@ -326,6 +332,15 @@ class StenoView(BookView):
     def _stop(self):
         self._stopTimer()
         self.visual_kbd.should_enter_key_on_click = False
+
+    def resume(self):
+        self.timer.start(1000)
+        self.started = True
+        self.paused = False
+
+    def pause(self):
+        self._stop()
+        self.paused = True
 
     def _stageSelectionScreen(self, ended=False):
         self.state = State.stage_selection

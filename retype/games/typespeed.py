@@ -108,7 +108,7 @@ class TypespeedGame(QWidget):
 
     def _resetVariables(self):
         self.initial = True
-        self.started = False
+        self.started = self.paused = False
         self.over = False
         self.hundredth_seconds = self.prev_hundredth_seconds = 0
         self.rate = 1
@@ -183,20 +183,32 @@ Font adjustment: In order to stay consistent with typespeed, we need to have 22
         super().showEvent(e)
         self._setSizeDependentStuff(self._isFontBad())
         self._console.textChanged.connect(self._handleTextChanged)
+        if self.paused:
+            self.resume()
 
     def hideEvent(self, e):
         super().hideEvent(e)
         self._console.textChanged.disconnect(self._handleTextChanged)
+        if self.started:
+            self.pause()
 
     def start(self, words):
         self._resetVariables()
         self.words = words
-        self.timer.start(10)  # every 100th of a second
-        self.started = True
+        self.resume()
 
     def stop(self):
         self.timer.stop()
         self.started = False
+
+    def resume(self):
+        self.timer.start(10)  # every 100th of a second
+        self.started = True
+        self.paused = False
+
+    def pause(self):
+        self.stop()
+        self.paused = True
 
     def _gameLoop(self):
         self.hundredth_seconds += 1
