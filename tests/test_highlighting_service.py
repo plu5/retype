@@ -54,7 +54,6 @@ class FakeBookView(QObject):
         self.progress = 0
 
         self.highlight_format = QTextCharFormat()
-        self.unhighlight_format = QTextCharFormat()
         self.mistake_format = QTextCharFormat()
 
         self.cursor = QTextCursor(self.display.document())

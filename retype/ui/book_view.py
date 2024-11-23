@@ -112,7 +112,6 @@ class BookDisplay(QTextBrowser):
 
 
 @theme('BookView.Highlighting.Highlight', C(fg='black', bg='yellow'))
-@theme('BookView.Highlighting.Unhighlight', C(fg='black', bg='white'))
 @theme('BookView.Highlighting.Mistake', C(fg='white', bg='red'))
 class BookView(QWidget):
     def __init__(self, main_win, main_controller, sdict={}, rdict={},
@@ -144,18 +143,16 @@ class BookView(QWidget):
 
         self.c = self._loadTheme()
 
+        self.highlight_sel = self.display.ExtraSelection()
         self.highlight_format = QTextCharFormat()
-        self.unhighlight_format = QTextCharFormat()
         self.mistake_format = QTextCharFormat()
-        self.formats = (self.highlight_format, self.unhighlight_format,
-                        self.mistake_format)
+        self.formats = (self.highlight_format, self.mistake_format)
 
         self.c[0].changed.connect(self.themeUpdate)
         self.themeUpdate()
 
     def _loadTheme(self):
         return (Theme.get('BookView.Highlighting.Highlight'),
-                Theme.get('BookView.Highlighting.Unhighlight'),
                 Theme.get('BookView.Highlighting.Mistake'))
 
     def themeUpdate(self):
@@ -341,8 +338,9 @@ class BookView(QWidget):
     def updateHighlightCursor(self, to_pos=None):
         pos = to_pos or self.cursor_pos
         self.highlight_cursor.setPosition(pos, self.cursor.KeepAnchor)
-        self.highlight_cursor.mergeCharFormat(self.unhighlight_format)
-        self.highlight_cursor.mergeCharFormat(self.highlight_format)
+        self.highlight_sel.cursor = self.highlight_cursor
+        self.highlight_sel.format = self.highlight_format
+        self.display.setExtraSelections([self.highlight_sel])
 
     def fillHighlight(self):
         self.setHighlightCursor()
@@ -358,6 +356,10 @@ class BookView(QWidget):
             document.addResource(QTextDocument.ImageResource,
                                  QUrl(image['link']), pixmap)
 
+        # Extra selections must be cleared before calling setDocument to avoid
+        # a crash, see https://stackoverflow.com/a/73776461/18396947
+        # Thank you, Patrick Jeeves!
+        self.display.setExtraSelections([])
         self.display.setDocument(document)
 
     def anchorClicked(self, link):
