@@ -401,7 +401,6 @@ class BookView(QWidget):
             self.markComplete()
 
     def setChapter(self, pos, move_cursor=False, reset=True):
-        self._console.clear()
         self.setSource(self.book.chapters[pos])
         self.viewed_chapter_pos = pos
         if move_cursor:
@@ -477,7 +476,6 @@ class BookView(QWidget):
             logger.error("Bad tobetyped_list; {}".format(self.tobetyped_list))
 
     def advanceLine(self):
-        self._console.clear()
         self._controller.console.command_service.advanceLine()
 
     def setSdict(self, sdict):
