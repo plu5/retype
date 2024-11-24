@@ -211,6 +211,12 @@ class BookWrapper(object):
                 proper_img = builder.IMG(**attrs)
                 svg.getparent().replace(svg, proper_img)
 
+        # Ensure figure elements appear in their own line
+        figure_elements = tree.xpath('//figure')
+        if figure_elements:
+            for figure in figure_elements:
+                figure.addprevious(figure.makeelement('div'))
+
         xhtml_to_html(tree)
         html = tostring(tree, method='xml', encoding='unicode')
 
