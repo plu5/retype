@@ -443,6 +443,9 @@ class StenoView(BookView):
     def _insertWrongText(self, v, pre_pos, text):
         v.mistake_cursor.setPosition(pre_pos, v.mistake_cursor.MoveAnchor)
         v.mistake_cursor.insertText(text, v.mistake_format)
+        self.updateHighlighting()
+        if pre_pos == 0:
+            self.display.setExtraSelections([])
 
     def _removeWrongText(self, v, start, end):
         v.mistake_cursor.setPosition(start, v.mistake_cursor.MoveAnchor)
