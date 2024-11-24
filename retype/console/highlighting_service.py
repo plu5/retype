@@ -44,10 +44,6 @@ class HighlightingService(object):
         if not self.valid(v):
             return
 
-        # Remove highlighting if things were deleted
-        if len(text) + v.persistent_pos < v.cursor_pos:
-            v.highlight_cursor.mergeCharFormat(v.unhighlight_format)
-
         # Cursor position in the line
         end_correctness_index = compareStrings(text, v.current_line)
         v.cursor_pos = v.persistent_pos + end_correctness_index

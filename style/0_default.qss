@@ -77,11 +77,6 @@ BookView.Highlighting.Mistake {
   background-color: #ff0000;
 }
 
-BookView.Highlighting.Unhighlight {
-  color: #000000;
-  background-color: #ffffff;
-}
-
 BookView.Highlighting.Highlight {
   color: #000000;
   background-color: #ffff00;
