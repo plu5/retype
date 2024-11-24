@@ -342,6 +342,10 @@ class BookView(QWidget):
         self.highlight_sel.format = self.highlight_format
         self.display.setExtraSelections([self.highlight_sel])
 
+        # Also required to avoid ExtraSelections segfault when switching view,
+        # even if self.display.extraSelections() is an empty list
+        self.highlight_cursor.setPosition(0)
+
     def fillHighlight(self):
         self.setHighlightCursor()
         self.updateHighlightCursor(self.chapter_lens[self.viewed_chapter_pos])
