@@ -12,7 +12,9 @@ from qt import (QWidget, QFormLayout, QVBoxLayout, QLabel, QLineEdit,
                 QColorDialog, QColor, QTreeView, QStandardItemModel,
                 QAbstractItemView, QItemDelegate, QStandardItem, QSizePolicy)
 
-from retype.extras.dict import SafeDict, update
+from typing import TYPE_CHECKING
+
+from retype.extras.dict import merge_dicts, update
 from retype.constants import default_config, iswindows, default_steno_kdict
 from retype.services.theme import (Theme, populateThemes, valuesFromQss, theme,
                                    C)
@@ -27,19 +29,41 @@ from retype.games.steno import VisualStenoKeyboard
 logger = logging.getLogger(__name__)
 
 DEFAULTS = default_config
-NESTED_RAW_DICT_KEYS = ['rdict', 'sdict', 'kdict']
 THEME_MODIFICATIONS_FILENAME = '__current__.qss'
 
 
 def hline():
+    # type: () -> QFrame
     line = QFrame()
     line.setFrameShape(QFrame.Shape.HLine)
     line.setFrameShadow(QFrame.Shadow.Sunken)
     return line
 
 
+class SelectorValueTypeMismatch(TypeError):
+    """Wrong value type passed to a configuration selector."""
+
+
+class SpinBox(QSpinBox):
+    changed = pyqtSignal(int)
+
+    def __init__(self, parent=None):
+        # type: (SpinBox, QWidget | None) -> None
+        QSpinBox.__init__(self, parent)
+        self.valueChanged.connect(lambda t: self.changed.emit(t))
+
+    def set_(self, value):
+        # type: (SpinBox, object) -> None
+        # Taking a wide type in order to be able to call it dynamically from
+        # data structure of selectors with set_ method
+        if not isinstance(value, int):
+            raise SelectorValueTypeMismatch(f'expects int, got: {type(value)}')
+        self.setValue(value)
+
+
 def pxspinbox(value=0, suffix=" px"):
-    sb = QSpinBox()
+    # type: (int, str) -> SpinBox
+    sb = SpinBox()
     sb.setSuffix(suffix)
     sb.setMaximum(10000)
     sb.setValue(value)
@@ -47,6 +71,7 @@ def pxspinbox(value=0, suffix=" px"):
 
 
 def npxspinbox(value):
+    # type: (int) -> SpinBox
     sb = pxspinbox()
     sb.setMinimum(-10000)
     sb.setValue(value)
@@ -54,23 +79,30 @@ def npxspinbox(value):
 
 
 def descl(text):
+    # type: (str) -> WrappedLabel
     return WrappedLabel(text)
 
 
 class CustomisationDialog(QDialog):
-    def __init__(self, config, window, saveConfig, prevView,
-                 getBookViewFontSize, parent=None):
+    def __init__(self,  # type: CustomisationDialog
+                 config,  # type: Config
+                 window,  # type: MainWin
+                 saveConfig,  # type: pyqtBoundSignal
+                 prevView,  # type: pyqtBoundSignal
+                 getBookViewFontSize,  # type: Callable[[], int]
+                 parent=None  # type: QWidget | None
+                 ):
+        # type: (...) -> None
         QDialog.__init__(self, parent, Qt.WindowType.WindowCloseButtonHint)
         # The base config (no uncommitted modifications)
-        self.config = SafeDict(deepcopy(DEFAULTS), {}, NESTED_RAW_DICT_KEYS)
-        self.config.update(config)
+        self.config = merge_dicts(DEFAULTS, config)  # type: Config
         # The config with uncommitted modifications (any modifications will be
         #  applied to this one)
-        self.config_edited = self.config.deepcopy()
+        self.config_edited = deepcopy(self.config)
 
         self.saveConfig = saveConfig
         self.prevView = prevView
-        self.window = window
+        self._window = window
         self.getBookViewFontSize = getBookViewFontSize
 
         self._initUI()
@@ -78,13 +110,16 @@ class CustomisationDialog(QDialog):
         self.setWindowTitle("Customise retype")
 
     def sizeHint(self):
+        # type: (CustomisationDialog) -> QSize
         return QSize(500, 500)
 
     def getUserDir(self):
+        # type: (CustomisationDialog) -> str
         return self.config['user_dir']
 
     def _initUI(self):
-        self.selectors = {}
+        # type: (CustomisationDialog) -> None
+        self.selectors = {}  # type: dict[str, Selector]
 
         catw = CategorisedWidget()
         catw.add("Filesystem", "Paths", self._pathSettings())
@@ -116,9 +151,10 @@ class CustomisationDialog(QDialog):
         self.revert_btn.clicked.connect(self.revert)
         self.restore_btn = btnbox.button(StandardButton.RestoreDefaults)
         self.restore_btn.clicked.connect(self.restoreDefaults)
-        self.restore_btn.setEnabled(self.config.raw != DEFAULTS)
+        self.restore_btn.setEnabled(self.config != DEFAULTS)
 
     def _pathSettings(self):
+        # type: (CustomisationDialog) -> QWidget
         plib = QWidget()
         lyt = QFormLayout(plib)
 
@@ -127,7 +163,7 @@ class CustomisationDialog(QDialog):
         self.selectors['user_dir'] = PathSelector(
             self.config_edited['user_dir'])
         self.selectors['user_dir'].changed.connect(
-            lambda t: self.update("user_dir", t))
+            lambda t: self.update_("user_dir", t))
         lyt.addRow("User dir:", self.selectors['user_dir'])
         lyt.addRow(hline())
         # library_paths
@@ -135,12 +171,13 @@ class CustomisationDialog(QDialog):
         self.selectors['library_paths'] = LibraryPathsWidget(
             self.config_edited['library_paths'])
         self.selectors['library_paths'].changed.connect(
-            lambda paths: self.update("library_paths", paths))
+            lambda paths: self.update_("library_paths", paths))
         lyt.addRow(self.selectors['library_paths'])
 
         return plib
 
     def _iconsSettings(self):
+        # type: (CustomisationDialog) -> QWidget
         pic = QWidget()
         lyt = QFormLayout(pic)
         icon_sets = QComboBox()
@@ -155,10 +192,11 @@ class CustomisationDialog(QDialog):
         icon_sets.model().sort(0)
         icon_sets.setCurrentText(self.config_edited['icon_set'])
         icon_sets.currentTextChanged.connect(
-            lambda t: self.update('icon_set', t))
+            lambda t: self.update_('icon_set', t))
         return pic
 
     def _themeSettings(self):
+        # type: (CustomisationDialog) -> QWidget
         pth = QWidget()
         lyt = QFormLayout(pth)
 
@@ -186,17 +224,19 @@ class CustomisationDialog(QDialog):
         themes.model().sort(0)
         themes.setCurrentIndex(0)
 
-        t = ThemeWidget(user_dir)
-        self.theme = t
+        self.theme = ThemeWidget(user_dir)
         self.theme.changed.connect(self.themeUpdate)
         lyt.addRow(self.theme)
 
-        apply_btn.clicked.connect(lambda: t.applyTheme(themes.currentText()))
-        export_btn.clicked.connect(lambda: t.exportCurrent(self.getUserDir()))
+        apply_btn.clicked.connect(
+            lambda: self.theme.applyTheme(themes.currentText()))
+        export_btn.clicked.connect(
+            lambda: self.theme.exportCurrent(self.getUserDir()))
 
         return pth
 
     def _consoleSettings(self):
+        # type: (CustomisationDialog) -> QWidget
         pcon = MinWidget(200, height=False)
         lyt = QFormLayout(pcon)
 
@@ -205,15 +245,15 @@ class CustomisationDialog(QDialog):
  any length, including empty if you do not want to prefix them with anything."
                          ))
         self.selectors['prompt'] = PromptEdit(self.config_edited['prompt'])
-        self.selectors['prompt'].textChanged.connect(
-            lambda t: self.update("prompt", t))
+        self.selectors['prompt'].changed.connect(
+            lambda t: self.update_("prompt", t))
         lyt.addRow("Prompt:", self.selectors['prompt'])
 
         # console font
         self.selectors['console_font'] = ConsoleFontSelector(
             self.config_edited['console_font'])
-        self.selectors['console_font'].currentFontChanged.connect(
-            lambda f: self.update("console_font", f.family()))
+        self.selectors['console_font'].changed.connect(
+            lambda f: self.update_("console_font", f))
         lyt.addRow("Console font:", self.selectors['console_font'])
 
         # Windows-only: system console
@@ -224,7 +264,7 @@ class CustomisationDialog(QDialog):
             hide_sysconsole_checkbox.setChecked(
                 self.config_edited.get('hide_sysconsole', True))
             hide_sysconsole_checkbox.changed.connect(
-                lambda t: self.update("hide_sysconsole", t))
+                lambda t: self.update_("hide_sysconsole", t))
             self.selectors['hide_sysconsole'] = hide_sysconsole_checkbox
             lyt.addRow(hide_sysconsole_checkbox)
 
@@ -232,6 +272,7 @@ class CustomisationDialog(QDialog):
         return pcon
 
     def _sdictSettings(self):
+        # type: (CustomisationDialog) -> QWidget
         psep = QWidget()
         lyt = QFormLayout(psep)
         lyt.addRow(descl("Configure substrings that split the text into lines.\
@@ -240,7 +281,7 @@ class CustomisationDialog(QDialog):
         self.selectors['sdict'] = SDictWidget(
             deepcopy(self.config_edited['sdict']))
         self.selectors['sdict'].changed.connect(
-            lambda sdict: self.update("sdict", sdict))
+            lambda sdict: self.update_("sdict", sdict))
         lyt.addRow(self.selectors['sdict'])
 
         lyt.addRow(hline())
@@ -249,13 +290,14 @@ class CustomisationDialog(QDialog):
 (if off, requires pressing Enter at the end of a line)")
         auto_newline_checkbox.setChecked(self.config_edited['auto_newline'])
         auto_newline_checkbox.changed.connect(
-            lambda t: self.update("auto_newline", t))
+            lambda t: self.update_("auto_newline", t))
         self.selectors['auto_newline'] = auto_newline_checkbox
         lyt.addRow(auto_newline_checkbox)
 
         return psep
 
     def _rdictSettings(self):
+        # type: (CustomisationDialog) -> QWidget
         prep = QWidget()
         lyt = QFormLayout(prep)
         lyt.addRow(descl("Configure substrings that can be typeable\
@@ -265,59 +307,65 @@ class CustomisationDialog(QDialog):
         self.selectors['rdict'] = RDictWidget(
             deepcopy(self.config_edited['rdict']))
         self.selectors['rdict'].changed.connect(
-            lambda rdict: self.update("rdict", rdict))
+            lambda rdict: self.update_("rdict", rdict))
         lyt.addRow(self.selectors['rdict'])
 
         return prep
 
     def _windowSettings(self):
+        # type: (CustomisationDialog) -> QWidget
         self.selectors['window'] = WindowGeometrySelector(
-            self.window, self.config_edited['window'])
+            self._window, self.config_edited['window'])
         self.selectors['window'].changed.connect(
-            lambda dims: self.update("window", dims))
-        self.window.closing.connect(self.maybeSaveCertainThings)
+            lambda dims: self.update_("window", dims))
+        self._window.closing.connect(self.maybeSaveCertainThings)
 
         return self.selectors['window']
 
     def _bookviewSettings(self):
+        # type: (CustomisationDialog) -> QWidget
         self.selectors['bookview'] = BookViewSettingsWidget(
             self.config_edited['bookview'])
         self.selectors['bookview'].changed.connect(
-            lambda x: self.update("bookview", x))
+            lambda x: self.update_("bookview", x))
 
         return self.selectors['bookview']
 
     def _stenoSettings(self):
+        # type: (CustomisationDialog) -> QWidget
         w = self.selectors['steno'] = StenoSettingsWidget(
             self.config_edited['steno'])
-        w.changed.connect(lambda x: self.update("steno", x))
+        w.changed.connect(lambda x: self.update_("steno", x))
         return w
 
-    def update(self, name, new_value):
-        self.config_edited[name] = new_value
+    def update_(self, name, new_value):
+        # type: (CustomisationDialog, str, object) -> None
+        self.config_edited[name] = new_value  # type: ignore[literal-required]
         logger.debug("config_edited updated to: {}".format(
-            self.config_edited.raw))
+            self.config_edited))
 
-        self.revert_btn.setEnabled(self.config_edited.raw != self.config.raw)
-        self.restore_btn.setEnabled(self.config_edited.raw != DEFAULTS)
+        self.revert_btn.setEnabled(self.config_edited != self.config)
+        self.restore_btn.setEnabled(self.config_edited != DEFAULTS)
 
     def themeUpdate(self):
+        # type: (CustomisationDialog) -> None
         revert = restore = False
 
         if self.theme.committed is False:
             revert = True
         else:
-            revert = self.config_edited.raw != self.config.raw
+            revert = self.config_edited != self.config
 
         if self.theme.isDefault() is False:
             restore = True
         else:
-            restore = self.config_edited.raw != DEFAULTS
+            restore = self.config_edited != DEFAULTS
 
         self.revert_btn.setEnabled(revert)
         self.restore_btn.setEnabled(restore)
 
     def accept(self):
+        # type: (CustomisationDialog) -> None
         # User dir validation
         if not os.path.exists(self.config_edited['user_dir']):
             ret = QMessageBox.warning(
@@ -346,9 +394,9 @@ class CustomisationDialog(QDialog):
             return
 
         # Save
-        self.saveConfig.emit(self.config_edited.raw)
+        self.saveConfig.emit(self.config_edited)
         # Update base config
-        self.config = self.config_edited.deepcopy()
+        self.config = deepcopy(self.config_edited)
 
         # Save theme
         self.theme.saveCurrent(getStylePath(self.getUserDir()))
@@ -356,12 +404,13 @@ class CustomisationDialog(QDialog):
         self.revert_btn.setEnabled(False)
 
     def setSelectors(self, config):
+        # type: (CustomisationDialog, Config) -> None
         for key, selector in self.selectors.items():
-            selector.set_(config[key])
+            selector.set_(config[key])  # type: ignore[literal-required, misc]
 
     def restoreDefaults(self):
-        self.config_edited = SafeDict(
-            deepcopy(DEFAULTS), {}, NESTED_RAW_DICT_KEYS)
+        # type: (CustomisationDialog) -> None
+        self.config_edited = deepcopy(DEFAULTS)
         self.setSelectors(self.config_edited)
 
         self.theme.restoreDefaults()
@@ -369,7 +418,8 @@ class CustomisationDialog(QDialog):
         self.restore_btn.setEnabled(False)
 
     def revert(self):
-        self.config_edited = self.config.deepcopy()
+        # type: (CustomisationDialog) -> None
+        self.config_edited = deepcopy(self.config)
         self.setSelectors(self.config_edited)
 
         self.theme.revert()
@@ -377,19 +427,28 @@ class CustomisationDialog(QDialog):
         self.revert_btn.setEnabled(False)
 
     def maybeSaveCertainThings(self):
+        # type: (CustomisationDialog) -> None
         shouldSave = False
 
-        if self.config['window']['save_on_quit']:
+        geom = self.config['window']  # type: Geometry
+
+        if geom['save_on_quit']:
             logger.debug("Saving window geometry")
-            values = self.selectors['window'].valuesByWindow()
-            self.config['window'].update(values)
+            s = self.selectors[
+                'window'
+            ]  # type: WindowGeometrySelector  # type: ignore[assignment]
+            values = s.valuesByWindow()
+            update(geom, values)  # type: ignore[arg-type]
             shouldSave = True
 
-        if self.config['window'].get('save_splitters_on_quit', True):
+        if geom['save_splitters_on_quit']:
             logger.debug("Saving splitters states")
-            for name, splitter in self.window.splitters.items():
-                self.config['window'][f'{name}_splitter_state'] =\
-                    b64encode(splitter.saveState()).decode('ascii')
+            for name, splitter in self._window.splitters.items():
+                state = splitter.saveState().data()
+                encoded_state = b64encode(state).decode('ascii')
+                geom[
+                    f'{name}_splitter_state'  # type: ignore[literal-required]
+                ] = encoded_state
             shouldSave = True
 
         if self.config['bookview']['save_font_size_on_quit']:
@@ -398,21 +457,27 @@ class CustomisationDialog(QDialog):
             shouldSave = True
 
         if shouldSave:
-            self.saveConfig.emit(self.config.raw)
+            self.saveConfig.emit(self.config)
 
 
 class CheckBox(QCheckBox):
     changed = pyqtSignal(bool)
 
     def __init__(self, desc, parent=None):
+        # type: (CheckBox, str, QWidget | None) -> None
         QCheckBox.__init__(self, desc, parent)
         self.default_value = False
         self.stateChanged.connect(lambda t: self.changed.emit(bool(t)))
 
     def value(self):
+        # type: (CheckBox) -> bool
         return self.isChecked()
 
     def set_(self, value):
+        # type: (CheckBox, object) -> None
+        if not isinstance(value, bool):
+            raise SelectorValueTypeMismatch(
+                f'expects bool, got: {type(value)}')
         self.setChecked(value or self.default_value)
         self.changed.emit(value)
 
@@ -421,6 +486,7 @@ class PathSelector(QWidget):
     changed = pyqtSignal(str)
 
     def __init__(self, path, parent=None, window_title="Select path"):
+        # type: (PathSelector, str, QWidget | None, str) -> None
         QWidget.__init__(self, parent)
         self.window_title = window_title
 
@@ -440,6 +506,7 @@ class PathSelector(QWidget):
         self.setFocusProxy(self.path_edit)
 
     def browse(self):
+        # type: (PathSelector) -> None
         # The set focus lines are a workaround to a qt bug which causes the
         #  application to crash after the QFileDialog is invoked from a
         #  delegate editor
@@ -451,23 +518,35 @@ class PathSelector(QWidget):
             self.path_edit.setText(path)
 
     def value(self):
+        # type: (PathSelector) -> str
         return self.path_edit.text()
 
     def set_(self, value):
+        # type: (PathSelector, object) -> None
+        if not isinstance(value, str):
+            raise SelectorValueTypeMismatch(
+                f'expects str, got: {type(value)}')
         self.path_edit.setText(value)
 
 
 class Delegate(QStyledItemDelegate):
     def __init__(self, parent=None):
+        # type: (Delegate, QWidget | None) -> None
         QStyledItemDelegate.__init__(self, parent)
         self.spacing = 5
 
     def toDoc(self, index):
+        # type: (Delegate, QModelIndex) -> QTextDocument
         doc = QTextDocument()
-        doc.setHtml(index.data())
+        data = index.data()  # type: str | object
+        if isinstance(data, str):
+            doc.setHtml(data)
+        else:
+            logger.error(f'toDoc: data at index {index} is not str')
         return doc
 
     def paint(self, painter, option, index):
+        # type: (Delegate, QPainter, QStyleOptionViewItem, QModelIndex) -> None
         painter.save()
         painter.setClipRect(QRectF(option.rect))
 
@@ -485,6 +564,7 @@ class Delegate(QStyledItemDelegate):
         painter.restore()
 
     def sizeHint(self, option, index):
+        # type: (Delegate, QStyleOptionViewItem, QModelIndex) -> QSize
         size = self.toDoc(index).size().toSize()
         size.setHeight(size.height() + self.spacing*2)
         return size
@@ -492,13 +572,34 @@ class Delegate(QStyledItemDelegate):
 
 class PathDelegate(Delegate):
     def __init__(self, parent=None):
+        # type: (PathDelegate, QWidget | None) -> None
         Delegate.__init__(self, parent)
 
-    def createEditor(self, parent, option, index):
-        return PathSelector(index.data(Qt.ItemDataRole.EditRole), parent)
+    def createEditor(self,
+                     parent,  # type: QWidget
+                     option,  # type: QStyleOptionViewItem
+                     index  # type: QModelIndex
+                     ):
+        # type: (...) -> QWidget
+        data = index.data(Qt.ItemDataRole.EditRole)  # type: object
+        if not isinstance(data, str):
+            logger.error(f'createEditor: EditRole data at index {index} is not'
+                         f' str. Received {data} ({type(data)}).')
+            data = ''
+        return PathSelector(data, parent)
 
-    def setModelData(self, editor, model, index):
-        model.setData(index, editor.value(), Qt.EditRole)
+    def setModelData(self,
+                     editor,  # type: QWidget
+                     model,  # type: QAbstractItemModel
+                     index  # type: QModelIndex
+                     ):
+        # type: (...) -> None
+        if isinstance(editor, PathSelector):
+            model.setData(index, editor.value(), Qt.EditRole)
+        else:
+            logger.error('setModelData: Wrong editor type used with '
+                         'PathDelegate. Expected PathSelector, got '
+                         f'{type(editor)}')
 
 
 class LibraryPathsModel(QAbstractListModel):
@@ -506,13 +607,16 @@ class LibraryPathsModel(QAbstractListModel):
     INVALID_TEMPLATE = '''<span style="color:red">{}</span>'''
 
     def __init__(self, paths, parent=None):
+        # type: (LibraryPathsModel, list[str], QWidget | None) -> None
         QAbstractListModel.__init__(self, parent)
         self.paths = paths
 
-    def rowCount(self, parent):
+    def rowCount(self, parent=QModelIndex()):
+        # type: (LibraryPathsModel, QModelIndex) -> int
         return len(self.paths)
 
-    def data(self, index, role):
+    def data(self, index, role=Qt.ItemDataRole.DisplayRole):
+        # type: (LibraryPathsModel, QModelIndex, int) -> str | None
         row = index.row()
         if row < 0 or row >= len(self.paths):
             return None
@@ -529,22 +633,26 @@ class LibraryPathsModel(QAbstractListModel):
 
         return None
 
-    def setData(self, index, data, role):
+    def setData(self, index, data, role=Qt.ItemDataRole.EditRole):
+        # type: (LibraryPathsModel, QModelIndex, str, int) -> bool
         if index.isValid() and role == Qt.ItemDataRole.EditRole:
             self.paths[index.row()] = str(data)
-            self.dataChanged.emit(index, index, [role])
+            roles = [role]  # type: list[int]
+            self.dataChanged.emit(index, index, roles)
             self.changed.emit(self.paths)
             return True
         return False
 
     def flags(self, index):
+        # type: (LibraryPathsModel, QModelIndex) -> Qt.ItemFlags
         if not index.isValid():
-            return Qt.ItemFlag.ItemIsEnabled
+            return Qt.ItemFlags(Qt.ItemFlag.ItemIsEnabled)
         return (QAbstractListModel.flags(self, index) |
                 Qt.ItemFlag.ItemIsEditable)
 
-    def insertRows(self, position=None, rows=1, parent=QModelIndex()):
-        if position is None:
+    def insertRows(self, position=-1, rows=1, parent=QModelIndex()):
+        # type: (LibraryPathsModel, int, int, QModelIndex) -> bool
+        if position == -1:
             position = len(self.paths)
         self.beginInsertRows(QModelIndex(), position, position+rows-1)
         for row in range(rows):
@@ -553,7 +661,8 @@ class LibraryPathsModel(QAbstractListModel):
         self.endInsertRows()
         return True
 
-    def removeRows(self, position, rows, parent):
+    def removeRows(self, position, rows, parent=QModelIndex()):
+        # type: (LibraryPathsModel, int, int, QModelIndex) -> bool
         self.beginRemoveRows(QModelIndex(), position, position+rows-1)
         for row in range(rows):
             del self.paths[position + row]
@@ -566,6 +675,7 @@ class LibraryPathsWidget(QWidget):
     changed = pyqtSignal(list)
 
     def __init__(self, library_paths, parent=None):
+        # type: (LibraryPathsWidget, list[str], QWidget | None) -> None
         QWidget.__init__(self, parent)
 
         lyt = QFormLayout(self)
@@ -589,11 +699,13 @@ class LibraryPathsWidget(QWidget):
         lyt.addRow(pbuttons)
 
     def setModel(self, library_paths):
+        # type: (LibraryPathsWidget, list[str]) -> None
         self.model = LibraryPathsModel(library_paths)
         self.view.setModel(self.model)
         self.model.changed.connect(lambda paths: self.changed.emit(paths))
 
     def addPath(self):
+        # type: (LibraryPathsWidget) -> None
         self.model.insertRows()
         row = self.model.rowCount(QModelIndex())-1
         index = self.model.index(row, 0)
@@ -602,49 +714,75 @@ class LibraryPathsWidget(QWidget):
         self.view.edit(index)
 
     def selectedRowIndex(self):
+        # type: (LibraryPathsWidget) -> QModelIndex | None
         selectionModel = self.view.selectionModel()
         if selectionModel.hasSelection():
             index = selectionModel.selectedRows()[0]
             return index
-        return False
+        return None
 
     def removePath(self):
+        # type: (LibraryPathsWidget) -> None
         index = self.selectedRowIndex()
-        if index:
+        if isinstance(index, QModelIndex):
             self.model.removeRows(index.row(), 1, QModelIndex())
 
     def modifyPath(self):
+        # type: (LibraryPathsWidget) -> None
         index = self.selectedRowIndex()
-        if index:
+        if isinstance(index, QModelIndex):
             self.view.edit(index)
 
-    def set_(self, library_paths):
-        self.setModel(library_paths)
+    def set_(self, value):
+        # type: (LibraryPathsWidget, object) -> None
+        if not isinstance(value, list):
+            raise SelectorValueTypeMismatch(
+                f'expects list[str], got: {type(value)}')
+        self.setModel(value)
 
 
 class PromptEdit(QLineEdit):
+    changed = pyqtSignal(str)
+
     def __init__(self, prompt, parent=None):
+        # type: (PromptEdit, str, QWidget | None) -> None
         QLineEdit.__init__(self, parent)
         self.set_(prompt)
+        self.textChanged.connect(lambda t: self.changed.emit(t))
 
-    def set_(self, prompt):
-        self.setText(prompt)
+    def set_(self, value):
+        # type: (PromptEdit, object) -> None
+        if not isinstance(value, str):
+            raise SelectorValueTypeMismatch(
+                f'expects str, got: {type(value)}')
+        self.setText(value)
 
 
 class ConsoleFontSelector(QFontComboBox):
-    def __init__(self, font, parent=None):
-        QLineEdit.__init__(self, parent)
-        self.set_(font)
+    changed = pyqtSignal(str)
 
-    def set_(self, font):
-        self.setCurrentFont(QFont(font))
+    def __init__(self, font, parent=None):
+        # type: (ConsoleFontSelector, str, QWidget | None) -> None
+        QFontComboBox.__init__(self, parent)
+        self.set_(font)
+        self.currentFontChanged.connect(
+            lambda f: self.changed.emit(f.family()))  # type: ignore[misc]
+
+    def set_(self, value):
+        # type: (ConsoleFontSelector, object) -> None
+        if not isinstance(value, str):
+            raise SelectorValueTypeMismatch(
+                f'expects str, got: {type(value)}')
+        self.setCurrentFont(QFont(value))
 
 
 class ListView(QListView):
-    def __init__(self, *args):
-        QListView.__init__(self, *args)
+    def __init__(self, parent=None):
+        # type: (ListView, QWidget | None) -> None
+        QListView.__init__(self, parent)
 
     def sizeHint(self):
+        # type: (ListView) -> QSize
         size = QListView.sizeHint(self)
         size.setHeight(10)
         return size
@@ -658,14 +796,17 @@ Keep: <code><b>{2}</b></code></p>'''
     changed = pyqtSignal(dict)
 
     def __init__(self, sdict, parent=None):
+        # type: (SDictModel, SDict, QWidget | None) -> None
         QAbstractListModel.__init__(self, parent)
         self.sdict = sdict
         self.order = list(sdict)
 
-    def rowCount(self, parent):
+    def rowCount(self, parent=QModelIndex()):
+        # type: (SDictModel, QModelIndex) -> int
         return len(self.sdict)
 
-    def data(self, index, role):
+    def data(self, index, role=Qt.ItemDataRole.DisplayRole):
+        # type: (SDictModel, QModelIndex, int) -> str | tuple[str, bool] | None
         row = index.row()
         if row < 0 or row >= len(self.order):
             return None
@@ -685,8 +826,9 @@ Keep: <code><b>{2}</b></code></p>'''
 
         return None
 
-    def insertRows(self, position=None, rows=1, parent=QModelIndex()):
-        if position is None:
+    def insertRows(self, position=-1, rows=1, parent=QModelIndex()):
+        # type: (SDictModel, int, int, QModelIndex) -> bool
+        if position == -1:
             position = len(self.order)
         self.beginInsertRows(QModelIndex(), position, position+rows-1)
         for row in range(rows):
@@ -698,7 +840,8 @@ Keep: <code><b>{2}</b></code></p>'''
         self.endInsertRows()
         return True
 
-    def removeRows(self, position, rows, parent):
+    def removeRows(self, position, rows, parent=QModelIndex()):
+        # type: (SDictModel, int, int, QModelIndex) -> bool
         self.beginRemoveRows(QModelIndex(), position, position+rows-1)
         for row in range(rows):
             del self.sdict[self.order[position + row]]
@@ -708,17 +851,20 @@ Keep: <code><b>{2}</b></code></p>'''
         return True
 
     def flags(self, index):
+        # type: (SDictModel, QModelIndex) -> Qt.ItemFlags
         if not index.isValid():
-            return Qt.ItemFlag.ItemIsEnabled
+            return Qt.ItemFlags(Qt.ItemFlag.ItemIsEnabled)
         return (QAbstractListModel.flags(self, index) |
                 Qt.ItemFlag.ItemIsEditable)
 
-    def setData(self, index, data, role):
+    def setData(self, index, data, role=Qt.ItemDataRole.EditRole):
+        # type: (SDictModel, QModelIndex, tuple[str, bool], int) -> bool
         if index.isValid() and role == Qt.ItemDataRole.EditRole:
             del self.sdict[self.order[index.row()]]
             self.order[index.row()] = data[0]
-            self.sdict[data[0]] = data[1]
-            self.dataChanged.emit(index, index, [role])
+            self.sdict[data[0]] = {'keep': data[1]}
+            roles = [role]  # type: list[int]
+            self.dataChanged.emit(index, index, roles)
             self.changed.emit(self.sdict)
             return True
         return False
@@ -729,6 +875,7 @@ class SDictEntryEditor(QWidget):
     selector = 'CustomisationDialog.SDict.EntryEditor'
 
     def __init__(self, substr, keep, parent=None):
+        # type: (SDictEntryEditor, str, bool, QWidget | None) -> None
         QWidget.__init__(self, parent)
 
         lyt = QFormLayout(self)
@@ -748,35 +895,59 @@ class SDictEntryEditor(QWidget):
         lyt.setSpacing(1)
 
     def substr(self):
+        # type: (SDictEntryEditor) -> str
         return self.substr_e.text()
 
     def keep(self):
+        # type: (SDictEntryEditor) -> SDictEntry
         return {'keep': self.keep_e.isChecked()}
 
     def themeUpdate(self):
+        # type: (SDictEntryEditor) -> None
         qss = Theme.getQss(self.selector).replace(self.selector, 'QWidget')
         self.setStyleSheet(qss)
 
 
 class SDictDelegate(Delegate):
     def __init__(self, parent=None):
+        # type: (SDictDelegate, QWidget | None) -> None
         Delegate.__init__(self, parent)
 
-    def createEditor(self, parent, option, index):
-        data = index.data(Qt.ItemDataRole.EditRole)
+    def createEditor(self,
+                     parent,  # type: QWidget
+                     option,  # type: QStyleOptionViewItem
+                     index  # type: QModelIndex
+                     ):
+        # type: (...) -> QWidget
+        data = index.data(Qt.ItemDataRole.EditRole)  # type: object
+        if not isinstance(data, tuple) or len(data) != 2:
+            logger.error(f'createEditor: EditRole data at index {index} is not'
+                         f' a len 2 tuple. Received {data} ({type(data)}).')
+            data = ('', False)
         return SDictEntryEditor(*data, parent)
 
-    def setModelData(self, editor, model, index):
-        substr = editor.substr()
-        keep = editor.keep()
-
-        model.setData(index, [substr, keep], Qt.ItemDataRole.EditRole)
+    def setModelData(self,
+                     editor,  # type: QWidget
+                     model,  # type: QAbstractItemModel
+                     index  # type: QModelIndex
+                     ):
+        # type: (...) -> None
+        if isinstance(editor, SDictEntryEditor):
+            substr = editor.substr()
+            keep = editor.keep()
+            data = (substr, keep)
+            model.setData(index, data, Qt.ItemDataRole.EditRole)
+        else:
+            logger.error('setModelData: Wrong editor type used with '
+                         'SDictDelegate. Expected SDictEntryEditor, got '
+                         f'{type(editor)}')
 
 
 class SDictWidget(QWidget):
     changed = pyqtSignal(dict)
 
     def __init__(self, sdict, parent=None):
+        # type: (SDictWidget, SDict, QWidget | None) -> None
         QWidget.__init__(self, parent)
 
         lyt = QFormLayout(self)
@@ -801,11 +972,13 @@ class SDictWidget(QWidget):
         lyt.addRow(pbuttons)
 
     def setModel(self, sdict):
+        # type: (SDictWidget, SDict) -> None
         self.model = SDictModel(sdict)
         self.model.changed.connect(lambda sdict: self.changed.emit(sdict))
         self.view.setModel(self.model)
 
     def addEntry(self):
+        # type: (SDictWidget) -> None
         self.model.insertRows()
         row = self.model.rowCount(QModelIndex())-1
         index = self.model.index(row, 0)
@@ -814,24 +987,31 @@ class SDictWidget(QWidget):
         self.view.edit(index)
 
     def selectedRowIndex(self):
+        # type: (SDictWidget) -> QModelIndex | None
         selectionModel = self.view.selectionModel()
         if selectionModel.hasSelection():
             index = selectionModel.selectedRows()[0]
             return index
-        return False
+        return None
 
     def removeEntry(self):
+        # type: (SDictWidget) -> None
         index = self.selectedRowIndex()
         if index:
             self.model.removeRows(index.row(), 1, QModelIndex())
 
     def modifyEntry(self):
+        # type: (SDictWidget) -> None
         index = self.selectedRowIndex()
         if index:
             self.view.edit(index)
 
-    def set_(self, sdict):
-        self.setModel(sdict)
+    def set_(self, value):
+        # type: (SDictWidget, object) -> None
+        if not isinstance(value, dict):
+            raise SelectorValueTypeMismatch(
+                f'expects SDict, got: {type(value)}')
+        self.setModel(value)
 
 
 class RDictModel(QAbstractListModel):
@@ -842,14 +1022,20 @@ Replacements list: <code><b>{2}</b></code></p>'''
     changed = pyqtSignal(dict)
 
     def __init__(self, rdict, parent=None):
+        # type: (RDictModel, RDict, QWidget | None) -> None
         QAbstractListModel.__init__(self, parent)
         self.rdict = rdict
         self.order = list(rdict)
 
-    def rowCount(self, parent):
+    def rowCount(self, parent=QModelIndex()):
+        # type: (RDictModel, QModelIndex) -> int
         return len(self.rdict)
 
-    def data(self, index, role):
+    def data(self,
+             index,  # type: QModelIndex
+             role=Qt.ItemDataRole.DisplayRole  # type: int
+             ):
+        # type: (...) -> str | tuple[str, list[str]] | None
         row = index.row()
         if row < 0 or row >= len(self.order):
             return None
@@ -869,20 +1055,22 @@ Replacements list: <code><b>{2}</b></code></p>'''
 
         return None
 
-    def insertRows(self, position=None, rows=1, parent=QModelIndex()):
-        if position is None:
+    def insertRows(self, position=-1, rows=1, parent=QModelIndex()):
+        # type: (RDictModel, int, int, QModelIndex) -> bool
+        if position == -1:
             position = len(self.order)
         self.beginInsertRows(QModelIndex(), position, position+rows-1)
         for row in range(rows):
             if '' in self.rdict:
                 break
             self.order.insert(position + row, "")
-            self.rdict[''] = ""
+            self.rdict[''] = ['']
             self.changed.emit(self.rdict)
         self.endInsertRows()
         return True
 
-    def removeRows(self, position, rows, parent):
+    def removeRows(self, position, rows, parent=QModelIndex()):
+        # type: (RDictModel, int, int, QModelIndex) -> bool
         self.beginRemoveRows(QModelIndex(), position, position+rows-1)
         for row in range(rows):
             del self.rdict[self.order[position + row]]
@@ -892,17 +1080,20 @@ Replacements list: <code><b>{2}</b></code></p>'''
         return True
 
     def flags(self, index):
+        # type: (RDictModel, QModelIndex) -> Qt.ItemFlags
         if not index.isValid():
-            return Qt.ItemFlag.ItemIsEnabled
+            return Qt.ItemFlags(Qt.ItemFlag.ItemIsEnabled)
         return (QAbstractListModel.flags(self, index) |
                 Qt.ItemFlag.ItemIsEditable)
 
-    def setData(self, index, data, role):
+    def setData(self, index, data, role=Qt.ItemDataRole.EditRole):
+        # type: (RDictModel, QModelIndex, tuple[str, list[str]], int) -> bool
         if index.isValid() and role == Qt.ItemDataRole.EditRole:
             del self.rdict[self.order[index.row()]]
             self.order[index.row()] = data[0]
             self.rdict[data[0]] = data[1]
-            self.dataChanged.emit(index, index, [role])
+            roles = [role]  # type: list[int]
+            self.dataChanged.emit(index, index, roles)
             self.changed.emit(self.rdict)
             return True
         return False
@@ -913,6 +1104,7 @@ class RDictEntryEditor(QWidget):
     selector = 'CustomisationDialog.RDict.EntryEditor'
 
     def __init__(self, substr, reps, parent=None):
+        # type: (RDictEntryEditor, str, list[str], QWidget | None) -> None
         QWidget.__init__(self, parent)
 
         lyt = QFormLayout(self)
@@ -931,43 +1123,68 @@ class RDictEntryEditor(QWidget):
         lyt.setSpacing(1)
 
     def substr(self):
+        # type: (RDictEntryEditor) -> str
         return self.substr_e.text()
 
     def reps(self):
+        # type: (RDictEntryEditor) -> list[str]
         return self.reps_e.text().split(',')
 
     def themeUpdate(self):
+        # type: (RDictEntryEditor) -> None
         qss = Theme.getQss(self.selector).replace(self.selector, 'QWidget')
         self.setStyleSheet(qss)
 
 
 class RDictDelegate(Delegate):
     def __init__(self, parent=None):
+        # type: (RDictDelegate, QWidget | None) -> None
         Delegate.__init__(self, parent)
 
-    def createEditor(self, parent, option, index):
-        data = index.data(Qt.ItemDataRole.EditRole)
+    def createEditor(self,
+                     parent,  # type: QWidget
+                     option,  # type: QStyleOptionViewItem
+                     index  # type: QModelIndex
+                     ):
+        # type: (...) -> QWidget
+        data = index.data(Qt.ItemDataRole.EditRole)  # type: object
+        if not isinstance(data, tuple) or len(data) != 2:
+            logger.error(f'createEditor: EditRole data at index {index} is not'
+                         f' a len 2 tuple. Received {data} ({type(data)}).')
+            data = ('', [''])
         return RDictEntryEditor(*data, parent)
 
-    def setModelData(self, editor, model, index):
+    def setModelData(self,
+                     editor,  # type: QWidget
+                     model,  # type: QAbstractItemModel
+                     index  # type: QModelIndex
+                     ):
+        # type: (...) -> None
+        if not isinstance(editor, RDictEntryEditor):
+            logger.error('setModelData: Wrong editor type used with '
+                         'RDictDelegate. Expected RDictEntryEditor, got '
+                         f'{type(editor)}')
+            return
         substr = editor.substr()
         reps = editor.reps()
 
         # remove duplicates
-        reps = list(dict.fromkeys(reps))
+        reps = list(dict.fromkeys(reps))  # type: ignore[misc]
 
         # remove reps that are of incorrect length
         for i, rep in enumerate(reps):
             if len(rep) != len(substr):
                 del reps[i]
 
-        model.setData(index, [substr, reps], Qt.ItemDataRole.EditRole)
+        data = (substr, reps)
+        model.setData(index, data, Qt.ItemDataRole.EditRole)
 
 
 class RDictWidget(QWidget):
     changed = pyqtSignal(dict)
 
     def __init__(self, rdict, parent=None):
+        # type: (RDictWidget, RDict, QWidget | None) -> None
         QWidget.__init__(self, parent)
 
         lyt = QFormLayout(self)
@@ -992,11 +1209,13 @@ class RDictWidget(QWidget):
         lyt.addRow(pbuttons)
 
     def setModel(self, rdict):
+        # type: (RDictWidget, RDict) -> None
         self.model = RDictModel(rdict)
         self.model.changed.connect(lambda rdict: self.changed.emit(rdict))
         self.view.setModel(self.model)
 
     def addEntry(self):
+        # type: (RDictWidget) -> None
         self.model.insertRows()
         row = self.model.rowCount(QModelIndex())-1
         index = self.model.index(row, 0)
@@ -1005,24 +1224,31 @@ class RDictWidget(QWidget):
         self.view.edit(index)
 
     def selectedRowIndex(self):
+        # type: (RDictWidget) -> QModelIndex | None
         selectionModel = self.view.selectionModel()
         if selectionModel.hasSelection():
             index = selectionModel.selectedRows()[0]
             return index
-        return False
+        return None
 
     def removeEntry(self):
+        # type: (RDictWidget) -> None
         index = self.selectedRowIndex()
         if index:
             self.model.removeRows(index.row(), 1, QModelIndex())
 
     def modifyEntry(self):
+        # type: (RDictWidget) -> None
         index = self.selectedRowIndex()
         if index:
             self.view.edit(index)
 
-    def set_(self, rdict):
-        self.setModel(rdict)
+    def set_(self, value):
+        # type: (RDictWidget, object) -> None
+        if not isinstance(value, dict):
+            raise SelectorValueTypeMismatch(
+                f'expects RDict, got: {type(value)}')
+        self.setModel(value)
 
 
 class KDictModel(QAbstractListModel):
@@ -1032,14 +1258,20 @@ Bindings list: <code><b>{1}</b></code></p>'''
     changed = pyqtSignal(dict)
 
     def __init__(self, kdict, parent=None):
+        # type: (KDictModel, KDict, QWidget | None) -> None
         QAbstractListModel.__init__(self, parent)
         self.kdict = kdict
         self.order = list(kdict)
 
-    def rowCount(self, parent):
+    def rowCount(self, parent=QModelIndex()):
+        # type: (KDictModel, QModelIndex) -> int
         return len(self.kdict)
 
-    def data(self, index, role):
+    def data(self,
+             index,  # type: QModelIndex
+             role=Qt.ItemDataRole.DisplayRole  # type: int
+             ):
+        # type: (...) -> str | tuple[str, list[str]] | None
         row = index.row()
         if row < 0 or row >= len(self.order):
             return None
@@ -1057,15 +1289,18 @@ Bindings list: <code><b>{1}</b></code></p>'''
         return None
 
     def flags(self, index):
+        # type: (KDictModel, QModelIndex) -> Qt.ItemFlags
         if not index.isValid():
-            return Qt.ItemFlag.ItemIsEnabled
+            return Qt.ItemFlags(Qt.ItemFlag.ItemIsEnabled)
         return (QAbstractListModel.flags(self, index) |
                 Qt.ItemFlag.ItemIsEditable)
 
-    def setData(self, index, data, role):
+    def setData(self, index, data, role=Qt.ItemDataRole.EditRole):
+        # type: (KDictModel, QModelIndex, tuple[str, list[str]], int) -> bool
         if index.isValid() and role == Qt.ItemDataRole.EditRole:
             self.kdict[data[0]] = data[1]
-            self.dataChanged.emit(index, index, [role])
+            roles = [role]  # type: list[int]
+            self.dataChanged.emit(index, index, roles)
             self.changed.emit(self.kdict)
             return True
         return False
@@ -1076,6 +1311,7 @@ class KDictEntryEditor(QWidget):
     selector = 'CustomisationDialog.KDict.EntryEditor'
 
     def __init__(self, substr, reps, parent=None):
+        # type: (KDictEntryEditor, str, list[str], QWidget | None) -> None
         QWidget.__init__(self, parent)
 
         lyt = QFormLayout(self)
@@ -1094,37 +1330,61 @@ class KDictEntryEditor(QWidget):
         lyt.setSpacing(1)
 
     def substr(self):
+        # type: (KDictEntryEditor) -> str
         return self.substr_e.text()
 
     def reps(self):
+        # type: (KDictEntryEditor) -> list[str]
         return self.reps_e.text().split(',')
 
     def themeUpdate(self):
+        # type: (KDictEntryEditor) -> None
         qss = Theme.getQss(self.selector).replace(self.selector, 'QWidget')
         self.setStyleSheet(qss)
 
 
 class KDictDelegate(Delegate):
     def __init__(self, parent=None):
+        # type: (KDictDelegate, QWidget | None) -> None
         Delegate.__init__(self, parent)
 
-    def createEditor(self, parent, option, index):
-        data = index.data(Qt.ItemDataRole.EditRole)
+    def createEditor(self,
+                     parent,  # type: QWidget
+                     option,  # type: QStyleOptionViewItem
+                     index  # type: QModelIndex
+                     ):
+        # type: (...) -> QWidget
+        data = index.data(Qt.ItemDataRole.EditRole)  # type: object
+        if not isinstance(data, tuple) or len(data) != 2:
+            logger.error(f'createEditor: EditRole data at index {index} is not'
+                         f' a len 2 tuple. Received {data} ({type(data)}).')
+            data = ('', [''])
         return KDictEntryEditor(*data, parent)
 
-    def setModelData(self, editor, model, index):
+    def setModelData(self,
+                     editor,  # type: QWidget
+                     model,  # type: QAbstractItemModel
+                     index  # type: QModelIndex
+                     ):
+        # type: (...) -> None
+        if not isinstance(editor, KDictEntryEditor):
+            logger.error('setModelData: Wrong editor type used with '
+                         'KDictDelegate. Expected KDictEntryEditor, got '
+                         f'{type(editor)}')
+            return
         substr = editor.substr()
         reps = editor.reps()
 
         # remove duplicates
-        reps = list(dict.fromkeys(reps))
+        reps = list(dict.fromkeys(reps))  # type: ignore[misc]
 
         # remove reps that are of incorrect length
         for i, rep in enumerate(reps):
             if len(rep) != 1:
                 del reps[i]
 
-        model.setData(index, [substr, reps], Qt.ItemDataRole.EditRole)
+        data = (substr, reps)
+        model.setData(index, data, Qt.ItemDataRole.EditRole)
 
 
 class KDictWidget(QWidget):
@@ -1132,6 +1392,7 @@ class KDictWidget(QWidget):
     currentChanged = pyqtSignal(int)
 
     def __init__(self, kdict, parent=None):
+        # type: (KDictWidget, KDict, QWidget | None) -> None
         QWidget.__init__(self, parent)
 
         lyt = QFormLayout(self)
@@ -1150,54 +1411,68 @@ class KDictWidget(QWidget):
         lyt.addRow(pbuttons)
 
     def setModel(self, kdict):
+        # type: (KDictWidget, KDict) -> None
         self.model = KDictModel(kdict)
         self.model.changed.connect(lambda kdict: self.changed.emit(kdict))
         self.view.setModel(self.model)
         self.view.selectionModel().currentChanged.connect(
-            lambda i: self.currentChanged.emit(i.row()))
+            lambda i: self.currentChanged.emit(i.row()))  # type: ignore[misc]
 
-    def select(self, index):
-        index = self.model.index(index, 0)
+    def select(self, i):
+        # type: (KDictWidget, int) -> None
+        index = self.model.index(i, 0)
         self.view.selectionModel().setCurrentIndex(
             index, QItemSelectionModel.ClearAndSelect)
 
     def selectedRowIndex(self):
+        # type: (KDictWidget) -> QModelIndex | None
         selectionModel = self.view.selectionModel()
         if selectionModel.hasSelection():
             index = selectionModel.selectedRows()[0]
             return index
-        return False
+        return None
 
     def modifyEntry(self):
+        # type: (KDictWidget) -> None
         index = self.selectedRowIndex()
         if index:
             self.view.edit(index)
 
-    def set_(self, kdict):
-        self.setModel(kdict)
+    def set_(self, value):
+        # type: (KDictWidget, object) -> None
+        if not isinstance(value, dict):
+            raise SelectorValueTypeMismatch(
+                f'expects KDict, got: {type(value)}')
+        self.setModel(value)
 
 
 class WindowGeometrySelector(QWidget):
     changed = pyqtSignal(dict)
 
-    def __init__(self, window, dims, parent=None):
+    def __init__(self,
+                 window,  # type: MainWin
+                 dims,  # type: Geometry
+                 parent=None  # type: QWidget | None
+                 ):
+        # type: (...) -> None
         QWidget.__init__(self, parent)
 
-        self.window = window
+        self._window = window
         self.dims = dims
 
         lyt = QFormLayout(self)
 
-        self.selectors = {}
+        self.selectors = {}  # type: dict[str, Selector]
 
-        self.selectors['save_splitters_on_quit'] = CheckBox(
+        cb = self.selectors['save_splitters_on_quit'] = CheckBox(
             "Save state of splitters on quit")
-        self.selectors['save_splitters_on_quit'].changed.connect(
-            lambda state: self.updateDim('save_splitters_on_quit', state))
+        cb.changed.connect(
+            lambda state: self.updateDim(  # type: ignore[misc]
+                'save_splitters_on_quit', state))
 
-        self.selectors['save_on_quit'] = CheckBox(
+        cb = self.selectors['save_on_quit'] = CheckBox(
             "Save window size and position on quit")
-        self.selectors['save_on_quit'].changed.connect(self.setSaveOnQuit)
+        cb.changed.connect(self.setSaveOnQuit)
 
         lyt.addRow(self.selectors['save_splitters_on_quit'])
         lyt.addRow(self.selectors['save_on_quit'])
@@ -1211,8 +1486,10 @@ class WindowGeometrySelector(QWidget):
         self.cur_btn = QPushButton("Set values according to current window")
         self.cur_btn.clicked.connect(self.setSelectorsValuesByWindow)
 
-        self.dim_selectors = {k: v for k, v in self.selectors.items()
-                              if k in 'xywh'}
+        self.dim_selectors = {
+            k: v for k, v in self.selectors.items()  # type: ignore[misc]
+            if k in 'xywh'
+        }  # type: dict[str, SpinBox]
 
         for name, selector in self.dim_selectors.items():
             label = name.title() + ':'
@@ -1221,11 +1498,11 @@ class WindowGeometrySelector(QWidget):
 
         lyt.addRow(self.cur_btn)
 
-        self.selectors['save_splitters_on_quit'].setChecked(
-            dims['save_splitters_on_quit'])
-        self.selectors['save_on_quit'].setChecked(dims['save_on_quit'])
+        for k in ('save_splitters_on_quit', 'save_on_quit'):
+            self.selectors[k].set_(self.dims[k])
 
     def setSaveOnQuit(self, state):
+        # type: (WindowGeometrySelector, bool) -> None
         controls_to_toggle = [*list(self.dim_selectors.values()), self.cur_btn]
         for control in controls_to_toggle:
             disabled_bool = True if state else False
@@ -1234,10 +1511,11 @@ class WindowGeometrySelector(QWidget):
         self.updateDim('save_on_quit', state)
 
     def valuesByWindow(self):
-        pos = self.window.pos()
-        size = self.window.size()
+        # type: (WindowGeometrySelector) -> Geometry
+        pos = self._window.pos()
+        size = self._window.size()
 
-        values = {}
+        values = {}  # type: Geometry
         values['x'] = pos.x()
         values['y'] = pos.y()
         values['w'] = size.width()
@@ -1246,35 +1524,61 @@ class WindowGeometrySelector(QWidget):
         return values
 
     def setSelectorsValuesByWindow(self):
+        # type: (WindowGeometrySelector) -> None
         values = self.valuesByWindow()
-        self.dims.update(values)
+        update(self.dims, values)  # type: ignore[arg-type]
         self.set_(self.dims)
-        self.changed.emit(self.dims.raw)
+        self.changed.emit(self.dims)
 
     def connectSelector(self, name, signal):
-        signal.connect(lambda val: self.updateDim(name, val))
+        # type: (WindowGeometrySelector, str, pyqtBoundSignal) -> None
+        signal.connect(
+            lambda val: self.updateDim(name, val))  # type: ignore[misc]
 
     def updateDim(self, name, val):
-        self.dims[name] = val
-        self.changed.emit(self.dims.raw)
+        # type: (WindowGeometrySelector, str, object) -> None
+        if name not in self.dims.keys():
+            logger.error(f'updateDim: Nonexistent key {name}')
+        self.dims[name] = val  # type: ignore[literal-required]
+        self.changed.emit(self.dims)
 
-    def set_(self, dims):
+    def set_(self, value):
+        # type: (WindowGeometrySelector, object) -> None
+        if not isinstance(value, dict):
+            raise SelectorValueTypeMismatch(
+                f'expects Geometry dict, got: {type(value)}')
         for key, selector in self.selectors.items():
-            if key in ['save_splitters_on_quit', 'save_on_quit']:
-                selector.setChecked(dims[key])
-                continue
-            value = dims[key] if dims[key] is not None else 0
-            selector.setValue(value)
+            selector.set_(value[key])
+
+
+class FontComboBox(QFontComboBox):
+    changed = pyqtSignal(int)
+
+    def __init__(self, parent=None):
+        # type: (FontComboBox, QWidget | None) -> None
+        QFontComboBox.__init__(self, parent)
+        self.currentFontChanged.connect(lambda t: self.changed.emit(t))
+
+    def set_(self, value):
+        # type: (FontComboBox, object) -> None
+        if not isinstance(value, str):
+            raise SelectorValueTypeMismatch(f'expects str, got: {type(value)}')
+        self.setCurrentFont(QFont(value))
 
 
 class BookViewSettingsWidget(QWidget):
     changed = pyqtSignal(dict)
 
-    def __init__(self, bookview_settings, parent=None):
+    def __init__(self,
+                 bookview_settings,  # type: BookViewSettings
+                 parent=None  # type: QWidget | None
+                 ):
+        # type: (...) -> None
         QWidget.__init__(self, parent)
 
         self.settings = bookview_settings
-        self.selectors = {}
+        self.selectors = {
+        }  # type: dict[str, Selector]
 
         save_font_size_checkbox = CheckBox("Save font size on quit")
         save_font_size_checkbox.changed.connect(self.setSaveFontSizeOnQuit)
@@ -1285,9 +1589,9 @@ class BookViewSettingsWidget(QWidget):
             lambda val: self.updateSetting('font_size', val))
         self.selectors['font_size'] = self.font_size_selector
 
-        self.font_selector = QFontComboBox()
-        self.font_selector.currentFontChanged.connect(
-            lambda val: self.updateSetting('font', val.family()))
+        self.font_selector = FontComboBox()
+        self.font_selector.changed.connect(
+            lambda f: self.updateSetting('font', f))
         self.selectors['font'] = self.font_selector
 
         lyt = QFormLayout(self)
@@ -1299,29 +1603,32 @@ class BookViewSettingsWidget(QWidget):
         self.set_(bookview_settings)
 
     def updateSetting(self, name, val):
-        self.settings[name] = val
-        self.changed.emit(self.settings.raw)
+        # type: (BookViewSettingsWidget, str, object) -> None
+        if name in self.settings.keys():
+            self.settings[name] = val  # type: ignore[literal-required]
+            self.changed.emit(self.settings)
+        else:
+            logger.error(f'updateSetting: Nonexistent key {name}')
 
     def setSaveFontSizeOnQuit(self, state):
+        # type: (BookViewSettingsWidget, bool) -> None
         self.font_size_selector.setDisabled(True if state else False)
         self.updateSetting('save_font_size_on_quit', state)
 
-    def set_(self, settings):
+    def set_(self, value):
+        # type: (BookViewSettingsWidget, object) -> None
+        if not isinstance(value, dict):
+            raise SelectorValueTypeMismatch(
+                f'expects BookViewSettings dict, got: {type(value)}')
         for key, selector in self.selectors.items():
-            if key == 'save_font_size_on_quit':
-                state = settings[key]
-                selector.setChecked(state)
-                continue
-            elif key == 'font':
-                selector.setCurrentFont(QFont(settings[key]))
-                continue
-            value = settings[key]
-            selector.setValue(value)
+            selector.set_(value[key])
 
     def minimumSizeHint(self):
+        # type: (BookViewSettingsWidget) -> QSize
         return QSize(100, 100)
 
     def sizeHint(self):
+        # type: (BookViewSettingsWidget) -> QSize
         return self.minimumSizeHint()
 
 
@@ -1329,10 +1636,11 @@ class StenoSettingsWidget(QWidget):
     changed = pyqtSignal(dict)
 
     def __init__(self, steno_settings, parent=None):
+        # type: (StenoSettingsWidget, StenoSettings, QWidget|None) -> None
         QWidget.__init__(self, parent)
 
         self.settings = steno_settings
-        self.selectors = {}
+        self.selectors = {}  # type: dict[str, Selector]
 
         lyt = QFormLayout(self)
         self.kbd = VisualStenoKeyboard()
@@ -1340,25 +1648,40 @@ class StenoSettingsWidget(QWidget):
         kdictw = self.selectors['kdict'] = KDictWidget(self.settings['kdict'])
         kdictw.changed.connect(lambda v: self.updateSetting('kdict', v))
         self.kl = list(default_steno_kdict)
-        self.kbd.keySelected.connect(
-            lambda k: k in self.kl and kdictw.select(self.kl.index(k)))
+
+        def maybeSelect(k):
+            # type: (str) -> None
+            if k in self.kl:
+                kdictw.select(self.kl.index(k))
+
+        self.kbd.keySelected.connect(maybeSelect)
         kdictw.currentChanged.connect(lambda i: self.kbd.selectKey(self.kl[i]))
+
         lyt.addRow(self.kbd)
         lyt.addRow(kdictw)
 
     def updateSetting(self, name, val):
-        self.settings[name] = val
-        self.changed.emit(self.settings.raw)
+        # type: (StenoSettingsWidget, str, object) -> None
+        if name in self.settings.keys():
+            self.settings[name] = val  # type: ignore[literal-required]
+            self.changed.emit(self.settings)
+        else:
+            logger.error(f'updateSetting: Nonexistent key {name}')
 
-    def set_(self, settings):
+    def set_(self, value):
+        # type: (StenoSettingsWidget, object) -> None
+        if not isinstance(value, dict):
+            raise SelectorValueTypeMismatch(
+                f'expects StenoSettings dict, got: {type(value)}')
         for key, selector in self.selectors.items():
-            value = settings[key]
-            selector.set_(value)
+            selector.set_(value[key])
 
     def minimumSizeHint(self):
+        # type: (StenoSettingsWidget) -> QSize
         return QSize(100, 100)
 
     def sizeHint(self):
+        # type: (StenoSettingsWidget) -> QSize
         return self.minimumSizeHint()
 
 
@@ -1366,26 +1689,32 @@ class _CEdit(QWidget):
     changed = pyqtSignal()
 
     def __init__(self, c, parent=None):
+        # type: (_CEdit, QColor, QWidget | None) -> None
         QWidget.__init__(self, parent)
         self.current_c = self.committed_c = c
 
     def set_(self, c):
+        # type: (_CEdit, QColor) -> None
         self.current_c = c
         self.update()
         self.changed.emit()
 
     def revert(self):
+        # type: (_CEdit) -> None
         self.set_(self.committed_c)
 
     def commitCurrent(self):
+        # type: (_CEdit) -> None
         self.committed_c = self.current_c
 
     def paintEvent(self, event=None):
+        # type: (_CEdit, QPaintEvent | None) -> None
         painter = QPainter(self)
         painter.setBrush(QBrush(self.current_c))
         painter.drawRect(self.rect())
 
     def mouseReleaseEvent(self, e):
+        # type: (_CEdit, QMouseEvent) -> None
         res = QColorDialog.getColor(self.current_c)
         if res.isValid():
             self.set_(res)
@@ -1395,6 +1724,7 @@ class CEdit(QWidget):
     changed = pyqtSignal()
 
     def __init__(self, c, parent=None):
+        # type: (CEdit, QColor, QWidget | None) -> None
         QWidget.__init__(self, parent)
         self.committed = True
         self.inner = _CEdit(c)
@@ -1411,21 +1741,26 @@ class CEdit(QWidget):
         self.btn.clicked.connect(self.inner.revert)
 
     def set_(self, c):
+        # type: (CEdit, QColor) -> None
         self.inner.set_(c)
 
     def revert(self):
+        # type: (CEdit) -> None
         self.inner.revert()
 
     @property
     def current_c(self):
+        # type: (CEdit) -> QColor
         return self.inner.current_c
 
     def commitCurrent(self):
+        # type: (CEdit) -> None
         self.inner.commitCurrent()
         self.committed = True
         self.btn.hide()
 
     def handleChange(self):
+        # type: (CEdit) -> None
         if self.inner.current_c == self.inner.committed_c:
             self.committed = True
             self.btn.hide()
@@ -1438,21 +1773,28 @@ class CEdit(QWidget):
 class ThemeSelectorWidget(QWidget):
     changed = pyqtSignal()
 
-    def __init__(self, selector_name, values, parent=None):
+    def __init__(self,
+                 selector_name,  # type: str
+                 values,  # type: dict[str, str]
+                 parent=None  # type: QWidget | None
+                 ):
+        # type: (...) -> None
         QWidget.__init__(self, parent)
         self.committed = True
         self.selector_name = selector_name
         self.values = values
-        self.cedits = {}
+        self.cedits = {}  # type: dict[str, CEdit]
         self._populateCedits()
 
     def _populateCedits(self):
+        # type: (ThemeSelectorWidget) -> None
         for prop_name, value in self.values.items():
             cedit = CEdit(QColor(value))
             self.cedits[prop_name] = cedit
             cedit.changed.connect(self._ceditChanged)
 
     def _ceditChanged(self):
+        # type: (ThemeSelectorWidget) -> None
         all_committed = True
         for cedit in self.cedits.values():
             if cedit.committed is False:
@@ -1464,20 +1806,23 @@ class ThemeSelectorWidget(QWidget):
         self.changed.emit()
 
     def revert(self):
+        # type: (ThemeSelectorWidget) -> None
         for cedit in self.cedits.values():
             if cedit.committed is False:
                 cedit.revert()
 
     def set_(self, values):
+        # type: (ThemeSelectorWidget, dict[str, str]) -> None
         for prop_name, value in values.items():
             cedit = self.cedits.get(prop_name)
             if (cedit):
                 cedit.set_(QColor(value))
             else:
-                logger.error('Missing cedit for {prop_name} in\
- {self.selector_name}')
+                logger.error(f'Missing cedit for {prop_name} in'
+                             f'{self.selector_name}')
 
     def get(self):
+        # type: (ThemeSelectorWidget) -> dict[str, str]
         values = {}
         for prop_name, cedit in self.cedits.items():
             values[prop_name] = cedit.current_c.name()
@@ -1486,10 +1831,12 @@ class ThemeSelectorWidget(QWidget):
 
 class ThemeCategoryWidget(QWidget):
     def __init__(self, parent=None):
+        # type: (ThemeCategoryWidget, QWidget | None) -> None
         QWidget.__init__(self, parent)
         self.lyt = QFormLayout(self)
 
     def addSelectorWidget(self, widget):
+        # type: (ThemeCategoryWidget, ThemeSelectorWidget) -> None
         self.lyt.addRow(QLabel(f'<b>{widget.selector_name}</b>'))
         for prop_name, cedit in widget.cedits.items():
             self.lyt.addRow(prop_name, cedit)
@@ -1499,10 +1846,11 @@ class ThemeWidget(QWidget):
     changed = pyqtSignal()
 
     def __init__(self, user_dir, parent=None):
+        # type: (ThemeWidget, str, QWidget | None) -> None
         QWidget.__init__(self, parent)
         self.committed = True
-        self.selector_widgets = {}
-        self.cat_widgets = {}
+        self.selector_widgets = {}  # type: dict[str, ThemeSelectorWidget]
+        self.cat_widgets = {}  # type: dict[str, ThemeCategoryWidget]
         self.default_values = Theme.getValuesDict()
         self.values = self._loadValues(getStylePath(user_dir))
         self.lyt = QVBoxLayout(self)
@@ -1512,6 +1860,7 @@ class ThemeWidget(QWidget):
         self._populateWidgets()
 
     def _loadValues(self, path):
+        # type: (ThemeWidget, str) -> dict[str, dict[str, str]]
         values = deepcopy(self.default_values)
         file_path = os.path.join(path, THEME_MODIFICATIONS_FILENAME)
         if os.path.exists(file_path):
@@ -1533,6 +1882,7 @@ class ThemeWidget(QWidget):
         return values
 
     def _populateWidgets(self):
+        # type: (ThemeWidget) -> None
         for name, v in self.values.items():
             selector_widget = ThemeSelectorWidget(name, v)
             selector_widget.changed.connect(self._selectorWidgetChanged)
@@ -1548,6 +1898,7 @@ class ThemeWidget(QWidget):
                 self.tabw.addTab(cat_widget, cat_name)
 
     def _selectorWidgetChanged(self):
+        # type: (ThemeWidget) -> None
         all_committed = True
         for s in self.selector_widgets.values():
             if s.committed is False:
@@ -1559,26 +1910,31 @@ class ThemeWidget(QWidget):
         self.changed.emit()
 
     def friendlyCatName(self, name):
+        # type: (ThemeWidget, str) -> str
         return spacecamel(name.split('.')[0])
 
     def get(self):
+        # type: (ThemeWidget) -> dict[str, dict[str, str]]
         values = {}
         for name, widget in self.selector_widgets.items():
             values[name] = widget.get()
         return values
 
     def applyTheme(self, name):
-        values = {}
+        # type: (ThemeWidget, str) -> None
+        values = {}  # type: dict[str, dict[str, str]]
         t = Theme.themes.get(name)
         if t:
             values = t.get('values', {})
         else:
-            logger.warn('Unable to find values for theme {name}')
+            logger.warning('applyTheme: Unable to find values for theme '
+                           f'{name}')
         for name, widget in self.selector_widgets.items():
             v = values.get(name, {})
             widget.set_(v)
 
     def isDefault(self):
+        # type: (ThemeWidget) -> bool
         res = True
         values = self.get()
         for selector_name, props in self.default_values.items():
@@ -1587,19 +1943,21 @@ class ThemeWidget(QWidget):
                 if v:
                     res = QColor(v) == QColor(value)
                 else:
-                    logger.warn(f'Theme values asymmetry in {selector_name}\
- / {prop_name}')
+                    logger.warning('isDefault: Theme values asymmetry in '
+                                   f'{selector_name} / {prop_name}')
                     res = False
                 if res is False:
                     return res
         return res
 
     def revert(self):
+        # type: (ThemeWidget) -> None
         for s in self.selector_widgets.values():
             if s.committed is False:
                 s.revert()
 
     def restoreDefaults(self):
+        # type: (ThemeWidget) -> None
         for selector_name, props in self.default_values.items():
             for prop_name, value in props.items():
                 s = self.selector_widgets.get(selector_name)
@@ -1608,23 +1966,25 @@ class ThemeWidget(QWidget):
                     if cedit:
                         cedit.set_(QColor(value))
                     else:
-                        logger.error('restoreDefaults: Missing cedit for\
- {prop_name} in {selector_name}')
+                        logger.error('restoreDefaults: Missing cedit for '
+                                     f'{prop_name} in {selector_name}')
                 else:
-                    logger.error('restoreDefaults: Missing selector widget for\
- {selector_name}')
+                    logger.error('restoreDefaults: Missing selector widget '
+                                 f'for {selector_name}')
 
     def _save(self, file_path, qss):
+        # type: (ThemeWidget, str, str) -> None
         try:
             os.makedirs(os.path.dirname(file_path), exist_ok=True)
             with open(file_path, 'w', encoding='utf-8') as f:
                 logger.debug(f'Saving theme: {file_path}')
                 f.write(qss)
         except OSError as e:
-            logger.error('Failed to save theme to file {file_path}')
+            logger.error(f'Failed to save theme to file {file_path}')
             logger.error(f'{type(e)}: {e}')
 
     def saveCurrent(self, path):
+        # type: (ThemeWidget, str) -> None
         # Get values dict
         values = {}
         for name, widget in self.selector_widgets.items():
@@ -1641,6 +2001,7 @@ class ThemeWidget(QWidget):
         Theme.set_(values)
 
     def exportCurrent(self, user_dir):
+        # type: (ThemeWidget, str) -> None
         # Get values dict
         values = self.get()
         # Serialise
@@ -1658,18 +2019,27 @@ class ThemeWidget(QWidget):
         self._save(file_path, res)
 
     def minimumSizeHint(self):
+        # type: (ThemeWidget) -> QSize
         return QSize(100, 100)
 
     def sizeHint(self):
+        # type: (ThemeWidget) -> QSize
         return self.minimumSizeHint()
 
 
 class CategoriesDelegate(QItemDelegate):
     def __init__(self, parent=None):
+        # type: (CategoriesDelegate, QWidget | None) -> None
         QItemDelegate.__init__(self, parent)
         self.row_height = 24
 
-    def drawDisplay(self, painter, option, rect, text):
+    def drawDisplay(self,
+                    painter,  # type: QPainter
+                    option,  # type: QStyleOptionViewItem
+                    rect,  # type: QRect
+                    text  # type: str
+                    ):
+        # type: (...) -> None
         newoption = option
         if not option.state & QStyle.StateFlag.State_Enabled:  # Sections
             painter.fillRect(rect, option.palette.window().color().darker(106))
@@ -1683,11 +2053,15 @@ class CategoriesDelegate(QItemDelegate):
             # Fake enabled state
             newoption.state |= newoption.state | QStyle.StateFlag.State_Enabled
         else:
-            option.font.setWeight(QFont.Bold)
+            option.font.setWeight(QFont.Weight.Bold)
 
         QItemDelegate.drawDisplay(self, painter, newoption, rect, text)
 
-    def sizeHint(self, option, index):
+    def sizeHint(self,
+                 option,  # type: QStyleOptionViewItem
+                 index  # type: QModelIndex
+                 ):
+        # type: (...) -> QSize
         size = QItemDelegate.sizeHint(self, option, index)
         size.setHeight(self.row_height)
         return size
@@ -1695,6 +2069,7 @@ class CategoriesDelegate(QItemDelegate):
 
 class CategoriesTree(QTreeView):
     def __init__(self, parent=None):
+        # type: (CategoriesTree, QWidget | None) -> None
         QWidget.__init__(self, parent)
         self.setContentsMargins(0, 0, 0, 0)
         self.setIndentation(0)
@@ -1705,8 +2080,8 @@ class CategoriesTree(QTreeView):
         self.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
         self.setItemDelegate(CategoriesDelegate(self))
 
-        self.model = QStandardItemModel(self)
-        self.setModel(self.model)
+        self._model = QStandardItemModel(self)
+        self.setModel(self._model)
 
         self.data_role = Qt.ItemDataRole.UserRole
 
@@ -1714,17 +2089,20 @@ class CategoriesTree(QTreeView):
                            QSizePolicy.Policy.Preferred)
 
     def sizeHint(self):
+        # type: (CategoriesTree) -> QSize
         size = QTreeView.sizeHint(self)
         size.setWidth(130)
         return size
 
     def addSection(self, name):
+        # type: (CategoriesTree, str) -> QStandardItem
         section = QStandardItem(name)
         section.setFlags(Qt.ItemFlag.NoItemFlags)
-        self.model.appendRow(section)
+        self._model.appendRow(section)
         return section
 
     def addCategory(self, section, name, data=None):
+        # type: (CategoriesTree, QStandardItem, str, object | None) -> None
         category = QStandardItem(f'  {name}')
         if data is not None:
             category.setData(data, self.data_role)
@@ -1733,20 +2111,28 @@ class CategoriesTree(QTreeView):
                           Qt.ItemFlag.ItemIsSelectable)
 
     def postAddingCategories(self):
+        # type: (CategoriesTree) -> None
         self.expandAll()
-        self.setCurrentIndex(self.model.index(0, 0, self.model.index(0, 0)))
+        self.setCurrentIndex(self._model.index(0, 0, self._model.index(0, 0)))
         self.setFocus(Qt.FocusReason.NoFocusReason)
 
     def dataFromIndex(self, index):
-        return self.model.itemFromIndex(index).data(self.data_role)
+        # type: (CategoriesTree, QModelIndex) -> object | None
+        item = self._model.itemFromIndex(index)  # type: QStandardItem | None
+        if item is not None:
+            data = item.data(self.data_role)  # type: object
+            return data
+        else:
+            return None
 
 
 class CategorisedWidget(QWidget):
     def __init__(self, parent=None):
+        # type: (CategorisedWidget, QWidget | None) -> None
         QWidget.__init__(self, parent)
         self.tree = CategoriesTree()
         self.stack = AdjustedStackedWidget()
-        self.sections = {}
+        self.sections = {}  # type: dict[str, QStandardItem]
         self.tree.selectionModel().currentChanged.connect(self.switchCategory)
         lyt = QHBoxLayout(self)
         lyt.addWidget(self.tree)
@@ -1754,6 +2140,7 @@ class CategorisedWidget(QWidget):
         lyt.setContentsMargins(0, 0, 0, 0)
 
     def add(self, section_name, category_name, widget):
+        # type: (CategorisedWidget, str, str, QWidget) -> None
         if section_name not in self.sections:
             self.sections[section_name] = self.tree.addSection(section_name)
         self.tree.addCategory(
@@ -1761,7 +2148,26 @@ class CategorisedWidget(QWidget):
         self.stack.addWidget(widget)
 
     def postAddingCategories(self):
+        # type: (CategorisedWidget) -> None
         self.tree.postAddingCategories()
 
     def switchCategory(self, index):
-        self.stack.setCurrentWidget(self.tree.dataFromIndex(index))
+        # type: (CategorisedWidget, QModelIndex) -> None
+        widget = self.tree.dataFromIndex(index)
+        if isinstance(widget, QWidget):
+            self.stack.setCurrentWidget(widget)
+        else:
+            logger.error(f'switchCategory: Data at index {index} is not a '
+                         'QWidget')
+
+
+if TYPE_CHECKING:
+    from qt import (  # noqa: F401
+        QStyleOptionViewItem, QAbstractItemModel, QRect, pyqtBoundSignal,
+        QPaintEvent, QMouseEvent)
+    from typing import Callable  # noqa: F401
+    from retype.extras.metatypes import (  # noqa: F401
+        SDict, SDictEntry, RDict, KDict, Geometry, SafeGeometry,
+        BookViewSettings, StenoSettings, Config, NestedDict, Selector)
+    from retype.ui import MainWin  # noqa: F401
+    from retype.controllers import SafeConfig  # noqa: F401

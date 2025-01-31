@@ -5,60 +5,76 @@
 from math import floor
 from qt import QRect, QPoint, QSize, QLayout, Qt, QSizePolicy
 
+from typing import TYPE_CHECKING
+
 
 def _isExpanding(policy):
+    # type: (QSizePolicy.Policy) -> bool
     return policy in [
         QSizePolicy.Policy.Expanding, QSizePolicy.Policy.MinimumExpanding]
 
 
 def _calcItemGeom(item, x, y, height):
+    # type: (QLayoutItem, int, int, int) -> QRect
     v = _isExpanding(item.widget().sizePolicy().verticalPolicy())
-    y_gap_to_centre = 0 if v else (height / 2) - (item.sizeHint().height() / 2)
+    y_gap_to_centre = 0 if v else int(
+        (height / 2) - (item.sizeHint().height() / 2))
     size = item.sizeHint()
     if v:
         size.setHeight(height)
         # Using heightForWidth to get width for height instead. Which is maybe
         #  improper but i don't know how else to do it
         if item.hasHeightForWidth():
-            size.setWidth(item.heightForWidth(height))
+            size.setWidth(item.heightForWidth(int(height)))
     return QRect(QPoint(x, y + y_gap_to_centre), size)
 
 
 class RowLayout(QLayout):
     def __init__(self, parent=None):
-        super().__init__(parent)
-        self.item_list = []
+        # type: (RowLayout, QWidget | None) -> None
+        if parent:
+            super().__init__(parent)
+        else:
+            super().__init__()
+        self.item_list = []  # type: list[QLayoutItem]
 
     def __del__(self):
+        # type: (RowLayout) -> None
         """Delete all items in this layout"""
         item = self.takeAt(0)
         while item:
             item = self.takeAt(0)
 
     def addItem(self, item):
+        # type: (RowLayout, QLayoutItem) -> None
         """Add an item to the end of this layout"""
         self.item_list.append(item)
 
     def count(self):
+        # type: (RowLayout) -> int
         """Return number of items in this layout"""
         return len(self.item_list)
 
     def itemAt(self, index):
+        # type: (RowLayout, int) -> QLayoutItem | None
         """Return item at given index (non-destructively)"""
         if index >= 0 and index < len(self.item_list):
             return self.item_list[index]
         return None
 
     def takeAt(self, index):
+        # type: (RowLayout, int) -> QLayoutItem | None
         """Remove and return item at given index"""
         if index >= 0 and index < len(self.item_list):
             return self.item_list.pop(index)
         return None
 
     def expandingDirections(self):
-        return Qt.Orientation.Horizontal
+        # type: (RowLayout) -> Qt.Orientations
+        return Qt.Orientations(Qt.Orientation.Horizontal)
 
     def setGeometry(self, rect):
+        # type: (RowLayout, QRect) -> None
         super().setGeometry(rect)
         margins = self.getContentsMargins()
         rect.setX(rect.x() + margins[1])  # plus left margin
@@ -67,6 +83,7 @@ class RowLayout(QLayout):
         self.doLayout(rect, False)
 
     def sizeHint(self):
+        # type: (RowLayout) -> QSize
         size = self.minimumSize()
         size.setWidth(self.doLayout(QRect(0, 0, 0, 0), True))
         # Add left and right margins again
@@ -75,6 +92,7 @@ class RowLayout(QLayout):
         return size
 
     def minimumSize(self):
+        # type: (RowLayout) -> QSize
         size = QSize()
         margins = self.getContentsMargins()
         size = size.expandedTo(self.item_list[0].minimumSize())
@@ -83,6 +101,7 @@ class RowLayout(QLayout):
         return size
 
     def doLayout(self, rect, dry_run=False):
+        # type: (RowLayout, QRect, bool) -> int
         """Lay out the items in `item_list' within bounding QRect `rect'.
 If dry_run, only do the calculations and return the resulting width."""
         # Set the x and y to the top left corner of the bounding rect
@@ -127,3 +146,7 @@ If dry_run, only do the calculations and return the resulting width."""
         total_width -= self.spacing()
 
         return total_width
+
+
+if TYPE_CHECKING:
+    from qt import QLayoutItem, QWidget  # noqa: F401

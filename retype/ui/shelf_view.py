@@ -2,6 +2,8 @@ import logging
 from qt import (QWidget, QVBoxLayout, QPainter, Qt, QColor, QEvent, QPixmap,
                 QSize, QFontMetrics, QRectF)
 
+from typing import TYPE_CHECKING
+
 from retype.layouts import ShelvesWidget
 from retype.ui import Cover
 from retype.ui.painting import rectPixmap, linePixmap, textPixmap, Font
@@ -19,8 +21,9 @@ logger = logging.getLogger(__name__)
        C(t_border='#A1A0A0', b_border='#555'))
 class ShelfView(QWidget):
     def __init__(self, main_win, main_controller, parent=None):
+        # type: (ShelfView, MainWin, MainController, QWidget | None) -> None
         super().__init__(parent)
-        self.parent = parent
+        self._parent = parent
         self._controller = main_controller
         self._library = self._controller.library
         self.c_background, self.c_shelf, self.c_top = self._loadTheme()
@@ -28,14 +31,17 @@ class ShelfView(QWidget):
         self._initUI()
 
     def _loadTheme(self):
+        # type: (ShelfView) -> tuple[C, ...]
         return (Theme.get('ShelfView.Background'),
                 Theme.get('ShelfView.Shelf'),
                 Theme.get('ShelfView.Top'))
 
     def themeUpdate(self):
+        # type: (ShelfView) -> None
         self.update()
 
     def _initUI(self):
+        # type: (ShelfView) -> None
         self.cell_dimensions = (150, 200, 232)  # min width, max width, height
         self.shelf_height = self.cell_dimensions[2]
 
@@ -48,12 +54,17 @@ class ShelfView(QWidget):
         self.layout_.addWidget(self.shelves)
 
     def _populate(self):
+        # type: (ShelfView) -> None
+        if self._library.books is None:
+            logger.error('_populate: _library.books is None')
+            return
         for book in self._library.books.values():
             loadBook = self._controller.loadBookRequested
             item = ShelfItem(book, loadBook)
             self.shelves.addWidget(item)
 
     def repopulate(self):
+        # type: (ShelfView) -> None
         self.shelves.clearWidgets()
         self._populate()
 
@@ -96,7 +107,7 @@ class ShelfView(QWidget):
             draw(w - 13, 0, outline)
 
             def shelf():
-                pixmap = QPixmap(w, h)
+                pixmap = QPixmap(int(w), int(h))
                 pixmap.fill(QColor('transparent'))
                 qp = QPainter(pixmap)
                 draw = qp.drawPixmap
@@ -138,31 +149,35 @@ class ShelfView(QWidget):
 
 class ShelfItem(QWidget):
     def __init__(self, book, loadBook, parent=None):
+        # type: (ShelfItem, BookWrapper, pyqtBoundSignal, QWidget|None) -> None
         super().__init__(parent)
         self.book = book
         self.idn = book.idn
         self.cover = Cover(book, self)
         self.loadBook = loadBook
-        self.progress = self.book.progress
+        self.progress = self.book.progress or 0.0
         self._initUI()
 
     def _initUI(self):
+        # type: (ShelfItem) -> None
         self.layout_ = QVBoxLayout(self)
         self.layout_.setContentsMargins(0, 0, 0, 0)
         self.layout_.setSpacing(0)
-        self.layout_.addWidget(IDNDisplay(self.idn, self.cover.width))
+        self.layout_.addWidget(IDNDisplay(self.idn, self.cover.w))
         self.layout_.addWidget(self.cover)
-        self.progress_bar = ProgressBar(self.cover.width, self.progress)
+        self.progress_bar = ProgressBar(self.cover.w, self.progress)
         self.book.progress_subscribers.append(self.progress_bar.update_)
         self.layout_.addWidget(self.progress_bar)
 
     def mouseReleaseEvent(self, e):
+        # type: (ShelfItem, QMouseEvent) -> None
         self.loadBook.emit(self.book.idn)
 
 
 @theme('ShelfView.IDNDisplay', C(fg='gray'))
 class IDNDisplay(QWidget):
     def __init__(self, idn, w):
+        # type: (IDNDisplay, int, int) -> None
         super().__init__()
         self._idn = idn
         self._font = Font.GENERAL.toQFont()
@@ -173,9 +188,11 @@ class IDNDisplay(QWidget):
         self._pixmap = self.pixmap()
 
     def _loadTheme(self):
+        # type: (IDNDisplay) -> C
         return Theme.get('ShelfView.IDNDisplay')
 
     def pixmap(self):
+        # type: (IDNDisplay) -> QPixmap
         font = self._font
         fm = QFontMetrics(font)
         descent = fm.descent()
@@ -187,10 +204,12 @@ class IDNDisplay(QWidget):
             bounding_rect)
 
     def paintEvent(self, e):
+        # type: (IDNDisplay, QPaintEvent) -> None
         qp = QPainter(self)
         qp.drawPixmap(0, 0, self._pixmap)
 
     def sizeHint(self):
+        # type: (IDNDisplay) -> QSize
         return QSize(self._w, self._h)
 
 
@@ -198,6 +217,7 @@ class IDNDisplay(QWidget):
 @theme('ShelfView.ProgressBar:complete', C(fg='green'))
 class ProgressBar(QWidget):
     def __init__(self, w, progress):
+        # type: (ProgressBar, int, float) -> None
         super().__init__()
         self.w = w
         self.h = 2
@@ -205,10 +225,12 @@ class ProgressBar(QWidget):
         self.c, self.c_complete = self._loadTheme()
 
     def _loadTheme(self):
+        # type: (ProgressBar) -> tuple[C, ...]
         return (Theme.get('ShelfView.ProgressBar'),
                 Theme.get('ShelfView.ProgressBar:complete'))
 
     def pixmap(self):
+        # type: (ProgressBar) -> QPixmap
         (w, h) = (self.w, self.h)
         (pc, bc) = (self.c.fg(), self.c.bg())
         if self.progress == 100:
@@ -221,10 +243,11 @@ class ProgressBar(QWidget):
         qp.drawPixmap(0, 0,
                       rectPixmap(w, h, bc, bc))
         qp.drawPixmap(0, 0,
-                      rectPixmap(w * progress, h, pc, pc))
+                      rectPixmap(int(w * progress), h, pc, pc))
         return pixmap
 
     def paintEvent(self, e):
+        # type: (ProgressBar, QPaintEvent) -> None
         qp = QPainter(self)
         # If no progress, don’t draw anything
         if not self.progress:
@@ -232,7 +255,16 @@ class ProgressBar(QWidget):
         qp.drawPixmap(0, 0, self.pixmap())
 
     def sizeHint(self):
+        # type: (ProgressBar) -> QSize
         return QSize(self.w, self.h)
 
     def update_(self, progress):
+        # type: (ProgressBar, float) -> None
         self.progress = progress
+
+
+if TYPE_CHECKING:
+    from retype.ui import MainWin  # noqa: F401
+    from retype.controllers import MainController  # noqa: F401
+    from retype.controllers.library import BookWrapper  # noqa: F401
+    from qt import QPaintEvent, QMouseEvent, pyqtBoundSignal  # noqa: F401

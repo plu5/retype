@@ -2,6 +2,8 @@ from math import floor
 from time import time
 from qt import QWidget, QPainter, Qt, QSize, QFontMetricsF
 
+from typing import TYPE_CHECKING
+
 from retype.ui.painting import rectPixmap, textPixmap, linePixmap, Font
 from retype.services.theme import theme, C, Theme
 
@@ -11,6 +13,7 @@ from retype.services.theme import theme, C, Theme
 @theme('BookView.StatsDock.Grid', C(fg='gray'))
 class StatsDock(QWidget):
     def __init__(self, book_view, parent=None):
+        # type: (StatsDock, BookView, QWidget | None) -> None
         super().__init__(parent)
         self.book_view = book_view
 
@@ -23,27 +26,31 @@ class StatsDock(QWidget):
         self.cpm = 0
         self.wpm = 0
         self.wpm_pb = 0
-        self.wpms = []
+        self.wpms = []  # type: list[int]
 
         self.main_c, self.text_c, self.grid_c = self._loadTheme()
         self.main_c.changed.connect(self.themeUpdate)
 
     def _loadTheme(self):
+        # type: (StatsDock) -> tuple[C, ...]
         return (Theme.get('BookView.StatsDock.Main'),
                 Theme.get('BookView.StatsDock.Text'),
                 Theme.get('BookView.StatsDock.Grid'))
 
     def themeUpdate(self):
+        # type: (StatsDock) -> None
         self.update()
 
     def connectConsole(self, console):
+        # type: (StatsDock, Console) -> None
         self._hs = console.highlighting_service
         console.textEdited.connect(self.onUpdate)
         self.connected = True
 
     def onUpdate(self, text):
+        # type: (StatsDock, str) -> None
         v = self.book_view
-        if not v.isVisible:
+        if not v.isVisible() or v.cursor_pos is None:
             return
 
         ts = round(time())
@@ -78,7 +85,7 @@ class StatsDock(QWidget):
         # Periodic refreshment
         if seconds > 20:
             self.prev_ts = ts - 5
-            self.c = self.cpm / 12
+            self.c = int(self.cpm / 12)
 
         # Graph update
         if graphShouldUpdate:
@@ -95,6 +102,7 @@ class StatsDock(QWidget):
         self.prev_cursor_pos = v.cursor_pos
 
     def paintEvent(self, e):
+        # type: (StatsDock, QPaintEvent) -> None
         w = self.size().width()
         h = self.size().height()
         factor = 1 if not self.wpm_pb else h/self.wpm_pb
@@ -111,14 +119,14 @@ class StatsDock(QWidget):
         for wpm in self.wpms:
             rect_h = floor(wpm * factor)
             draw(i, h - rect_h,
-                 rectPixmap(self.rect_w, wpm * factor,
+                 rectPixmap(self.rect_w, int(wpm * factor),
                             self.main_c.bg(), self.main_c.fg()))
             i += self.rect_w
 
         # Gridlines
         i = 50
         while i < self.wpm_pb:
-            y = h - (i * factor)
+            y = h - int(i * factor)
             qp.drawPixmap(0, y,
                           linePixmap(w, 0, self.grid_c.fg(), 1,
                                      style=Qt.PenStyle.DashLine))
@@ -127,17 +135,24 @@ class StatsDock(QWidget):
         # Text
         font = Font.GENERAL.toQFont()
         fm = QFontMetricsF(font)
-        font_h = fm.height()
+        font_h = int(fm.height())
         pb_txt = "PB: {}".format(self.wpm_pb)
         cur_txt = "Current: {} WPM".format(self.wpm)
         draw(2, 2,
-             textPixmap(pb_txt, fm.horizontalAdvance(pb_txt), font_h,
+             textPixmap(pb_txt, int(fm.horizontalAdvance(pb_txt)), font_h,
                         font, self.text_c.fg()))
-        cur_w = fm.horizontalAdvance(cur_txt)
+        cur_w = int(fm.horizontalAdvance(cur_txt))
         draw(w - cur_w - 2, 2,
              textPixmap(cur_txt, cur_w, font_h, font, self.text_c.fg()))
 
         qp.end()
 
     def sizeHint(self):
+        # type: (StatsDock) -> QSize
         return QSize(50, 25)
+
+
+if TYPE_CHECKING:
+    from retype.ui import BookView  # noqa: F401
+    from retype.console import Console  # noqa: F401
+    from qt import QPaintEvent  # noqa: F401

@@ -1,5 +1,6 @@
 from enum import Enum
 from qt import Qt, QPainter, QPixmap, QRectF, QPen, QColor, QFontDatabase
+from typing import TYPE_CHECKING
 
 
 white = QColor('white')
@@ -17,6 +18,7 @@ class Font(Enum):
 
     @staticmethod
     def systemfonts():
+        # type: () -> dict[int, QFont]
         get = QFontDatabase.systemFont
         return {
             1: get(QFontDatabase.GeneralFont),
@@ -25,23 +27,29 @@ class Font(Enum):
 
     @classmethod
     def general(cls):
+        # type: (type[Font]) -> QFont
         return cls.systemfonts()[1]
 
     @classmethod
     def fixed(cls):
+        # type: (type[Font]) -> QFont
         return cls.systemfonts()[2]
 
     @classmethod
     def bold(cls):
+        # type: (type[Font]) -> QFont
         font = cls.general()
         font.setBold(True)
         return font
 
     def toQFont(self):
-        return getattr(self, self.name.lower())()
+        # type: (Font) -> QFont
+        return getattr(
+            self, self.name.lower())()  # type: ignore[misc]
 
 
 def rectPixmap(w, h, fg=white, bg=transparent):
+    # type: (int, int, QColor, QColor) -> QPixmap
     pixmap = QPixmap(w + 1, h + 1)
     pixmap.fill(transparent)
     qp = QPainter(pixmap)
@@ -51,8 +59,15 @@ def rectPixmap(w, h, fg=white, bg=transparent):
     return pixmap
 
 
-def textPixmap(text, w, h, font, fg=white,
-               alignment=center | wordwrap, bounding_rect=None):
+def textPixmap(text,  # type: str
+               w,  # type: int
+               h,  # type: int
+               font,  # type: Font | QFont
+               fg=white,  # type: QColor
+               alignment=center | wordwrap,  # type: int | Qt.Alignment
+               bounding_rect=None  # type: QRectF | None
+               ):
+    # type: (...) -> QPixmap
     pixmap = QPixmap(w, h)
     pixmap.fill(transparent)
     # On some versions of Qt there is a last optional argument to drawText to
@@ -66,10 +81,10 @@ def textPixmap(text, w, h, font, fg=white,
     else:
         qp = QPainter(pixmap)
         bounding_rect = QRectF(0, 0, w, h)
-    font = font.toQFont() if type(font) == Font else font
+    font = font.toQFont() if isinstance(font, Font) else font
     qp.setFont(font)
     qp.setPen(fg)
-    qp.drawText(bounding_rect, alignment, text)
+    qp.drawText(bounding_rect, int(alignment), text)
     if inner_pixmap:
         qp = QPainter(pixmap)
         qp.drawPixmap(0, 0, inner_pixmap)
@@ -77,11 +92,12 @@ def textPixmap(text, w, h, font, fg=white,
 
 
 def linePixmap(x2, y2, colour=white, thickness=2, style=solid):
+    # type: (int, int, QColor, int, Qt.PenStyle) -> QPixmap
     """Line from origin (0, 0) to (x2, y2)"""
     rect = QRectF()
     x1 = y1 = 0
     rect.adjust(x1, y1, x2, y2)
-    (w, h) = (rect.width(), rect.height())
+    (w, h) = (int(rect.width()), int(rect.height()))
     if not h:
         h = thickness
     elif not w:
@@ -96,6 +112,7 @@ def linePixmap(x2, y2, colour=white, thickness=2, style=solid):
 
 def ellipsePixmap(w, h, fg=white, bg=transparent, thickness=2,
                   style=solid):
+    # type: (int, int, QColor, QColor, int, Qt.PenStyle) -> QPixmap
     bounding_rect = QRectF(thickness/2, thickness/2, w-thickness, h-thickness)
     pixmap = QPixmap(w, h)
     pixmap.fill(transparent)
@@ -107,9 +124,17 @@ def ellipsePixmap(w, h, fg=white, bg=transparent, thickness=2,
     return pixmap
 
 
-def arcPixmap(w, h, fg=white, thickness=2, style=solid,
-              start_angle=0, span_angle=16*180, antialiasing=True,
-              cap=squarecap):
+def arcPixmap(w,  # type: int
+              h,  # type: int
+              fg=white,  # type: QColor
+              thickness=2,  # type: int
+              style=solid,  # type: Qt.PenStyle
+              start_angle=0,  # type: int
+              span_angle=16*180,  # type: int
+              antialiasing=True,  # type: bool
+              cap=squarecap  # type: Qt.PenCapStyle
+              ):
+    # type: (...) -> QPixmap
     bounding_rect = QRectF(thickness/2, thickness/2, w-thickness, h-thickness)
     pixmap = QPixmap(w, h)
     pixmap.fill(transparent)
@@ -119,3 +144,7 @@ def arcPixmap(w, h, fg=white, thickness=2, style=solid,
     qp.setPen(QPen(fg, thickness, style, cap))
     qp.drawArc(bounding_rect, start_angle, span_angle)
     return pixmap
+
+
+if TYPE_CHECKING:
+    from qt import QFont  # noqa: F401

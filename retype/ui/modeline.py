@@ -2,12 +2,15 @@ from math import floor
 from qt import (QWidget, QPainter, QColor, Qt, QPixmap, QPoint, QPolygon,
                 QLabel, pyqtSignal, QFrame, QSize, QSizePolicy)
 
+from typing import TYPE_CHECKING
+
 from retype.layouts import RowLayout
 from retype.services.theme import theme, C, Theme
 
 
 class Separator(QWidget):
     def __init__(self, c, facing_right=True):
+        # type: (Separator, C, bool) -> None
         super().__init__()
         self.c = c
         self.facing_right = facing_right
@@ -16,23 +19,28 @@ class Separator(QWidget):
         self._calc(self.width(), self.height())
 
     def hasHeightForWidth(self):
+        # type: (Separator) -> bool
         return True
 
     def heightForWidth(self, height):
+        # type: (Separator, int) -> int
         """Despite the name, this returns width for height"""
-        return height / 2
+        return int(height / 2)
 
     def sizeHint(self):
+        # type: (Separator) -> QSize
         """Minimum"""
         h = 4
         return QSize(self.heightForWidth(h), h)
 
     def _calc(self, width, height):
+        # type: (Separator, int, int) -> tuple[int, int, int]
         half = floor((height - 1) / 2)
         chupchik = (height - 2 * half) - 1
         return (height, half, chupchik)
 
     def pixmap(self, width, height):
+        # type: (Separator, int, int) -> QPixmap
         p = QPixmap(width, height)
         p.fill(QColor('transparent'))
         qp = QPainter(p)
@@ -52,6 +60,7 @@ class Separator(QWidget):
         return p
 
     def paintEvent(self, e):
+        # type: (Separator, QPaintEvent) -> None
         qp = QPainter()
         qp.begin(self)
         qp.drawPixmap(0, 0, self.pixmap(self.width(), self.height()))
@@ -59,7 +68,13 @@ class Separator(QWidget):
 
 
 class WidgetsGroup(QFrame):
-    def __init__(self, *widgets, css_=None, tooltip=None, cursor=None):
+    def __init__(self,  # type: WidgetsGroup
+                 *widgets,  # type: QWidget
+                 css_=None,  # type: str | None
+                 tooltip=None,  # type: str | None
+                 cursor=None  # type: Qt.CursorShape | None
+                 ):
+        # type: (...) -> None
         super().__init__()
         self.layout_ = RowLayout(self)
         self.layout_.setContentsMargins(0, 0, 0, 0)
@@ -80,16 +95,20 @@ class WidgetsGroup(QFrame):
             self.addWidget(widget)
 
     def addWidget(self, widget):
+        # type: (WidgetsGroup, QWidget) -> None
         self.layout_.addWidget(widget)
 
     def setHoverStyle(self, css):
+        # type: (WidgetsGroup, str) -> None
         self.hover_css = css
 
     def enterEvent(self, e):
+        # type: (WidgetsGroup, QEvent) -> None
         self.old_stylesheet = self.styleSheet()
         self.setStyleSheet(self.old_stylesheet + self.hover_css)
 
     def leaveEvent(self, e):
+        # type: (WidgetsGroup, QEvent) -> None
         self.setStyleSheet(self.old_stylesheet)
 
 
@@ -103,6 +122,7 @@ class Modeline(QWidget):
     repainted = pyqtSignal()
 
     def __init__(self, parent=None):
+        # type: (Modeline, QWidget | None) -> None
         super().__init__(parent)
         self.setMinimumHeight(16)
 
@@ -132,6 +152,7 @@ class Modeline(QWidget):
         self.vchap_sep = QLabel("/")
 
         def makeGroup(*widgets, tooltip):
+            # type: (QWidget, str) -> WidgetsGroup
             return WidgetsGroup(*widgets, css_="hover", tooltip=tooltip,
                                 cursor=Qt.CursorShape.WhatsThisCursor)
 
@@ -194,11 +215,13 @@ class Modeline(QWidget):
         self.themeUpdate()
 
     def _loadTheme(self):
+        # type: (Modeline) -> tuple[C, ...]
         return (Theme.get('BookView.Modeline.OuterSegment'),
                 Theme.get('BookView.Modeline.MidSegment'),
                 Theme.get('BookView.Modeline.InnerSegment'))
 
     def themeUpdate(self):
+        # type: (Modeline) -> None
         for widgets, c in zip(self.widgets_by_segment, self.c):
             for w in widgets:
                 w.setStyleSheet(f"QLabel{{color: {c.fg().name()}}}\
@@ -206,12 +229,20 @@ class Modeline(QWidget):
                 w.setHoverStyle(f'QLabel{{color: {c.sel().name()}}}')
         self.update()
 
-    def update_(self, title=None, cursor_pos=None, line_pos=None,
-                chap_pos=None, viewed_chap_pos=None, chap_total=None,
-                path=None, progress=None):
-        for p, v in vars().items():
-            if v is not None and p != "self":
-                self.__dict__[p].setText(str(v))
+    def update_(self,  # type: Modeline
+                title=None,  # type: str | None
+                cursor_pos=None,  # type: int | str | None
+                line_pos=None,  # type: int | str | None
+                chap_pos=None,  # type: int | str | None
+                viewed_chap_pos=None,  # type: int | str | None
+                chap_total=None,  # type: int | str | None
+                path=None,  # type: str | None
+                progress=None  # type: float | str | None
+                ):
+        # type: (...) -> None
+        for p, v in vars().items():  # type: ignore[misc]
+            if v is not None and p != "self":  # type: ignore[misc]
+                self.__dict__[p].setText(str(v))  # type: ignore[misc]
 
         if chap_total is not None:
             self.chap_total_dupe.setText(str(chap_total))
@@ -224,12 +255,14 @@ class Modeline(QWidget):
         if any([chap_pos, viewed_chap_pos, chap_total]):
             self.c_group.adjustSize()
             self.v_group.adjustSize()
-            self.push_to_right.width = self.c_group.rect().width() + \
-                self.v_group.rect().width() + 50
+            # TODO: The line below was here but doesn't do anything
+            # self.push_to_right.width = self.c_group.rect().width() + \
+            #     self.v_group.rect().width() + 50
 
         self.update()
 
     def paintEvent(self, e):
+        # type: (Modeline, QPaintEvent) -> None
         width = self.size().width()
         height = self.size().height()
 
@@ -248,3 +281,7 @@ class Modeline(QWidget):
 
         qp.end()
         self.repainted.emit()
+
+
+if TYPE_CHECKING:
+    from qt import QPaintEvent, QCursor, QEvent  # noqa: F401

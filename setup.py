@@ -9,6 +9,7 @@ metadata = dict(re.findall(r"__([a-z]+)__\s*=\s*'([^']+)'", pkg_file))
 
 setup(name='retype',
       version=metadata['version'],
+      package_data={"retype": ["py.typed"]},
       packages=['qt', 'retype'],
       zip_safe=False,
       install_requires=[

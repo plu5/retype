@@ -11,59 +11,72 @@ contentsMargins."""
 from qt import QSize, QRect, QPoint, QWidget, QGridLayout, QScrollArea, QLayout
 from math import floor, ceil
 
+from typing import TYPE_CHECKING
+
 
 class ShelvesLayout(QLayout):
     def __init__(self, parent=None,
                  min_cell_width=140, max_cell_width=200, cell_height=140):
-        super().__init__(parent)
+        # type: (ShelvesLayout, QWidget | None, int, int, int) -> None
+        if parent:
+            super().__init__(parent)
+        else:
+            super().__init__()
+        self.item_list = []  # type: list[QLayoutItem]
         self.min_cell_width = min_cell_width
         self.max_cell_width = max_cell_width
         self.cell_height = cell_height
         # The cell height is static, whereas cell width varies between min to
         # max as the window is resized.
 
-        self.item_list = []
-
     def __del__(self):
+        # type: (ShelvesLayout) -> None
         """Delete all items in this layout"""
         item = self.takeAt(0)
         while item:
             item = self.takeAt(0)
 
     def addItem(self, item):
+        # type: (ShelvesLayout, QLayoutItem) -> None
         """Add an item to the end of this layout"""
         self.item_list.append(item)
 
     def count(self):
+        # type: (ShelvesLayout) -> int
         """Return number of items in this layout"""
         return len(self.item_list)
 
     def itemAt(self, index):
+        # type: (ShelvesLayout, int) -> QLayoutItem | None
         """Return item at given index (non-destructively)"""
         if index >= 0 and index < len(self.item_list):
             return self.item_list[index]
         return None
 
     def takeAt(self, index):
+        # type: (ShelvesLayout, int) -> QLayoutItem | None
         """Remove and return item at given index"""
         if index >= 0 and index < len(self.item_list):
             return self.item_list.pop(index)
         return None
 
     def hasHeightForWidth(self):
+        # type: (ShelvesLayout) -> bool
         """This layout’s height depends on its width"""
         return True
 
     def heightForWidth(self, width):
+        # type: (ShelvesLayout, int) -> int
         """Return the preferred height for this layout"""
         margins = self.getContentsMargins()
         width -= margins[1] + margins[2]  # minus left and right margins
         # Get the height this width would result in
-        height = self.doLayout(QRect(0, 0, width, 0), True)
+        height = self.doLayout(QRect(0, 0, int(width), 0), True)
         height += margins[0] + margins[3]  # plus top and bottom margins
         return height
 
     def setGeometry(self, rect):
+        # type: (ShelvesLayout, QRect) -> None
         super().setGeometry(rect)
         margins = self.getContentsMargins()
         rect.setX(rect.x() + margins[1])  # plus left margin
@@ -72,9 +85,11 @@ class ShelvesLayout(QLayout):
         self.doLayout(rect, False)
 
     def sizeHint(self):
+        # type: (ShelvesLayout) -> QSize
         return self.minimumSize()
 
     def minimumSize(self):
+        # type: (ShelvesLayout) -> QSize
         size = QSize()
         margins = self.getContentsMargins()
         for item in self.item_list:
@@ -84,6 +99,7 @@ class ShelvesLayout(QLayout):
         return size
 
     def doLayout(self, rect, dry_run=False):
+        # type: (ShelvesLayout, QRect, bool) -> int
         """Lay out the items in `item_list' within bounding QRect `rect'.
 If dry_run, only do the calculations and return the resulting grid’s height."""
         # Set the x and y to the top left corner of the bounding rect
@@ -95,7 +111,7 @@ If dry_run, only do the calculations and return the resulting grid’s height.""
                       len(self.item_list)) or 1
         # Calculate what the width of each cell is going to be,
         #  based on the number of columns. No more than max_cell_width.
-        cell_effective_width = rect.width() / columns
+        cell_effective_width = int(rect.width() / columns)
         if cell_effective_width > self.max_cell_width:
             cell_effective_width = self.max_cell_width
             columns = min(floor(rect.width() / cell_effective_width),
@@ -116,14 +132,14 @@ If dry_run, only do the calculations and return the resulting grid’s height.""
                 if not dry_run:
                     # Some positioning variables to help place each item
                     #  at centre bottom of its cell, as if resting on a shelf
-                    x_gap_to_centre = (cell_effective_width / 2) \
-                        - (item.sizeHint().width() / 2)
+                    x_gap_to_centre = int((cell_effective_width / 2) -
+                                          (item.sizeHint().width() / 2))
                     y_gap_to_bottom = self.cell_height \
                         - item.sizeHint().height()
                     # Place item
                     item.setGeometry(QRect(
-                        QPoint(x + added_width + x_gap_to_centre,
-                               y + y_gap_to_bottom),
+                        QPoint(int(x + added_width + x_gap_to_centre),
+                               int(y + y_gap_to_bottom)),
                         item.sizeHint()))
                     added_width += cell_effective_width
                 item_index += 1
@@ -147,32 +163,41 @@ class ShelvesWidget(QWidget):
     """
     def __init__(self, parent=None,
                  min_cell_width=140, max_cell_width=200, cell_height=140):
+        # type: (ShelvesWidget, QWidget | None, int, int, int) -> None
         super().__init__(parent)
-        self.scroll = QScrollArea(self)
+        self._scroll = QScrollArea(self)
         # Unlike widgets and layouts, scroll areas have a solid background you
         #  can’t draw behind by default.
-        self.scroll.setStyleSheet('background: transparent')
-        self.scroll.setWidgetResizable(True)
+        self._scroll.setStyleSheet('background: transparent')
+        self._scroll.setWidgetResizable(True)
         # Wrapper widget to contain shelves layout
-        self.container = QWidget(self.scroll)
-        self.layout = ShelvesLayout(
+        self.container = QWidget(self._scroll)
+        self._layout = ShelvesLayout(
             self.container, min_cell_width, max_cell_width, cell_height)
-        self.container.setLayout(self.layout)
-        self.scroll.setWidget(self.container)
+        self.container.setLayout(self._layout)
+        self._scroll.setWidget(self.container)
         # Layout for us (this very widget) to put the scroll area in
         outer_layout = QGridLayout(self)
-        outer_layout.addWidget(self.scroll)
+        outer_layout.addWidget(self._scroll)
         outer_layout.setSpacing(0)
         outer_layout.setContentsMargins(0, 0, 0, 0)
 
     def addWidget(self, widget):
-        self.layout.addWidget(widget)
+        # type: (ShelvesWidget, QWidget) -> None
+        self._layout.addWidget(widget)
 
     def clearWidgets(self):
-        while self.layout.count():
-            child = self.layout.takeAt(0)
-            if child.widget():
+        # type: (ShelvesWidget) -> None
+        while self._layout.count():
+            child = self._layout.takeAt(0)
+            if child and child.widget():
                 child.widget().deleteLater()
 
-    def setContentsMargins(self, left, top, right, bottom):
-        self.layout.setContentsMargins(left, top, right, bottom)
+    def setContentsMargins(  # type: ignore[override]
+            self, left, top, right, bottom):
+        # type: (ShelvesWidget, int, int, int, int) -> None
+        self._layout.setContentsMargins(left, top, right, bottom)
+
+
+if TYPE_CHECKING:
+    from qt import QLayoutItem  # noqa: F401

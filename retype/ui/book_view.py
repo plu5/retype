@@ -4,12 +4,15 @@ from qt import (QWidget, QVBoxLayout, QTextBrowser, QTextDocument, QUrl,
                 QToolBar, QFont, QKeySequence, Qt, QApplication, pyqtSignal,
                 QSplitter, QSize)
 
+from typing import TYPE_CHECKING
+
 from retype.extras import splittext, isspaceorempty, ManifoldStr
 from retype.ui.modeline import Modeline
 from retype.services import Autosave
 from retype.stats import StatsDock
 from retype.resource_handler import getIcon
 from retype.services.theme import theme, C, Theme
+from retype.constants import default_font_family, default_font_size
 
 logger = logging.getLogger(__name__)
 
@@ -22,12 +25,13 @@ class BookDisplay(QTextBrowser):
     keyPressed = pyqtSignal(object)
     fontChanged = pyqtSignal()
 
-    def __init__(self, font_family, font_size=12, parent=None):
+    def __init__(self, font_family, font_size=default_font_size, parent=None):
+        # type: (BookDisplay, str, int, QWidget | None) -> None
         super().__init__(parent)
-        self.cursor = QTextCursor(self.document())
+        self._cursor = QTextCursor(self.document())  # type: QTextCursor
         self.setOpenLinks(False)
         self.setOpenExternalLinks(True)
-        self.font = QFont(font_family, font_size)
+        self._font = QFont(font_family, font_size)
         self._font_size = font_size
         self._font_family = font_family
         self.updateFont()
@@ -37,72 +41,86 @@ class BookDisplay(QTextBrowser):
         self.themeUpdate()
 
     def _loadTheme(self):
+        # type: (BookDisplay) -> tuple[C, ...]
         return (Theme.get('BookView.BookDisplay'),
                 Theme.get('BookView.BookDisplay.Cursor'))
 
     def themeUpdate(self):
+        # type: (BookDisplay) -> None
         qss = Theme.getQss('BookView.BookDisplay').replace(
             'BookView.BookDisplay', 'QTextBrowser')
         self.setStyleSheet(qss)
 
-    def setCursor(self, cursor):
-        self.cursor = cursor
+    def setCursor(self, cursor):  # type: ignore[override]
+        # type: (BookDisplay, QTextCursor) -> None
+        self._cursor = cursor
 
     def updateFont(self):
-        self.font.setPixelSize(self.font_size)
-        self.setFont(self.font)
-        self.document().setDefaultFont(self.font)
+        # type: (BookDisplay) -> None
+        self._font.setPixelSize(self.font_size)
+        self.setFont(self._font)
+        self.document().setDefaultFont(self._font)
         self.fontChanged.emit()
 
     @property
     def font_size(self):
+        # type: (BookDisplay) -> int
         return self._font_size
 
     @font_size.setter
     def font_size(self, val):
+        # type: (BookDisplay, int) -> None
         self._font_size = val
         self.updateFont()
 
     @property
     def font_family(self):
+        # type: (BookDisplay) -> str
         return self._font_family
 
     @font_family.setter
     def font_family(self, val):
-        self.font.setFamily(val)
+        # type: (BookDisplay, str) -> None
+        self._font.setFamily(val)
         self.updateFont()
 
     def paintEvent(self, e):
+        # type: (BookDisplay, QPaintEvent) -> None
         QTextBrowser.paintEvent(self, e)
         qp = QPainter(self.viewport())
         qp.setPen(self.c_cursor.fg())
-        qp.drawRect(self.cursorRect(self.cursor))
+        qp.drawRect(self.cursorRect(self._cursor))
         qp.end()
 
     def keyPressEvent(self, e):
+        # type: (BookDisplay, QKeyEvent) -> None
         self.keyPressed.emit(e)
         QTextBrowser.keyPressEvent(self, e)
 
     def centreAroundCursor(self):
+        # type: (BookDisplay) -> None
         viewport_height = self.viewport().rect().height()
-        cursor_height = self.cursorRect(self.cursor).height()
-        cursor_relative_y = self.cursorRect(self.cursor).y()
+        cursor_height = self.cursorRect(self._cursor).height()
+        cursor_relative_y = self.cursorRect(self._cursor).y()
         scrollbar = self.verticalScrollBar()
-        scrollbar.setValue(
+        scrollbar.setValue(int(
             scrollbar.value() + cursor_relative_y -
-            viewport_height/2 + cursor_height/2)
+            viewport_height/2 + cursor_height/2))
 
     def zoomIn(self, range_=1):
+        # type: (BookDisplay, int) -> None
         self.font_size += range_
         QTextBrowser.zoomIn(self, range_)
         self.updateFont()
 
     def zoomOut(self, range_=-1):
+        # type: (BookDisplay, int) -> None
         self.font_size += range_
         QTextBrowser.zoomOut(self, range_)
         self.updateFont()
 
     def wheelEvent(self, e):
+        # type: (BookDisplay, QWheelEvent) -> None
         if e.modifiers() == Qt.KeyboardModifier.ControlModifier:
             if e.angleDelta().y() > 0:
                 self.zoomIn()
@@ -114,8 +132,16 @@ class BookDisplay(QTextBrowser):
 @theme('BookView.Highlighting.Highlight', C(fg='black', bg='yellow'))
 @theme('BookView.Highlighting.Mistake', C(fg='white', bg='red'))
 class BookView(QWidget):
-    def __init__(self, main_win, main_controller, sdict={}, rdict={},
-                 bookview_settings=None, parent=None):
+    def __init__(
+            self,  # type: BookView
+            main_win,  # type: MainWin
+            main_controller,  # type: MainController
+            sdict=None,  # type: SDict | None
+            rdict=None,  # type: RDict | None
+            bookview_settings=None,  # type: BookViewSettings | None
+            parent=None  # type: QWidget | None
+    ):
+        # type: (...) -> None
         super().__init__(parent)
         self._main_win = main_win
         main_win.closing.connect(self.maybeSave)
@@ -124,43 +150,53 @@ class BookView(QWidget):
         self._console = self._controller.console
         self.autosave = Autosave(self._console)
         self.autosave.save.connect(self.maybeSave)
+
+        bookview_settings = bookview_settings or {}
         self.display = BookDisplay(
-            bookview_settings['font'], bookview_settings['font_size'], self)
+            bookview_settings.get('font', default_font_family),
+            bookview_settings.get('font_size', default_font_size), self
+        )  # type: BookDisplay
         self._initUI()
 
-        self.sdict = sdict
-        self.rdict = rdict
+        self.sdict = sdict or {}
+        self.rdict = rdict or {}
 
-        self.book = None
-        self.cursor = None
-        self.chapter_pos = None
-        self.line_pos = None
-        self.cursor_pos = None
-        self.persistent_pos = None
-        self.progress = None
-        self.chapter_lens = None
-        self.total_len = None
+        self.book = None  # type: Book | None
+        self._cursor = QTextCursor(self.display.document())
+        self.mistake_cursor = QTextCursor(
+            self.display.document())  # type: QTextCursor
+        self.chapter_pos = None  # type: int | None
+        self.line_pos = None  # type: int | None
+        self.cursor_pos = None  # type: int | None
+        self.persistent_pos = None  # type: int | None
+        self.progress = None  # type: float | None
+        self.chapter_lens = None  # type: list[int] | None
+        self.total_len = None  # type: int | None
+        self.tobetyped_list = []  # type: list[str]
 
         self.c = self._loadTheme()
 
         self.highlight_sel = self.display.ExtraSelection()
         self.highlight_format = QTextCharFormat()
-        self.mistake_format = QTextCharFormat()
+        self.mistake_format = QTextCharFormat()  # type: QTextCharFormat
         self.formats = (self.highlight_format, self.mistake_format)
 
         self.c[0].changed.connect(self.themeUpdate)
         self.themeUpdate()
 
     def _loadTheme(self):
+        # type: (BookView) -> tuple[C, ...]
         return (Theme.get('BookView.Highlighting.Highlight'),
                 Theme.get('BookView.Highlighting.Mistake'))
 
     def themeUpdate(self):
+        # type: (BookView) -> None
         for f, c in zip(self.formats, self.c):
             f.setForeground(c.fg())
             f.setBackground(c.bg())
 
     def _initUI(self):
+        # type: (BookView) -> None
         self.display.anchorClicked.connect(self.anchorClicked)
         self.display.keyPressed.connect(self._controller.console.transferFocus)
 
@@ -189,6 +225,7 @@ class BookView(QWidget):
         self.setLayout(self.layout_)
 
     def _initToolbar(self):
+        # type: (BookView) -> None
         self.toolbar = QToolBar(self)
         self.toolbar.setIconSize(QSize(16, 16))
 
@@ -202,8 +239,8 @@ class BookView(QWidget):
             {
                 'name': 'Cursor position',
                 'func': self.gotoCursorPosition,
-                'tooltip': 'Go to the cursor position. Hold Ctrl to move cursor\
- to your current position',
+                'tooltip': 'Go to the cursor position. Hold Ctrl to move\
+ cursor to your current position',
                 'icon': 'cursor'
             },
             'pchap':
@@ -243,9 +280,16 @@ class BookView(QWidget):
                 'shortcut': QKeySequence(QKeySequence.StandardKey.ZoomOut),
                 'icon': 't-down'
             }
-        }
+        }  # type: dict[str, ActionInfo]
 
-        def addAction(name, func, tooltip=None, shortcut=None, icon=None):
+        def addAction(name,  # type: str
+                      func,  # type: Callable[[], None]
+                      tooltip=None,  # type: str | None
+                      shortcut=None,  # type: Shortcut | None
+                      icon=None,  # type: str | None
+                      action=None  # type: QAction | None  # unused
+                      ):
+            # type: (...) -> QAction
             a = self.toolbar.addAction(name, func)
             if tooltip:
                 a.setToolTip(tooltip)
@@ -266,10 +310,14 @@ class BookView(QWidget):
         self.toolbar.insertSeparator(actions['pos']['action'])
 
     def _initModeline(self):
+        # type: (BookView) -> None
         self.modeline = Modeline(self)
         self.modeline.update_(title="No book loaded")
 
     def updateModeline(self):
+        # type: (BookView) -> None
+        if self.book is None:
+            return
         self.modeline.update_(
             title=self.book.title,
             path=self.book.path,
@@ -278,10 +326,11 @@ class BookView(QWidget):
             chap_pos=self.chapter_pos,
             viewed_chap_pos=self.viewed_chapter_pos,
             chap_total=len(self.book.chapters) - 1,
-            progress=int(self.progress),
+            progress=int(self.progress) if self.progress is not None else 0,
         )
 
     def _initChapter(self, reset=True):
+        # type: (BookView, bool) -> None
         if not self.chapter_pos:
             self.chapter_pos = 0
             # This is the position of the chapter on actual display, which may
@@ -303,7 +352,9 @@ class BookView(QWidget):
 
         self.setCursor()
 
-        self.tobetyped = self.book.chapters[self.chapter_pos]['plain']
+        self.tobetyped = self.book.chapters[self.chapter_pos]['plain'] if\
+            self.book else ''
+
         self._prepTobetypedList()
 
         self.line_pos = self.calcLinePos(self.cursor_pos)
@@ -311,33 +362,45 @@ class BookView(QWidget):
         self._setLine(self.line_pos)
 
     def _prepTobetypedList(self):
+        # type: (BookView) -> None
         self.tobetyped_list = splittext(self.tobetyped, self.sdict,
                                         True, True, '\r')
 
-    def setCursor(self):
-        self.cursor = QTextCursor(self.display.document())
+    def setCursor(self):  # type: ignore[override]
+        # type: (BookView) -> None
+        self._cursor = QTextCursor(self.display.document())
         self.updateCursorPosition()
-        self.display.setCursor(self.cursor)
+        self.display.setCursor(self._cursor)
 
         self.setHighlightCursor()
 
         self.setMistakeCursor()
 
     def setHighlightCursor(self):
+        # type: (BookView) -> None
         self.highlight_cursor = QTextCursor(self.display.document())
         self.updateHighlightCursor()
 
     def setMistakeCursor(self):
+        # type: (BookView) -> None
+        if self.cursor_pos is None:
+            return
         self.mistake_cursor = QTextCursor(self.display.document())
         self.mistake_cursor.setPosition(self.cursor_pos)
 
     def updateCursorPosition(self, to_pos=None):
+        # type: (BookView, int | None) -> None
+        if self.cursor_pos is None:
+            return
         pos = to_pos or self.cursor_pos
-        self.cursor.setPosition(pos)
+        self._cursor.setPosition(pos)
 
     def updateHighlightCursor(self, to_pos=None):
+        # type: (BookView, int | None) -> None
+        if self.cursor_pos is None:
+            return
         pos = to_pos or self.cursor_pos
-        self.highlight_cursor.setPosition(pos, self.cursor.KeepAnchor)
+        self.highlight_cursor.setPosition(pos, self._cursor.KeepAnchor)
         self.highlight_sel.cursor = self.highlight_cursor
         self.highlight_sel.format = self.highlight_format
         self.display.setExtraSelections([self.highlight_sel])
@@ -347,10 +410,14 @@ class BookView(QWidget):
         self.highlight_cursor.setPosition(0)
 
     def fillHighlight(self):
+        # type: (BookView) -> None
+        if self.chapter_lens is None:
+            return
         self.setHighlightCursor()
         self.updateHighlightCursor(self.chapter_lens[self.viewed_chapter_pos])
 
     def setSource(self, chapter):
+        # type: (BookView, Chapter) -> None
         document = QTextDocument()
         document.setHtml(chapter['html'])
 
@@ -362,11 +429,13 @@ class BookView(QWidget):
 
         # Extra selections must be cleared before calling setDocument to avoid
         # a crash, see https://stackoverflow.com/a/73776461/18396947
-        # Thank you, Patrick Jeeves!
         self.display.setExtraSelections([])
         self.display.setDocument(document)
 
     def anchorClicked(self, link):
+        # type: (BookView, QUrl) -> None
+        if self.book is None:
+            return
         f = link.fileName()
         if link.scheme() in ["http", "https"]:
             self._controller.openUrl(link)
@@ -377,10 +446,11 @@ class BookView(QWidget):
             logger.error("{} not found".format(f))
 
     def setBook(self, book, save_data=None):
+        # type: (BookView, Book, SaveData | None) -> None
         self.book = book
         if save_data:
             for p, v in save_data.items():
-                self.__dict__[p] = v
+                self.__dict__[p] = v  # type: ignore[misc]
             self.cursor_pos = self.persistent_pos
             reset = False
         else:
@@ -395,12 +465,20 @@ class BookView(QWidget):
 
         complete = book.progress == 100
 
-        self.setChapter(self.chapter_pos, True, reset)
+        if self.chapter_pos is None:
+            logger.error('setBook: self.chapter_pos is None')
+        else:
+            self.setChapter(self.chapter_pos, True, reset)
 
         if complete:
             self.markComplete()
 
     def setChapter(self, pos, move_cursor=False, reset=True):
+        # type: (BookView, int, bool, bool) -> None
+        if self.book is None or self.chapter_pos is None:
+            logger.error(f'setChapter: Unexpected None. book: {self.book}, '
+                         f'chapter_pos: {self.chapter_pos}')
+            return
         self.setSource(self.book.chapters[pos])
         self.viewed_chapter_pos = pos
         if move_cursor:
@@ -419,13 +497,35 @@ class BookView(QWidget):
         self.updateToolbarActions()
 
     def nextChapter(self, move_cursor=False):
+        # type: (BookView, bool) -> None
+        if self.book is None or self.chapter_pos is None:
+            logger.error(f'nextChapter: Unexpected None. book: {self.book}, '
+                         f'chapter_pos: {self.chapter_pos}')
+            return
         pos = self.chapter_pos + 1 if move_cursor \
             else self.viewed_chapter_pos + 1
         if pos >= len(self.book.chapters):
             return
         self.setChapter(pos, move_cursor)
 
+    def _keyboardModifiers(self):
+        # type: (BookView) -> Qt.KeyboardModifiers | None
+        modifiers = None
+        instance = QApplication.instance()
+        if isinstance(instance, QGuiApplication):
+            modifiers = instance.keyboardModifiers()
+        else:
+            logger.error('gotoCursorPosition: QApplication.instance() is '
+                         f'{type(instance)}, not QGuiApplication. This should '
+                         'never happen.')
+        return modifiers
+
     def previousChapter(self, move_cursor=False):
+        # type: (BookView, bool) -> None
+        if self.chapter_pos is None:
+            logger.error('previousChapter: Unexpected None. chapter_pos: '
+                         f'{self.chapter_pos}')
+            return
         pos = self.chapter_pos - 1 if move_cursor \
             else self.viewed_chapter_pos - 1
         if pos < 0:
@@ -433,20 +533,21 @@ class BookView(QWidget):
         self.setChapter(pos, move_cursor)
 
     def nextChapterAction(self):
-        if QApplication.instance().keyboardModifiers() == \
-           Qt.KeyboardModifier.ControlModifier:
+        # type: (BookView) -> None
+        if self._keyboardModifiers() == Qt.KeyboardModifier.ControlModifier:
             self.nextChapter(True)
         else:
             self.nextChapter(False)
 
     def previousChapterAction(self):
-        if QApplication.instance().keyboardModifiers() == \
-           Qt.KeyboardModifier.ControlModifier:
+        # type: (BookView) -> None
+        if self._keyboardModifiers() == Qt.KeyboardModifier.ControlModifier:
             self.previousChapter(True)
         else:
             self.previousChapter(False)
 
     def calcLinePos(self, cursor_pos):
+        # type: (BookView, int) -> int
         tally = line_pos = 0
         if (not self.tobetyped_list or
                 not isinstance(self.tobetyped_list, list)):
@@ -460,12 +561,15 @@ class BookView(QWidget):
         return line_pos
 
     def _setLine(self, pos):
+        # type: (BookView, int) -> None
         if self.tobetyped_list:
-            if self.line_pos > len(self.tobetyped_list):
+            if self.line_pos is not None and \
+               self.line_pos > len(self.tobetyped_list):
                 return logger.warning("line_pos out of range")
             if self.rdict:
-                self.current_line = ManifoldStr(self.tobetyped_list[pos],
-                                                self.rdict)
+                self.current_line = ManifoldStr(
+                    self.tobetyped_list[pos],
+                    self.rdict)  # type: str | ManifoldStr
             else:
                 self.current_line = self.tobetyped_list[pos]
 
@@ -476,36 +580,55 @@ class BookView(QWidget):
             logger.error("Bad tobetyped_list; {}".format(self.tobetyped_list))
 
     def advanceLine(self):
-        self._controller.console.command_service.advanceLine()
+        # type: (BookView) -> None
+        cs = self._controller.console.command_service
+        if cs is not None:
+            cs.advanceLine()
 
     def setSdict(self, sdict):
+        # type: (BookView, SDict) -> None
         self.sdict = sdict
-        if not self.book:
+        if not self.book or self.cursor_pos is None:
             return
         self._prepTobetypedList()
         self.line_pos = self.calcLinePos(self.cursor_pos)
         self._setLine(self.line_pos)
 
     def setRdict(self, rdict):
+        # type: (BookView, RDict) -> None
         self.rdict = rdict
-        if not self.book:
+        if not self.book or self.line_pos is None:
             return
         self._setLine(self.line_pos)
 
     def maybeSave(self):
+        # type: (BookView) -> None
+        if self.persistent_pos is None or self.chapter_pos is None or \
+           self.progress is None:
+            logger.error('maybeSave: Unexpected None in positioning '
+                         f'variables. persistent_pos: {self.persistent_pos}, '
+                         f'chapter_pos: {self.chapter_pos}, progress: '
+                         f'{self.progress}')
+            return
         if self.book and self.book.dirty:
             logger.debug(f"Saving progress in '{self.book.title}'")
             data = {'persistent_pos': self.persistent_pos,
                     'chapter_pos': self.chapter_pos,
-                    'progress': self.progress}
-            self._library.save(self.book, data)
+                    'progress': self.progress}  # type: SaveData
+            self._library.save(self.book, data)  # type: ignore[arg-type]
 
     def switchToShelves(self):
-        self._controller.console.command_service.switch('shelves')
+        # type: (BookView) -> None
+        cs = self._controller.console.command_service
+        if cs is not None:
+            cs.switch('shelves')
 
     def gotoCursorPosition(self, move=False):
-        if QApplication.instance().keyboardModifiers() == Qt.ControlModifier\
-           or move:
+        # type: (BookView, bool) -> None
+        if self.chapter_pos is None:
+            return
+        if move or (self._keyboardModifiers() ==
+                    Qt.KeyboardModifier.ControlModifier):
             self.setChapter(self.viewed_chapter_pos, True)
             self.updateProgress()
         else:
@@ -514,15 +637,20 @@ class BookView(QWidget):
             self.display.centreAroundCursor()
 
     def updateToolbarActions(self):
+        # type: (BookView) -> None
         self.nchap_action.setDisabled(False)
         self.pchap_action.setDisabled(False)
+        if not self.book:
+            return
         if self.viewed_chapter_pos == len(self.book.chapters) - 1:
             self.nchap_action.setDisabled(True)
         if self.viewed_chapter_pos == 0:
             self.pchap_action.setDisabled(True)
 
     def updateProgress(self):
-        if not self.chapter_lens:
+        # type: (BookView) -> None
+        if not self.chapter_lens or not self.total_len or \
+           self.persistent_pos is None or self.book is None:
             return
 
         typed = self.persistent_pos
@@ -535,26 +663,58 @@ class BookView(QWidget):
 
     @property
     def font_size(self):
+        # type: (BookView) -> int
         return self.display.font_size
 
     @font_size.setter
     def font_size(self, val):
+        # type: (BookView, int) -> None
         self.display.font_size = val
 
     @property
     def font_family(self):
+        # type: (BookView) -> str
         return self.display.font_family
 
     @font_family.setter
     def font_family(self, val):
+        # type: (BookView, str) -> None
         self.display.font_family = val
 
     def onLastChapter(self):
-        return self.chapter_pos == len(self.book.chapters)-1
+        # type: (BookView) -> bool
+        if self.book is None:
+            logger.error('onLastChapter: self.book is None')
+            return True
+        n = len(self.book.chapters)
+        if n <= 0:
+            logger.warning(f'onLastChapter: <=0 chapters? ({n})')
+            return True
+        return self.chapter_pos == n-1
 
     def markComplete(self):
+        # type: (BookView) -> None
         self.cursor_pos = self.persistent_pos = len(self.tobetyped)
         self.setCursor()
         self.progress = 100
-        self.book.updateProgress(self.progress)
+        if self.book is not None:
+            self.book.updateProgress(self.progress)
+        else:
+            logger.error('markComplete: self.book is None')
         self.updateModeline()
+
+
+if TYPE_CHECKING:
+    from qt import (  # noqa: F401
+        QPaintEvent, QKeyEvent, QWheelEvent, QIcon, QAction, QGuiApplication)
+    from retype.ui import MainWin  # noqa: F401
+    from retype.controllers import MainController  # noqa: F401
+    from typing import Union, Callable, Dict, TypedDict, Never  # noqa: F401
+    from retype.extras.metatypes import (  # noqa: F401
+        SaveData, BookViewSettings, Chapter, SDict, RDict, Book)
+    Shortcut = Union[QKeySequence, QKeySequence.StandardKey, str, int]
+    ActionInfo = TypedDict(
+        'ActionInfo',
+        {'name': str, 'func': Callable[[], None], 'tooltip': str,
+         'shortcut': QKeySequence, 'icon': str, 'action': QAction},
+        total=False)

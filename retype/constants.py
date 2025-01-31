@@ -5,6 +5,8 @@ from sys import platform
 from ebooklib import VERSION as EBOOKLIB_VERSION
 from qt import QT_VERSION_STR, PYQT_VERSION_STR, QT_WRAPPER, sip
 
+from typing import TYPE_CHECKING
+
 from retype.resource_handler import root_path, getLibraryPath, getIncludePath
 from retype import __version__
 
@@ -20,6 +22,9 @@ default_steno_kdict = {
     'A': ['C'], 'O': ['V'], 'E': ['N'], 'U': ['M'],
     '*': ['G', 'H', 'T', 'Y']
 }
+
+default_font_family = 'Georgia'
+default_font_size = 16
 
 default_config = {
     "user_dir": root_path,
@@ -58,8 +63,8 @@ default_config = {
     },
     "bookview": {
         "save_font_size_on_quit": True,
-        "font_size": 16,
-        "font": "Georgia"
+        "font_size": default_font_size,
+        "font": default_font_family
     },
     "window": {
         "x": None,
@@ -73,7 +78,7 @@ default_config = {
     "steno": {
         "kdict": default_steno_kdict
     }
-}
+}  # type: Config
 
 if iswindows:
     default_config["hide_sysconsole"] = True
@@ -116,8 +121,10 @@ ACKNOWLEDGEMENTS = {
 
 
 def getBuilddate():
+    # type: () -> str | None
     builddate = None
-    if not getattr(sys, 'frozen', False) and not hasattr(sys, '_MEIPASS'):
+    if not getattr(sys, 'frozen', False) and not hasattr(  # type: ignore[misc]
+            sys, '_MEIPASS'):
         return builddate
     path = os.path.join(getIncludePath(), 'builddate.txt')
     if os.path.exists(path):
@@ -133,3 +140,7 @@ RETYPE_BUILDDATE_DESC = f' built @ {RETYPE_BUILDDATE_STR}' \
 RETYPE_REPOSITORY_URL = "https://www.github.com/plu5/retype"
 RETYPE_ISSUE_TRACKER_URL = "https://www.github.com/plu5/retype/issues"
 RETYPE_DOCUMENTATION_URL = "https://retype.readthedocs.io/"
+
+
+if TYPE_CHECKING:
+    from retype.extras.metatypes import Config  # noqa: F401

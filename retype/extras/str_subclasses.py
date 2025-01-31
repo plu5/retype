@@ -2,6 +2,8 @@ import logging
 from copy import deepcopy
 from collections import UserString
 
+from typing import TYPE_CHECKING
+
 
 logger = logging.getLogger('str_subclasses')
 # Suppress our rather verbose logs by default. They can be shown in tests by
@@ -13,9 +15,10 @@ class AnyStr(UserString):
     """A string that is equal to all `possibilities'. Each possibility
  should be equal in length."""
     def __init__(self, *possibilities):
+        # type: (AnyStr, str) -> None
         super().__init__(possibilities[0])
         self.base = possibilities[0]
-        self.possibilities = []
+        self.possibilities = []  # type: list[str]
 
         # Get rid of duplicate possibilities
         for possibility in possibilities:
@@ -23,12 +26,14 @@ class AnyStr(UserString):
                 self.possibilities.append(possibility)
 
     def __eq__(self, s):
+        # type: (AnyStr, object) -> bool
         if s in self.possibilities:
             return True
         return False
 
     def _add(self, s, order=1):
-        args = None
+        # type: (AnyStr, object, int) -> ManifoldStr
+        args = None  # type: None | tuple[object, object]
         if order == 1:
             args = (self, s)
         elif order == -1:
@@ -46,15 +51,18 @@ class AnyStr(UserString):
             # raise TypeError('can only concatenate str or AnyStr (not "{}")\
 # to AnyStr'.format(type(s)))
 
-    def __add__(self, s):
+    def __add__(self, s):  # type: ignore[override]
+        # type: (AnyStr, object) -> ManifoldStr
         return self._add(s, 1)
 
-    def __radd__(self, s):
+    def __radd__(self, s):  # type: ignore[override]
+        # type: (AnyStr, object) -> ManifoldStr
         return self._add(s, -1)
 
-    def join(self, iterable):
+    def join(self, iterable):  # type: ignore[override]
+        # type: (AnyStr, Iterable[str | UserString]) -> str | UserString
         """Not like the str method because we don’t put anything in between"""
-        result = None
+        result = ''  # type: str | UserString
         for s in iterable:
             if not result:
                 result = s
@@ -62,13 +70,14 @@ class AnyStr(UserString):
                 result += s
         return result
 
-    def __getitem__(self, i):
+    def __getitem__(self, i):  # type: ignore[override]
+        # type: (AnyStr, IndexOrSlice) -> AnyStr | str
         if isinstance(i, int):
             if i < 0:
                 self.__getitem__(len(self.base) + i)
             return AnyStr(*[possibility[i] for possibility
                             in self.possibilities])
-        elif isinstance(i, slice):
+        elif isinstance(i, slice):  # type: ignore[misc]  # slice[Any, ...]
             start, stop, step = i.indices(len(self))
             if step == 1 and start == 0 and stop == len(self):
                 return self
@@ -82,6 +91,7 @@ class AnyStr(UserString):
                             .format(type(i)))
 
     def __str__(self):
+        # type: (AnyStr) -> str
         # this is kind of weird but i am doing this for ease of use in manifold
         #  when we calculate combined. but it isn’t ideal, returning self.base
         #  would make more sense (but break our usage in manifold)
@@ -91,11 +101,13 @@ class AnyStr(UserString):
             return str(self.base)
 
     def __repr__(self):
+        # type: (AnyStr) -> str
         return (f'{self.__class__.__name__}'
-                f'{*self.possibilities,}')
+                f'{*self.possibilities, }')
 
-    def strip(self, chars=" ", directions=[1, -1]):
-        new = AnyStr(*self.possibilities)
+    def strip(self, chars=" ", directions=[1, -1]):  # type: ignore[override]
+        # type: (AnyStr, str, list[int]) -> AnyStr | str
+        new = AnyStr(*self.possibilities)  # type: AnyStr | str
         for i in directions:
             if i == 1:
                 sl = slice(1, len(self))
@@ -109,18 +121,18 @@ not {}".format(i))
             for char in chars:
                 while new and new[k] == char:
                     new = new[sl]
-                    if new is None:
-                        new = ''
-                        break
         return new
 
-    def lstrip(self, chars=" "):
+    def lstrip(self, chars=" "):  # type: ignore[override]
+        # type: (AnyStr, str) -> AnyStr | str
         return self.strip(chars, directions=[1])
 
-    def rstrip(self, chars=" "):
+    def rstrip(self, chars=" "):  # type: ignore[override]
+        # type: (AnyStr, str) -> AnyStr | str
         return self.strip(chars, directions=[-1])
 
     def isspace(self):
+        # type: (AnyStr) -> bool
         for possibility in self.possibilities:
             if possibility.strip() == '':
                 return True
@@ -129,6 +141,7 @@ not {}".format(i))
 
 class ManifoldStr(UserString):
     def __init__(self, data, rdict):
+        # type: (ManifoldStr, str, dict[str, list[str]]) -> None
         """A string structure that takes an str `data' and a dictionary
  `rdict' where each key is a substring to be replaced, and
  corresponding value is an array of possible replacements of equal length. Each
@@ -138,9 +151,10 @@ class ManifoldStr(UserString):
         self.base = data
         self.rdict = rdict
         # A dictionary of strs and AnyStrs with the index of where each begins
-        self.manifold = {0: data}
+        self.manifold = {0: data}  # type: dict[int, str | AnyStr]
 
         def makeCombined():
+            # type: () -> str
             keys = sorted([*self.manifold])
             combined = ''.join([str(self.manifold[key]) for key in keys])
             return combined
@@ -197,9 +211,10 @@ class ManifoldStr(UserString):
                      .format(self.manifold))
 
     def __eq__(self, s):
+        # type: (ManifoldStr, object) -> bool
         if s == self.data:
             return True
-        else:  # else check against substrings
+        elif isinstance(s, (str, UserString)):  # else check against substrings
             for i, substring in self.manifold.items():
                 if s[i: i + len(substring)] != substring:
                     return False
@@ -207,7 +222,8 @@ class ManifoldStr(UserString):
         return False
 
     def _add(self, s, order=1):
-        args = None
+        # type: (ManifoldStr, object, int) -> ManifoldStr
+        args = None  # type: tuple[object, object] | None
         if order == 1:
             args = (self, s)
         elif order == -1:
@@ -227,13 +243,16 @@ class ManifoldStr(UserString):
  (not "{}") to ManifoldStr'.format(type(s)))
 
     def __add__(self, s):
+        # type: (ManifoldStr, object) -> ManifoldStr
         return self._add(s, 1)
 
     def __radd__(self, s):
+        # type: (ManifoldStr, object) -> ManifoldStr
         return self._add(s, -1)
 
-    def join(self, iterable):
-        result = None
+    def join(self, iterable):  # type: ignore[override]
+        # type: (ManifoldStr, Iterable[str | UserString]) -> str | UserString
+        result = ''  # type: str | UserString
         for s in iterable:
             if not result:
                 result = s
@@ -241,7 +260,8 @@ class ManifoldStr(UserString):
                 result += s
         return result
 
-    def __getitem__(self, i):
+    def __getitem__(self, i):  # type: ignore[override]
+        # type: (ManifoldStr, IndexOrSlice) -> UserString | str
         if isinstance(i, int):
             if i < 0:
                 ni = len(self.data) + i
@@ -264,7 +284,7 @@ class ManifoldStr(UserString):
                 if substring is None:
                     raise KeyError
                 return substring[i - k]
-        elif isinstance(i, slice):
+        elif isinstance(i, slice):  # type: ignore[misc]
             start, stop, step = i.indices(len(self))
             if step == 1:
                 descending_keys = sorted([*self.manifold], reverse=True)
@@ -294,11 +314,13 @@ class ManifoldStr(UserString):
  not {}".format(type(i)))
 
     def __repr__(self):
+        # type: (ManifoldStr) -> str
         return (f'{self.__class__.__name__}'
                 f'({repr(self.base)}, {self.rdict})')
 
-    def strip(self, chars=" ", directions=[1, -1]):
-        new = deepcopy(self)
+    def strip(self, chars=" ", directions=[1, -1]):  # type: ignore[override]
+        # type: (ManifoldStr, str, list[int]) -> UserString | str
+        new = deepcopy(self)  # type: UserString | str
         for i in directions:
             if i == 1:
                 sl = slice(1, len(self))
@@ -310,28 +332,33 @@ class ManifoldStr(UserString):
                 raise ValueError("each direction is expected to be 1 or -1, \
 not {}".format(i))
             for char in chars:
-                while len(new) and new[k] == char:
+                while new and new[k] == char:
                     new = new[sl]
-                    if new is None:
-                        new = ''
-                        break
         return new
 
-    def lstrip(self, chars=" "):
+    def lstrip(self, chars=" "):  # type: ignore[override]
+        # type: (ManifoldStr, str) -> UserString | str
         return self.strip(chars, directions=[1])
 
-    def rstrip(self, chars=" "):
+    def rstrip(self, chars=" "):  # type: ignore[override]
+        # type: (ManifoldStr, str) -> UserString | str
         return self.strip(chars, directions=[-1])
 
     def isspace(self):
+        # type: (ManifoldStr) -> bool
         if self.strip() == '':
             return True
         return False
 
     @classmethod
-    def by_parts(cls, data, rdict, manifold):
+    def by_parts(cls,  # type: type[ManifoldStr]
+                 data,  # type: str
+                 rdict,  # type: dict[str, list[str]]
+                 manifold  # ManifoldStr
+                 ):
+        # type: (...) -> ManifoldStr
         new = cls.__new__(cls)
-        super().__init__(cls, data)
+        super().__init__(new, data)
         new.base = data
         new.rdict = rdict
         new.manifold = manifold
@@ -339,6 +366,7 @@ not {}".format(i))
 
     @classmethod
     def from_anystr_and_anystr(cls, anystr1, anystr2):
+        # type: (type[ManifoldStr], AnyStr, AnyStr) -> ManifoldStr
         data = anystr1.base + anystr2.base
         rdict = {anystr1.base: anystr1.possibilities[1:],
                  anystr2.base: anystr2.possibilities[1:]}
@@ -350,6 +378,7 @@ not {}".format(i))
 
     @classmethod
     def from_str_and_anystr(cls, str_, anystr, order=1):
+        # type: (type[ManifoldStr], str, AnyStr, int) -> ManifoldStr
         data = manifold = None
         if order == 1:
             data = str_ + anystr.base
@@ -370,10 +399,12 @@ not {}".format(i))
 
     @classmethod
     def from_anystr_and_str(cls, anystr, str_):
+        # type: (type[ManifoldStr], AnyStr, str) -> ManifoldStr
         return cls.from_str_and_anystr(str_, anystr, -1)
 
     @classmethod
     def from_ms_and_anystr(cls, ms, anystr, order=1):
+        # type: (type[ManifoldStr], ManifoldStr, AnyStr, int) -> ManifoldStr
         data = manifold = None
         if order == 1:
             data = ms.base + anystr.base
@@ -396,10 +427,12 @@ not {}".format(i))
 
     @classmethod
     def from_anystr_and_ms(cls, anystr, ms):
-        cls.from_ms_and_anystr(ms, anystr, -1)
+        # type: (type[ManifoldStr], AnyStr, ManifoldStr) -> ManifoldStr
+        return cls.from_ms_and_anystr(ms, anystr, -1)
 
     @classmethod
     def from_ms_and_str(cls, ms, str_, order=1):
+        # type: (type[ManifoldStr], ManifoldStr, str, int) -> ManifoldStr
         rdict = deepcopy(ms.rdict)
         if order == 1:
             return ms + ManifoldStr(str_, rdict)
@@ -411,12 +444,20 @@ not {}".format(i))
 
     @classmethod
     def from_str_and_ms(cls, str_, ms):
-        cls.from_ms_and_str(ms, str_, -1)
+        # type: (type[ManifoldStr], str, ManifoldStr) -> ManifoldStr
+        return cls.from_ms_and_str(ms, str_, -1)
 
     @classmethod
     def from_ms_and_ms(cls, ms1, ms2):
+        # type: (type[ManifoldStr], ManifoldStr, ManifoldStr) -> ManifoldStr
         data = ms1.base + ms2.base
         rdict = deepcopy(ms1.rdict)
         for k, v in ms2.rdict.items():
             rdict[k] = v
         return ManifoldStr(data, rdict)
+
+
+if TYPE_CHECKING:
+    from typing import (  # noqa: F401
+        Iterable, SupportsIndex)
+    IndexOrSlice = SupportsIndex | slice

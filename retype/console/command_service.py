@@ -1,5 +1,8 @@
 import logging
 
+from typing import TYPE_CHECKING
+
+
 logger = logging.getLogger(__name__)
 
 
@@ -36,7 +39,8 @@ commands_info = {
     'setChapter':
     {
         'desc': 'Set chapter to the chapter of the given numerical POS.\
- Ignored if none passed. If followed by \'m\' or \'move\', move the cursor too',
+ Ignored if none passed. If followed by \'m\' or \'move\', move the cursor\
+ too',
         'aliases': ['setchapter', 'chapter'],
         'args': 'POS [m / move ?]',
         # 'func': self.setChapter
@@ -67,12 +71,20 @@ commands_info = {
         'args': None,
         # 'func': self.help_
     }
-}
+}  # type: CommandsInfo
 
 
 class CommandService(object):
-    def __init__(self, console, book_view, switchView, loadBook, prompt,
-                 customise, about):
+    def __init__(self,  # type: CommandService
+                 console,  # type: Console
+                 book_view,  # type: BookView
+                 switchView,  # type: pyqtBoundSignal
+                 loadBook,  # type: pyqtBoundSignal
+                 prompt,  # type: str
+                 customise,  # type: pyqtBoundSignal
+                 about  # type: pyqtBoundSignal
+                 ):
+        # type: (...) -> None
         self._console = console
         self.book_view = book_view
         self.switchView = switchView
@@ -85,26 +97,40 @@ class CommandService(object):
         self._initCommandHistory()
 
     def _initCommands(self):
+        # type: (CommandService) -> None
         self.commands_info = commands_info
 
         for f in self.commands_info.keys():
-            self.commands_info[f]['func'] = getattr(self, f)
+            self.commands_info[f]['func'] = getattr(
+                self, f)  # type: ignore[misc]
 
         self.commands = {}
         for cmd in self.commands_info.values():
-            for alias in cmd['aliases']:
-                self.commands[alias] = cmd['func']
+            aliases = cmd.get('aliases')
+            if isinstance(aliases, list):
+                for alias in aliases:
+                    self.commands[alias] = cmd['func']
+
+    def _initCommandHistory(self):
+        # type: (CommandService) -> None
+        self.command_history = []  # type: list[str]
+        self.command_history_pos = None  # type: int | None
 
     def _handleCommands(self, text):
+        # type: (CommandService, str) -> None
         e = text[len(self.prompt):].lower()
         el = e.split(' ')  #
         if text.startswith(self.prompt) and el[0] in self.commands:
+            cmd = self.commands[el[0]]
+            if not hasattr(cmd, '__call__'):
+                logger.error(f'Uncallable cmd: {cmd}')
+                return
             if len(el) == 1:
-                self.commands[el[0]]()
+                cmd()
             else:
                 try:
                     logger.debug('Command arguments: {}'.format(el[1:]))
-                    self.commands[el[0]](*el[1:])
+                    cmd(*el[1:])
                 except TypeError:
                     logger.error('Invalid arguments')
 
@@ -120,11 +146,8 @@ class CommandService(object):
             self.command_history_pos = None
             self._console.clear()
 
-    def _initCommandHistory(self):
-        self.command_history = []
-        self.command_history_pos = None
-
     def commandHistoryUp(self):
+        # type: (CommandService) -> None
         if not self.command_history:
             return
         if not self.command_history_pos:
@@ -139,6 +162,7 @@ class CommandService(object):
                      (self.command_history_pos, self.command_history))
 
     def commandHistoryDown(self):
+        # type: (CommandService) -> None
         if not self.command_history_pos:
             return
         if self.command_history_pos == -1:
@@ -152,9 +176,11 @@ class CommandService(object):
                      (self.command_history_pos, self.command_history))
 
     def onBookView(self):
+        # type: (CommandService) -> bool
         return self.book_view.isVisible()
 
     def switch(self, view_name=None):
+        # type: (CommandService, str | None) -> None
         v = 0
         if view_name in ['shelf', 'shelves', 'main']:
             v = 1
@@ -166,15 +192,18 @@ class CommandService(object):
         self.switchView.emit(v)
 
     def customise(self):
+        # type: (CommandService) -> None
         self.customise_signal.emit()
 
     def load(self, book_id=0):
+        # type: (CommandService, int) -> None
         try:
             self.loadBook.emit(int(book_id))
         except ValueError:
             logger.error('{} is not a valid book_id'.format(book_id))
 
     def setChapter(self, pos=None, move=None):
+        # type: (CommandService, int | None, bool | None) -> None
         if pos is None:
             return
         if self.onBookView():
@@ -189,18 +218,31 @@ class CommandService(object):
                     self.book_view.previousChapter(m)
 
     def advanceLine(self):
-        self._console.highlighting_service.advanceLine()
+        # type: (CommandService) -> None
+        if self._console.highlighting_service is not None:
+            self._console.highlighting_service.advanceLine()
 
     def gotoCursorPosition(self, move=None):
+        # type: (CommandService, str | None) -> None
         if self.onBookView():
             m = True if move == 'move' else False
             self.book_view.gotoCursorPosition(m)
 
     def help_(self):
+        # type: (CommandService) -> None
         self.about_signal.emit('Console commands')
 
     def typespeed(self):
+        # type: (CommandService) -> None
         self.switchView.emit(3)
 
     def steno(self):
+        # type: (CommandService) -> None
         self.switchView.emit(4)
+
+
+if TYPE_CHECKING:
+    from qt import pyqtBoundSignal  # noqa: F401
+    from retype.ui import BookView  # noqa: F401
+    from retype.console import Console  # noqa: F401
+    from retype.extras.metatypes import CommandsInfo  # noqa: F401

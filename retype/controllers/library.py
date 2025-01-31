@@ -2,8 +2,11 @@ import os
 import json
 import logging
 from lxml.html import fromstring, builder, tostring, xhtml_to_html
+from lxml.etree import _Element
 from ebooklib import epub
 from qt import QTextBrowser
+
+from typing import TYPE_CHECKING
 
 from retype.extras.space import isspaceorempty
 from retype.extras.hashing import generate_file_md5
@@ -13,22 +16,26 @@ logger = logging.getLogger(__name__)
 
 class LibraryController(object):
     def __init__(self, user_dir, library_paths):
+        # type: (LibraryController, str, list[str]) -> None
         self.user_dir = user_dir
         self.library_paths = library_paths
         self._library_items = self.indexLibrary(library_paths)
-        self.books = None
-        self.save_file_contents = None
+        self.books = None  # type: dict[int, BookWrapper] | None
+        self.save_file_contents = None  # type: Save | None
 
     @property
     def user_dir(self):
+        # type: (LibraryController) -> str
         return self._user_dir
 
     @user_dir.setter
     def user_dir(self, value):
+        # type: (LibraryController, str) -> None
         self._user_dir = value
         self.save_abs_path = os.path.join(value, 'save.json')
 
     def indexLibrary(self, library_paths):
+        # type: (LibraryController, list[str]) -> dict[int, LibraryItem]
         book_checksum_list = []
         library_items = {}
         idn = 0
@@ -46,15 +53,17 @@ class LibraryController(object):
         return library_items
 
     def instantiateBooks(self):
+        # type: (LibraryController) -> None
         self.books = {}
         for idn, item in self._library_items.items():
             book = BookWrapper(item, self.load(item))
             self.books[idn] = book
 
     def setBook(self, book_id, book_view, switchView):
+        # type: (LibraryController, int, BookView, pyqtBoundSignal) -> None
         book_view.maybeSave()
 
-        if book_id in self.books:
+        if self.books and book_id in self.books:
             book = self.books[book_id]
             logger.info("Loading book {}: {}".format(book_id, book.title))
         else:
@@ -69,6 +78,7 @@ class LibraryController(object):
         book_view.display.centreAroundCursor()
 
     def save(self, book, data):
+        # type: (LibraryController, BookWrapper, SaveData) -> None
         book.save_data = data
 
         if not os.path.exists(self._user_dir):
@@ -87,14 +97,15 @@ class LibraryController(object):
             json.dump(save, f, indent=2)
 
     def migrateV1Save(self, save):
+        # type: (LibraryController, Save) -> Save
         book_checksum_list = []
         new_save = {}
         for key in save:
             checksum = None
             if key.lower().endswith(".epub"):
                 if (not os.path.exists(key)):
-                    logger.warning(f"Save file contains v1 format save data for\
- a file that cannot be found: {key}")
+                    logger.warning("Save file contains v1 format save data "
+                                   f"for a file that cannot be found: {key}")
                     # Not a checksum; can’t generate it as we cannot find the
                     #  file, but setting it anyway in order that we keep the
                     #  save entry rather than delete it from the save. This
@@ -109,21 +120,24 @@ class LibraryController(object):
             else:  # assume it’s a checksum
                 checksum = key
             if checksum in book_checksum_list:
-                logger.warning(f"Save file contains several entries for the same\
- book (checksum {checksum}). The lowest one in the file will be used")
+                logger.warning("Save file contains several entries for the "
+                               f"same book (checksum {checksum}). The lowest "
+                               "one in the file will be used")
             else:
                 book_checksum_list.append(checksum)
             new_save[checksum] = save[key]
         return new_save
 
     def addFriendlyName(self, data, path):
+        # type: (LibraryController, SaveData, str) -> None
         data['friendly_name'] = os.path.basename(path)
 
     def loadSaveFile(self):
+        # type: (LibraryController) -> Save
         if os.path.exists(self.save_abs_path):
             logger.info(f'Read save: {self.save_abs_path}')
             with open(self.save_abs_path, 'r') as f:
-                save = json.load(f)
+                save = json.load(f)  # type: Save
         else:
             logger.debug(
                 f'Save path {self.save_abs_path} not found.\n'
@@ -135,6 +149,7 @@ class LibraryController(object):
         return save
 
     def load(self, item):
+        # type: (LibraryController, LibraryItem) -> SaveData | None
         save = None
         if self.save_file_contents is not None:
             save = self.save_file_contents
@@ -151,6 +166,7 @@ class LibraryController(object):
 
 class LibraryItem:
     def __init__(self, idn, path, checksum):
+        # type: (LibraryItem, int, str, str) -> None
         self.idn = idn
         self.path = path
         self.checksum = checksum
@@ -158,27 +174,28 @@ class LibraryItem:
 
 class BookWrapper(object):
     def __init__(self, library_item, save_data=None):
+        # type: (BookWrapper, LibraryItem, SaveData | None) -> None
         self._library_item = library_item
         self.path = library_item.path
         self.idn = library_item.idn
         self.checksum = library_item.checksum
         self._book = epub.read_epub(self.path, options={'ignore_ncx': True})
         self.title = self._book.title
-        self._chapters = None
-        self._images = None
-        self._author = None
-        self._cover = None
-        self._images = []
-        self.documents = {}
-        self._unparsed_chapters = []
+        self._chapters = []  # type: list[Chapter]
+        self._images = []  # type: list[epub.EpubImage]
+        self._author = ''
+        self._cover = None  # type: epub.EpubCover | epub.EpubImage | None
+        self.documents = {}  # type: dict[str, epub.EpubHtml]
+        self._unparsed_chapters = []  # type: list[epub.EpubHtml]
         self.save_data = save_data
         self.dirty = False
-        self.progress = save_data['progress'] if save_data else None
-        self.progress_subscribers = []
+        self.progress = save_data['progress'] if save_data else 0.0
+        self.progress_subscribers = []  # type: list[Callable[[float], None]]
 
     def _parseChaptersContent(self, chapters):
+        # type: (BookWrapper, list[epub.EpubHtml]) -> list[Chapter]
         parsed_chapters = []
-        self.chapter_lookup = {}
+        self.chapter_lookup = {}  # type: dict[str, int]
         for i, chapter in enumerate(chapters):
             parsed_chapters.append(self.__parseChapterContent(chapter))
             self.chapter_lookup[chapter.file_name.split('/')[-1]] = i
@@ -186,6 +203,7 @@ class BookWrapper(object):
         return parsed_chapters
 
     def __parseChapterContent(self, chapter):
+        # type: (BookWrapper, epub.EpubHtml) -> Chapter
         raw = chapter.content
         # FIXME: This ugly workaround is the only way I found to make lxml
         #  use the correct encoding when an lxml declaration is absent from
@@ -196,12 +214,18 @@ class BookWrapper(object):
 
         # Replace xml svg elements with valid html
         svg_elements = tree.xpath('//svg')
-        if svg_elements:
+        if isinstance(svg_elements, list):
             for svg in svg_elements:
-                if not svg.xpath('//image'):
+                if not isinstance(svg, _Element):
                     continue
-                image = svg.xpath('//image')[0]
-                attrs = {item[0]: item[1] for item in image.items()}
+                imgs = svg.xpath('//image')
+                if not isinstance(imgs, list):
+                    continue
+                imaged = imgs[0]
+                if not isinstance(imaged, _Element):
+                    continue
+                attrs = {item[0]: item[1] for item in imaged.items()
+                         }  # type: dict[str, str]
                 try:
                     href = attrs['xlink:href']
                     del attrs['xlink:href']
@@ -209,13 +233,16 @@ class BookWrapper(object):
                 except AttributeError:
                     pass
                 proper_img = builder.IMG(**attrs)
-                svg.getparent().replace(svg, proper_img)
+                parent = svg.getparent()
+                if parent is not None:
+                    parent.replace(svg, proper_img)
 
         # Ensure figure elements appear in their own line
         figure_elements = tree.xpath('//figure')
-        if figure_elements:
+        if isinstance(figure_elements, list):
             for figure in figure_elements:
-                figure.addprevious(figure.makeelement('div'))
+                if isinstance(figure, _Element):
+                    figure.addprevious(figure.makeelement('div'))
 
         xhtml_to_html(tree)
         html = tostring(tree, method='xml', encoding='unicode')
@@ -226,13 +253,16 @@ class BookWrapper(object):
         links = tree.xpath('//a/@href')
         image_links = tree.xpath('//img/@src')
 
-        images = []
-        for image_link in image_links:
-            for image in self._images:
-                if image_link.lstrip('./') in image.file_name:
-                    images.append({'item': image,
-                                   'link': image_link,
-                                   'raw': image.content})
+        images = []  # type: list[ImageData]
+        if isinstance(image_links, list):
+            for image_link in image_links:
+                for image in self._images:
+                    if not isinstance(image_link, str):
+                        continue
+                    if image_link.lstrip('./') in image.file_name:
+                        images.append({'item': image,
+                                       'link': image_link,
+                                       'raw': image.content})
 
         # We to store the length of the plain text of all chapters for
         #  progress-calculation purposes
@@ -245,26 +275,30 @@ class BookWrapper(object):
 
     @property
     def chapters(self):
+        # type: (BookWrapper) -> list[Chapter]
         if not self._unparsed_chapters:
             self._getItems(self._book)
         if not self._chapters:
             self._chapters = self._parseChaptersContent(
                 self._unparsed_chapters)
-        return self._chapters
+        return self._chapters or []
 
     @property
     def images(self):
+        # type: (BookWrapper) -> list[epub.EpubImage]
         if not self._images:
             self._getItems(self._book)
         return self._images
 
     @property
     def cover(self):
+        # type: (BookWrapper) -> epub.EpubCover | epub.EpubImage | None
         if not self._cover:
             self._getItems(self._book)
         return self._cover
 
     def _getItems(self, book):
+        # type: (BookWrapper, epub.EpubBook) -> None
         logger.debug("_getItems called for '{}'".format(book.title))
 
         # Reset lists
@@ -273,18 +307,18 @@ class BookWrapper(object):
 
         # Get items
         for item in book.get_items():
-            if type(item) is epub.EpubCover:
+            if isinstance(item, epub.EpubCover):
                 self._cover = item
-            if type(item) is epub.EpubImage:
+            elif isinstance(item, epub.EpubImage):
                 if 'cover' in item.id and not self._cover:
                     self._cover = item
                 self._images.append(item)
-            if type(item) is epub.EpubHtml:
+            elif isinstance(item, epub.EpubHtml):
                 self.documents[item.id] = item
 
         # Get chapters
-        for item in book.spine:
-            uid = item[0]
+        for spine_item in book.spine:
+            uid = spine_item[0]
             if uid in self.documents.keys():
                 self._unparsed_chapters.append(self.documents[uid])
 
@@ -298,6 +332,7 @@ class BookWrapper(object):
 
     @property
     def author(self):
+        # type: (BookWrapper) -> str
         book = self._book
         if not self._author:
             for namespace in book.metadata.keys():
@@ -308,7 +343,16 @@ class BookWrapper(object):
         return self._author
 
     def updateProgress(self, progress):
+        # type: (BookWrapper, float) -> None
         self.progress = progress
 
         for subscriber in self.progress_subscribers:
             subscriber(progress)
+
+
+if TYPE_CHECKING:
+    from typing import Callable  # noqa: F401
+    from qt import pyqtBoundSignal  # noqa: F401
+    from retype.ui import BookView, Cover  # noqa: F401
+    from retype.extras.metatypes import (  # noqa: F401
+        SaveData, Save, ImageData, Chapter)

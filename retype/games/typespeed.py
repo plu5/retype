@@ -4,6 +4,8 @@ import logging
 from enum import Enum
 from qt import QWidget, QSize, QPainter, QTimer, QFontMetrics, Qt, pyqtSignal
 
+from typing import TYPE_CHECKING
+
 from retype.ui import BookView
 from retype.ui.painting import textPixmap
 from retype.services.theme import theme, C, Theme
@@ -45,14 +47,18 @@ class State(Enum):
 
 class TypespeedBook:
     def __init__(self, html='', titleext=''):
+        # type: (TypespeedBook, str, str) -> None
         self.path = ''
         self.title = 'Typespeed' + titleext
-        self.progress = 0
+        self.progress = 0.0
         s = html
-        self.chapters = [{'len': len(s), 'html': s, 'plain': s, 'images': []}]
+        self.chapters = [{'len': len(s), 'html': s, 'plain': s, 'images': []}
+                         ]  # type: list[Chapter]
+        self.chapter_lookup = {}  # type: dict[str, int]
         self.dirty = False
 
     def updateProgress(self, *args):
+        # type: (TypespeedBook, object) -> None
         pass
 
 
@@ -74,11 +80,12 @@ class TypespeedGame(QWidget):
     scoreChanged = pyqtSignal()
 
     def __init__(self, display, console, parent):
+        # type: (TypespeedGame, BookDisplay, Console, QWidget | None) -> None
         super().__init__(parent)
         (self.c_u0, self.c_u1, self.c_u2, self.c_r0, self.c_r1, self.c_r2,
          self.c_r3, self.c) = self._loadTheme()
         self.display = display
-        self.font = display.font
+        self._font = display._font
         self._console = console
         console.subscribe(console.Ev.keypress, self._handleKeyPress)
         display.fontChanged.connect(self._setSizeDependentStuff)
@@ -104,9 +111,11 @@ class TypespeedGame(QWidget):
         self._resetVariables()
 
     def _loadTheme(self):
+        # type: (TypespeedGame) -> tuple[C, ...]
         return tuple(Theme.get(c) for c in selectors.values())
 
     def _resetVariables(self):
+        # type: (TypespeedGame) -> None
         self.initial = True
         self.started = self.paused = False
         self.over = False
@@ -123,7 +132,8 @@ class TypespeedGame(QWidget):
         self._clearSlots()
 
     def _clearSlots(self):
-        self.word_slots = []
+        # type: (TypespeedGame) -> None
+        self.word_slots = []  # type: list[Slot]
         for i in range(self.num_slots):
             self.word_slots.append(
                 {'free': True, 'text': '', 'cx': self.cx_start,
@@ -131,14 +141,16 @@ class TypespeedGame(QWidget):
                  'urgency': WordUrgency.low})
 
     def _clearSlot(self, slot):
+        # type: (TypespeedGame, Slot) -> None
         slot['text'] = ''
         slot['cx'] = self.cx_start
-        slot['x'] = self.cx_start * self.x_increment
+        slot['x'] = int(self.cx_start * self.x_increment)
         slot['free'] = True
         slot['urgency'] = WordUrgency.low
         self.update()
 
     def _setSizeDependentStuff(self, font=False):
+        # type: (TypespeedGame, bool) -> None
         """Set positions and font size based on widget size.
 This game is designed to adapt to the width and height it has available, while
  still behaving the same as the original typespeed, which had a constant width
@@ -153,22 +165,24 @@ Font adjustment: In order to stay consistent with typespeed, we need to have 22
         self.x_increment = self.cx_increment * (self.w * self.x_ratio)
         self.hper = int(self.h / self.num_slots)
         if font:
-            self.font.setPixelSize(self.hper)
-        self.fm = QFontMetrics(self.font)
+            self._font.setPixelSize(self.hper)
+        self.fm = QFontMetrics(self._font)
         self.edge = 79 * self.x_increment - (
             4 * self.x_increment - 4 * self.fm.averageCharWidth())
         y = 0
         for s in self.word_slots:
-            s['x'] = s['cx'] * self.x_increment
+            s['x'] = int(s['cx'] * self.x_increment)
             s['y'] = y
             y += self.hper
 
     def _isFontBad(self):
+        # type: (TypespeedGame) -> bool
         h = self.height()
-        fm = QFontMetrics(self.display.font)
+        fm = QFontMetrics(self.display._font)
         return fm.height() * self.num_slots > h
 
     def resizeEvent(self, e):
+        # type: (TypespeedGame, QResizeEvent) -> None
         super().resizeEvent(e)
         if self.initial:
             self.initial = False
@@ -176,10 +190,12 @@ Font adjustment: In order to stay consistent with typespeed, we need to have 22
         self._setSizeDependentStuff(True)
 
     def wheelEvent(self, e):
+        # type: (TypespeedGame, QWheelEvent) -> None
         super().wheelEvent(e)
         self.display.wheelEvent(e)
 
     def showEvent(self, e):
+        # type: (TypespeedGame, QShowEvent) -> None
         super().showEvent(e)
         self._setSizeDependentStuff(self._isFontBad())
         self._console.textChanged.connect(self._handleTextChanged)
@@ -187,44 +203,51 @@ Font adjustment: In order to stay consistent with typespeed, we need to have 22
             self.resume()
 
     def hideEvent(self, e):
+        # type: (TypespeedGame, QHideEvent) -> None
         super().hideEvent(e)
         self._console.textChanged.disconnect(self._handleTextChanged)
         if self.started:
             self.pause()
 
     def start(self, words):
+        # type: (TypespeedGame, list[str]) -> None
         self._resetVariables()
         self.words = words
         self.resume()
 
     def stop(self):
+        # type: (TypespeedGame) -> None
         self.timer.stop()
         self.started = False
 
     def resume(self):
+        # type: (TypespeedGame) -> None
         self.timer.start(10)  # every 100th of a second
         self.started = True
         self.paused = False
 
     def pause(self):
+        # type: (TypespeedGame) -> None
         self.stop()
         self.paused = True
 
     def _gameLoop(self):
+        # type: (TypespeedGame) -> None
         self.hundredth_seconds += 1
         if self.hundredth_seconds >= (self.prev_hundredth_seconds +
                                       (100.0 / self.rate) + self.extra_delay):
             self.prev_hundredth_seconds = self.hundredth_seconds
             self._moveWords()
             self._adjustRateAndMaybeAddWord()
-            self.cps = ((self.score + self.wordswritten) * 100.0 /
-                        self.hundredth_seconds)
+            self.cps = int((self.score + self.wordswritten) * 100.0 /
+                           self.hundredth_seconds)
             self.wpm = self.cps * 12
             self.update()
         if self.misses >= Rules.misses:
             self._gameOver()
 
     def _countPartial(self):
+        # type: (TypespeedGame) -> None
         text = self._console.text()
         length = len(text)
         for s in self.word_slots:
@@ -235,6 +258,7 @@ Font adjustment: In order to stay consistent with typespeed, we need to have 22
                     self._scoreChange()
 
     def _addNewWord(self):
+        # type: (TypespeedGame) -> bool
         """Insert a random new word on the screen that does not already exist.
 Returns True on success or False on failure.
 Can result in a very long loop when there are many words on field and only a
@@ -256,16 +280,17 @@ few words in word list (no duplicates allowed)."""
             word = random.choice(self.words)
         self.word_slots[slot]['text'] = word
         self.word_slots[slot]['free'] = False
-        self.word_slots[slot]['x'] = self.cx_start * self.x_increment
+        self.word_slots[slot]['x'] = int(self.cx_start * self.x_increment)
         return True
 
     def _moveWords(self):
+        # type: (TypespeedGame) -> None
         """Move words across the screen, removing them if they reach the right
  side."""
         for s in self.word_slots:
             if s['free'] is False:
                 s['cx'] += self.cx_increment
-                s['x'] = s['cx'] * self.x_increment
+                s['x'] = int(s['cx'] * self.x_increment)
 
                 x = s['x']
                 length = len(s['text'])
@@ -289,6 +314,7 @@ few words in word list (no duplicates allowed)."""
         self._scoreChange()
 
     def _adjustRateAndMaybeAddWord(self):
+        # type: (TypespeedGame) -> None
         """Set rate according to current length of all visible words.
 If words with too few chars are on screen, throw in another word."""
         wc = length = 0
@@ -300,21 +326,24 @@ If words with too few chars are on screen, throw in another word."""
         if (length < self.score / 4 + 1 or wc < Rules.minwords):
             self._addNewWord()
 
-        self.rate = self.score / Rules.step + Rules.minspeed
+        self.rate = int(self.score / Rules.step + Rules.minspeed)
         if Rules.maxspeed and self.rate > Rules.maxspeed:
             self.rate = Rules.maxspeed
 
     def _updateRank(self):
+        # type: (TypespeedGame) -> None
         rank = 0
         if self.score > 0:
             rank = min(int(self.score / 100 + 1), 10)
         self.rank = ranks[rank]
 
     def _scoreChange(self):
+        # type: (TypespeedGame) -> None
         self._updateRank()
         self.scoreChanged.emit()
 
     def _enterAttempt(self, text):
+        # type: (TypespeedGame, str) -> None
         found_word = False
         length = len(text)
         if not length:
@@ -332,6 +361,7 @@ If words with too few chars are on screen, throw in another word."""
             self.presses += 1
 
     def _getTyporank(self, ratio):
+        # type: (TypespeedGame, int) -> str
         typorank = 0
         r = {2: 2, 3: 4, 4: 6, 5: 8, 6: 11, 7: 15, 8: 20, 9: 30, 10: 50}
 
@@ -350,11 +380,12 @@ If words with too few chars are on screen, throw in another word."""
         return typoranks[typorank]
 
     def _gameOver(self):
+        # type: (TypespeedGame) -> None
         self.timer.stop()
         self.typo_ratio = 0
         if self.presses:
-            self.typo_ratio = (1 - (self.score + self.wordswritten) /
-                               (self.presses + self.wordswritten)) * 100
+            self.typo_ratio = int(1 - (self.score + self.wordswritten) /
+                                  (self.presses + self.wordswritten)) * 100
             self.typorank = self._getTyporank(self.typo_ratio)
         else:
             self.typorank = typoranks[0]
@@ -373,6 +404,7 @@ If words with too few chars are on screen, throw in another word."""
         self._console.clear()
 
     def _handleKeyPress(self, e):
+        # type: (TypespeedGame, QKeyEvent) -> None
         if not self.started or self.isHidden():
             return
         if e.key() in [Qt.Key.Key_Return, Qt.Key.Key_Enter, Qt.Key.Key_Space]:
@@ -382,18 +414,22 @@ If words with too few chars are on screen, throw in another word."""
             self.presses += 1
 
     def _handleTextChanged(self, text):
+        # type: (TypespeedGame, str) -> None
         if not self.started:
             return
         if text == " ":
             self._console.setText("")
 
     def sizeHint(self):
+        # type: (TypespeedGame) -> QSize
         return QSize(100, 100)
 
     def minimumSizeHint(self):
+        # type: (TypespeedGame) -> QSize
         return self.sizeHint()
 
     def _cRank(self):
+        # type: (TypespeedGame) -> C
         c = self.c
         if self.score < 400:
             c = self.c_r0
@@ -406,6 +442,7 @@ If words with too few chars are on screen, throw in another word."""
         return c
 
     def _cTyporank(self):
+        # type: (TypespeedGame) -> C
         c = self.c
         if self.typo_ratio < 6:
             c = self.c_r0
@@ -418,6 +455,7 @@ If words with too few chars are on screen, throw in another word."""
         return c
 
     def paintEvent(self, e):
+        # type: (TypespeedGame, QPaintEvent) -> None
         super().paintEvent(e)
         if not self.started:
             return
@@ -426,11 +464,11 @@ If words with too few chars are on screen, throw in another word."""
         qp.begin(self)
         draw = qp.drawPixmap
 
-        font = self.font
+        font = self._font
         qp.fillRect(0, 0, w, h, self.c.bg())
 
         if self.over:
-            x = self.x_increment * 20
+            x = int(self.x_increment * 20)
             y = self.hper * 3
             for a, b in self.game_over_lines.items():
                 size = self.fm.size(Qt.TextFlag.TextSingleLine, a)
@@ -438,8 +476,8 @@ If words with too few chars are on screen, throw in another word."""
                     draw(x, y, textPixmap(
                         a, size.width(), size.height(), font, self.c.fg()))
                 if len(b):
-                    x2 = x + self.x_increment * 20
-                    x2_min = x + size.width() + self.x_increment
+                    x2 = int(x + self.x_increment * 20)
+                    x2_min = int(x + size.width() + self.x_increment)
                     if x2 < x2_min:
                         x2 = x2_min
                     size = self.fm.size(Qt.TextFlag.TextSingleLine, b)
@@ -451,8 +489,8 @@ If words with too few chars are on screen, throw in another word."""
                     draw(x2, y, textPixmap(
                         b, size.width(), size.height(), font, c.fg()))
                 else:
-                    y += self.hper * 1.2
-                y += self.hper * 1.2
+                    y += int(self.hper * 1.2)
+                y += int(self.hper * 1.2)
             return
 
         highest_x = -2
@@ -466,22 +504,28 @@ If words with too few chars are on screen, throw in another word."""
                 highest_x_width = size.width()
                 highest_x_length = len(word)
             u = s.get('urgency')
-            c = self.c_u2.fg() if u == WordUrgency.high else (
+            cl = self.c_u2.fg() if u == WordUrgency.high else (
                 self.c_u1.fg() if u == WordUrgency.mid else self.c_u0.fg())
             if s['free'] is False and x < w:
                 draw(x, y, textPixmap(
-                    word, size.width(), size.height(), font, c))
+                    word, size.width(), size.height(), font, cl))
 
         # draw edge
-        x = self.edge
+        x = int(self.edge)
         if highest_x > -2:
-            x = self.edge = 79 * self.x_increment - (
-                highest_x_length * self.x_increment - highest_x_width)
+            x = self.edge = int(79 * self.x_increment - (
+                highest_x_length * self.x_increment - highest_x_width))
         qp.fillRect(x, 0, 1, self.h, self.c_u2.fg())
 
 
 class TypespeedView(BookView):
-    def __init__(self, main_win, main_controller, bookview_settings, user_dir):
+    def __init__(self,  # type: TypespeedView
+                 main_win,  # type: MainWin
+                 main_controller,  # type: MainController
+                 bookview_settings,  # type: BookViewSettings
+                 user_dir  # type: str
+                 ):
+        # type: (...) -> None
         super().__init__(main_win, main_controller,
                          bookview_settings=bookview_settings, parent=main_win)
         self._console = main_controller.console
@@ -507,8 +551,8 @@ class TypespeedView(BookView):
  screen")
         self.modeline.v_group.setToolTip("")
 
-        self.word_lists = {}
-        self.words = []
+        self.word_lists = {}  # type: dict[str, WordListData]
+        self.words = []  # type: list[str]
         self._populateWordLists(
             getTypespeedWordsPath(), getTypespeedWordsPath(user_dir))
         self.game = TypespeedGame(self.display, self._console, self)
@@ -518,20 +562,25 @@ class TypespeedView(BookView):
         self._stageSelectionScreen()
 
     def maybeSave(self):
+        # type: (TypespeedView) -> None
         pass
 
-    def setCursor(self):
+    def setCursor(self):  # type: ignore[override]
+        # type: (TypespeedView) -> None
         pass
 
     def showEvent(self, e):
+        # type: (TypespeedView, QShowEvent) -> None
         super().showEvent(e)
         self._console.returnPressed.connect(self._handleEntry)
 
     def hideEvent(self, e):
+        # type: (TypespeedView, QHideEvent) -> None
         super().hideEvent(e)
         self._console.returnPressed.disconnect(self._handleEntry)
 
     def _populateWordLists(self, app_path, user_path):
+        # type: (TypespeedView, str, str) -> None
         self.word_lists = {}
         paths = [app_path, user_path] if app_path != user_path else [app_path]
         for path in paths:
@@ -542,12 +591,12 @@ class TypespeedView(BookView):
                             continue
                         key = f[6:]
                         p = os.path.join(root, f)
-                        word_list = {'path': p}
+                        word_list = {'path': p}  # type: WordListData
                         try:
                             with open(p, 'r', encoding='utf-8') as _f:
                                 words = _f.read().splitlines()
                                 if not len(words):
-                                    logger.warn(f'Empty word list {p}')
+                                    logger.warning(f'Empty word list {p}')
                                     continue
                                 name = words[0]
                                 word_list['name'] = name
@@ -562,16 +611,17 @@ class TypespeedView(BookView):
                                    path == user_path:
                                     key += ' (user dir)'
                                 self.word_lists[key] = word_list
-                        except OSError:
-                            logger.error(f'Cannot read word list file {p}')
-                            continue
-                        except UnicodeDecodeError:
-                            logger.error(f'Cannot decode word list file {p}')
+                        except OSError as e:
+                            logger.error(f'Cannot read word list file {p}', e)
+                        except UnicodeDecodeError as e:
+                            logger.error(f'Cannot decode word list file {p}',
+                                         e)
                 break  # do not recurse
         # sort alphabetically
         self.word_lists = dict(sorted(self.word_lists.items()))
 
     def _stageSelectionScreen(self, ended=False):
+        # type: (TypespeedView, bool) -> None
         self.state = State.stage_selection
         lines = []
         lines.append("<h1>Typespeed</h1>")
@@ -584,34 +634,41 @@ class TypespeedView(BookView):
         self.setBook(TypespeedBook(''.join(lines)))
 
     def _start(self):
+        # type: (TypespeedView) -> None
         self._setDisplayGeom()
         self.game.start(self.words)
         self.game.show()
 
     def _stop(self):
+        # type: (TypespeedView) -> None
         self.game.stop()
         self.game.hide()
 
     def _setStage(self, word_list):
+        # type: (TypespeedView, WordListData) -> None
         html = f"<p><i>Enter {self.return_entry} to back out to\
  word list selection.</i></p>"
-        self.setBook(TypespeedBook(html, f': {word_list.get("name")}'))
+        self.setBook(TypespeedBook(html, f': {word_list["name"]}'))
         self.state = State.in_progress
-        self.words = word_list.get('words')
+        self.words = word_list['words']
         self._start()
 
     def _setDisplayGeom(self):
-        doc_h = self.display.document().size().height()
-        y = self.display.parent().y()
+        # type: (TypespeedView) -> None
+        doc_h = int(self.display.document().size().height())
+        p = self.display.parent()
+        y = p.y()  # type: int  # type: ignore[attr-defined]
         self.game.setGeometry(
             self.display.x(), y + doc_h,
             self.display.width(), self.display.height() - doc_h)
 
     def resizeEvent(self, e):
+        # type: (TypespeedView, QResizeEvent) -> None
         super().resizeEvent(e)
         self._setDisplayGeom()
 
     def _handleEntry(self):
+        # type: (TypespeedView) -> None
         text = self._console.text()
         if self.state == State.stage_selection:
             matching = self.word_lists.get(text)
@@ -625,6 +682,9 @@ class TypespeedView(BookView):
                 self._stageSelectionScreen()
 
     def updateModeline(self):
+        # type: (TypespeedView) -> None
+        if self.book is None:
+            return
         self.modeline.update_(
             title=self.book.title, path="", line_pos=self.game.score,
             cursor_pos=self.game.rank,
@@ -633,3 +693,22 @@ class TypespeedView(BookView):
         self.modeline.chap_total_dupe.setText("")
         self.modeline.cursor_pos.setStyleSheet(
             f'color:{self.game._cRank().fg.value}')
+
+
+if TYPE_CHECKING:
+    from qt import (  # noqa: F401
+        QShowEvent, QHideEvent, QResizeEvent, QKeyEvent, QWheelEvent,
+        QPaintEvent)
+    from retype.ui import MainWin  # noqa: F401
+    from retype.ui.book_view import BookDisplay  # noqa: F401
+    from retype.controllers import MainController  # noqa: F401
+    from retype.console import Console  # noqa: F401
+    from retype.extras.metatypes import BookViewSettings, Chapter  # noqa: F401
+    from typing import TypedDict
+    Slot = TypedDict(
+        'Slot',
+        {'free': bool, 'text': str, 'cx': int, 'x': int, 'y': int,
+         'urgency': WordUrgency})
+    WordListData = TypedDict(
+        'WordListData',
+        {'path': str, 'name': str, 'words': list[str]}, total=False)

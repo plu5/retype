@@ -12,11 +12,12 @@ NOTE:
 * Unimplemented signals: editingFinished, inputRejected"""
 
 import sys
-from qt import (QPlainTextEdit, QWidget, QKeySequence,
-                pyqtSlot, pyqtSignal, QFocusEvent, QShortcut, QTextOption,
-                QTextCursor, Qt, QVBoxLayout,
+from qt import (QPlainTextEdit, QWidget, QKeySequence, pyqtSlot, pyqtSignal,
+                QShortcut, QTextOption, QTextCursor, Qt, QVBoxLayout,
                 # for the demo only:
                 QApplication, QLineEdit)
+
+from typing import TYPE_CHECKING
 
 
 class LineEdit(QWidget):
@@ -26,9 +27,10 @@ class LineEdit(QWidget):
     selectionChanged = pyqtSignal()
     cursorPositionChanged = pyqtSignal(int, int)
 
-    def __init__(self, parent=None, *args):
+    def __init__(self, parent=None, *args, **kwargs):
+        # type: (LineEdit, QWidget | None, Any, Any) -> None
         super().__init__(parent)
-        self.edit = _LineEdit(self, *args)
+        self.edit = _LineEdit(self, *args, **kwargs)  # type: ignore[misc]
         self.edit.textChanged.connect(self._emitTextChanged)
         self.edit.returnPressed.connect(self.returnPressed)
         self.edit.selectionChanged.connect(self.selectionChanged)
@@ -42,30 +44,38 @@ class LineEdit(QWidget):
         layout.addWidget(self.edit)
 
     def setAccessibleName(self, name):
+        # type: (LineEdit, str) -> None
         self.edit.setAccessibleName(name)
 
     def setStyleSheet(self, ss):
+        # type: (LineEdit, str) -> None
         self.edit.setStyleSheet(ss)
 
-    def setSizePolicy(self, hsp, vsp):
-        self.edit.setSizePolicy(hsp, vsp)
-        super().setSizePolicy(hsp, vsp)
+    def setSizePolicy(self, *args):
+        # type: (LineEdit, QSizePolicy | QSizePolicy.Policy) -> None
+        self.edit.setSizePolicy(*args)  # type: ignore[arg-type]
+        super().setSizePolicy(*args)  # type: ignore[arg-type]
 
     def keyPressEvent(self, e):
+        # type: (LineEdit, QKeyEvent) -> None
         if not self.passed:
             self.edit.transferFocus(e)
         self.passed = False
 
     def text(self):
+        # type: (LineEdit) -> str
         return self.edit.toPlainText()
 
     def setText(self, text):
+        # type: (LineEdit, str) -> None
         self.edit.setPlainText(text)
 
     def setPlainText(self, text):
+        # type: (LineEdit, str) -> None
         self.edit.setPlainText(text)
 
     def _emitTextChanged(self):
+        # type: (LineEdit) -> None
         text = self.edit.toPlainText()
         self.textChanged.emit(text)
         if self.edit._isUserModified:
@@ -73,30 +83,38 @@ class LineEdit(QWidget):
             self.edit._isUserModified = False
 
     def _emitCursorPositionChanged(self):
+        # type: (LineEdit) -> None
         newPos = self.edit.textCursor().position()
         self.cursorPositionChanged.emit(self._oldPos, newPos)
         self._oldPos = newPos
 
     def minimumSizeHint(self):
+        # type: (LineEdit) -> QSize
         return self.edit.minimumSizeHint()
 
     def sizeHint(self):
+        # type: (LineEdit) -> QSize
         return self.edit.sizeHint()
 
     def font(self):
+        # type: (LineEdit) -> QFont
         return self.edit.font()
 
     def setFont(self, *args):
+        # type: (LineEdit, QFont) -> None
         self.edit.setFont(*args)
 
     def textCursor(self):
+        # type: (LineEdit) -> QTextCursor
         return self.edit.textCursor()
 
     def setTextCursor(self, *args):
+        # type: (LineEdit, QTextCursor) -> None
         self.edit.setTextCursor(*args)
 
     def moveCursor(self, *args):
-        self.edit.moveCursor(*args)
+        # type: (LineEdit, Any) -> None
+        self.edit.moveCursor(*args)  # type: ignore[misc]
 
 
 class _LineEdit(QPlainTextEdit):
@@ -104,7 +122,8 @@ class _LineEdit(QPlainTextEdit):
     overtype_changed = pyqtSignal(bool)
 
     def __init__(self, wrapper, *args):
-        super().__init__(*args)
+        # type: (_LineEdit, LineEdit, Any) -> None
+        super().__init__(*args)  # type: ignore[misc]
 
         # Internal QLineEdit element to get the minimum size hint from this
         #  instead of doing some crazy calculation which I cannot get
@@ -127,12 +146,15 @@ class _LineEdit(QPlainTextEdit):
         self.textChanged.connect(self.cb_text_changed)
 
         self.wrapper = wrapper
-        self._isUserModified = False  # used for textEdited signal logic
+
+        # used for textEdited signal logic
+        self._isUserModified = False  # type: bool
 
         self.setContentsMargins(0, 0, 0, 0)
         self.document().setDocumentMargin(3)
 
-    def focusInEvent(self, e: QFocusEvent):
+    def focusInEvent(self, e):
+        # type: (_LineEdit, QFocusEvent) -> None
         """Override focusInEvent to mimic QLineEdit behaviour"""
         super().focusInEvent(e)
 
@@ -141,7 +163,8 @@ class _LineEdit(QPlainTextEdit):
                           Qt.TabFocusReason):
             self.selectAll()
 
-    def focusOutEvent(self, e: QFocusEvent):
+    def focusOutEvent(self, e):
+        # type: (_LineEdit, QFocusEvent) -> None
         """Override focusOutEvent to mimic QLineEdit behaviour"""
         super().focusOutEvent(e)
 
@@ -154,19 +177,23 @@ class _LineEdit(QPlainTextEdit):
             self.setTextCursor(cur)
 
     def minimumSizeHint(self):
+        # type: (_LineEdit) -> QSize
         # """Redefine minimum size hint to match QLineEdit"""
         return self.template.minimumSizeHint()
 
     def setStyleSheet(self, ss):
+        # type: (_LineEdit, str) -> None
         super().setStyleSheet(ss)
         self.template.setStyleSheet(ss)
 
     def sizeHint(self):
+        # type: (_LineEdit) -> QSize
         """Reuse minimumSizeHint for sizeHint"""
         return self.minimumSizeHint()
 
     @pyqtSlot()
     def cb_text_changed(self):
+        # type: (_LineEdit) -> None
         """Handler to enforce one-linedness on typing/pastes/etc.
 
         (Can't use self.setMaximumBlockCount(1) because it disables Undo/Redo)
@@ -179,7 +206,8 @@ class _LineEdit(QPlainTextEdit):
                 self.document().firstBlock().text())
 
     @pyqtSlot()
-    def cb_toggle_insert(self, target: bool = None):
+    def cb_toggle_insert(self, target=None):
+        # type: (_LineEdit, bool | None) -> None
         """Event handler for the Insert key"""
         if target is None:
             target = not self.overwriteMode()
@@ -187,6 +215,7 @@ class _LineEdit(QPlainTextEdit):
         self.overtype_changed.emit(target)
 
     def keyPressEvent(self, e):
+        # type: (_LineEdit, QKeyEvent) -> None
         if e.key() in [Qt.Key.Key_Return, Qt.Key.Key_Enter]:
             self.returnPressed.emit()
         if e.text():
@@ -196,6 +225,7 @@ class _LineEdit(QPlainTextEdit):
         super().keyPressEvent(e)
 
     def transferFocus(self, e):
+        # type: (_LineEdit, QKeyEvent) -> None
         """Like setFocus, except you can also pass a keyPress event from
  another widget. Only does so if no modifier keys (excluding Shift) are
  held."""
@@ -225,3 +255,9 @@ if __name__ == '__main__':
     win.show()
 
     sys.exit(app.exec_())
+
+
+if TYPE_CHECKING:
+    from typing import Any  # noqa: F401
+    from qt import (  # noqa: F401
+        QSizePolicy, QKeyEvent, QFocusEvent, QSize, QFont)
