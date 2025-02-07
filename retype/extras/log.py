@@ -20,6 +20,7 @@ def configLog(level):
 
 
 def filterWarnings(current_level, target_level):
+    # type: (str, str) -> None
     # Turn third-party warnings into `target_level` logs
     logging.captureWarnings(True)
     logging.getLogger('py.warnings').addFilter(

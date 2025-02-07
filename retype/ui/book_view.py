@@ -121,7 +121,8 @@ class BookDisplay(QTextBrowser):
 
     def wheelEvent(self, e):
         # type: (BookDisplay, QWheelEvent) -> None
-        if e.modifiers() == Qt.KeyboardModifier.ControlModifier:
+        if e.modifiers() == Qt.KeyboardModifiers(
+                Qt.KeyboardModifier.ControlModifier):
             if e.angleDelta().y() > 0:
                 self.zoomIn()
             else:
@@ -534,14 +535,16 @@ class BookView(QWidget):
 
     def nextChapterAction(self):
         # type: (BookView) -> None
-        if self._keyboardModifiers() == Qt.KeyboardModifier.ControlModifier:
+        if self._keyboardModifiers() == Qt.KeyboardModifiers(
+                Qt.KeyboardModifier.ControlModifier):
             self.nextChapter(True)
         else:
             self.nextChapter(False)
 
     def previousChapterAction(self):
         # type: (BookView) -> None
-        if self._keyboardModifiers() == Qt.KeyboardModifier.ControlModifier:
+        if self._keyboardModifiers() == Qt.KeyboardModifiers(
+                Qt.KeyboardModifier.ControlModifier):
             self.previousChapter(True)
         else:
             self.previousChapter(False)
@@ -627,8 +630,8 @@ class BookView(QWidget):
         # type: (BookView, bool) -> None
         if self.chapter_pos is None:
             return
-        if move or (self._keyboardModifiers() ==
-                    Qt.KeyboardModifier.ControlModifier):
+        if move or (self._keyboardModifiers() == Qt.KeyboardModifiers(
+                Qt.KeyboardModifier.ControlModifier)):
             self.setChapter(self.viewed_chapter_pos, True)
             self.updateProgress()
         else:

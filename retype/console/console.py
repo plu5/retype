@@ -128,8 +128,10 @@ class Console(LineEdit):
         """Like setFocus, except you can also pass a keyPress event from
  another widget. Only does so if no modifier keys (excluding Shift) are
  held."""
-        if e.modifiers() in [Qt.KeyboardModifier.NoModifier,
-                             Qt.KeyboardModifier.ShiftModifier]:
+        if e.modifiers() in [
+                Qt.KeyboardModifiers(Qt.KeyboardModifier.NoModifier),
+                Qt.KeyboardModifiers(Qt.KeyboardModifier.ShiftModifier)
+        ]:
             self.setFocus()
             self.keyPressEvent(e)
 

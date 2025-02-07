@@ -44,8 +44,12 @@ class Font(Enum):
 
     def toQFont(self):
         # type: (Font) -> QFont
-        return getattr(
-            self, self.name.lower())()  # type: ignore[misc]
+        if self.value == 2:
+            return self.fixed()
+        elif self.value == 3:
+            return self.bold()
+        else:
+            return self.general()
 
 
 def rectPixmap(w, h, fg=white, bg=transparent):

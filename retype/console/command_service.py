@@ -203,7 +203,7 @@ class CommandService(object):
             logger.error('{} is not a valid book_id'.format(book_id))
 
     def setChapter(self, pos=None, move=None):
-        # type: (CommandService, int | None, bool | None) -> None
+        # type: (CommandService, str | None, str | None) -> None
         if pos is None:
             return
         if self.onBookView():

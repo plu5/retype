@@ -47,7 +47,7 @@ class AnyStr(UserString):
         if isinstance(s, AnyStr):
             return ManifoldStr.from_anystr_and_anystr(*args)
         else:
-            return NotImplemented
+            return NotImplemented  # type: ignore[no-any-return]
             # raise TypeError('can only concatenate str or AnyStr (not "{}")\
 # to AnyStr'.format(type(s)))
 
@@ -151,7 +151,7 @@ class ManifoldStr(UserString):
         self.base = data
         self.rdict = rdict
         # A dictionary of strs and AnyStrs with the index of where each begins
-        self.manifold = {0: data}  # type: dict[int, str | AnyStr]
+        self.manifold = {0: data}  # type: Mapping[int, str | AnyStr]
 
         def makeCombined():
             # type: () -> str
@@ -354,7 +354,7 @@ not {}".format(i))
     def by_parts(cls,  # type: type[ManifoldStr]
                  data,  # type: str
                  rdict,  # type: dict[str, list[str]]
-                 manifold  # ManifoldStr
+                 manifold  # type: Mapping[int, str | AnyStr]
                  ):
         # type: (...) -> ManifoldStr
         new = cls.__new__(cls)
@@ -379,7 +379,8 @@ not {}".format(i))
     @classmethod
     def from_str_and_anystr(cls, str_, anystr, order=1):
         # type: (type[ManifoldStr], str, AnyStr, int) -> ManifoldStr
-        data = manifold = None
+        data = None
+        manifold = None  # type: Mapping[int, str | AnyStr] | None
         if order == 1:
             data = str_ + anystr.base
             manifold = {0: str_, len(str_): anystr}
@@ -393,8 +394,8 @@ not {}".format(i))
         rdict = {anystr.base: anystr.possibilities[1:]}
 
         new = cls.by_parts(data, rdict, manifold)
-        logger.debug("New ManifoldStr from str '{}' and AnyStr '{}'\
- (order {}): '{}'".format(str_, anystr, order, new))
+        logger.debug(f"New ManifoldStr from str '{str_}' and AnyStr '{anystr}'"
+                     f" (order {order}): '{new}'")
         return new
 
     @classmethod
@@ -459,5 +460,5 @@ not {}".format(i))
 
 if TYPE_CHECKING:
     from typing import (  # noqa: F401
-        Iterable, SupportsIndex)
+        Iterable, SupportsIndex, Mapping)
     IndexOrSlice = SupportsIndex | slice

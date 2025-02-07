@@ -1467,8 +1467,7 @@ class WindowGeometrySelector(QWidget):
         cb = self.selectors['save_splitters_on_quit'] = CheckBox(
             "Save state of splitters on quit")
         cb.changed.connect(
-            lambda state: self.updateDim(  # type: ignore[misc]
-                'save_splitters_on_quit', state))
+            lambda state: self.updateDim('save_splitters_on_quit', state))
 
         cb = self.selectors['save_on_quit'] = CheckBox(
             "Save window size and position on quit")
@@ -1532,8 +1531,7 @@ class WindowGeometrySelector(QWidget):
 
     def connectSelector(self, name, signal):
         # type: (WindowGeometrySelector, str, pyqtBoundSignal) -> None
-        signal.connect(
-            lambda val: self.updateDim(name, val))  # type: ignore[misc]
+        signal.connect(lambda val: self.updateDim(name, val))
 
     def updateDim(self, name, val):
         # type: (WindowGeometrySelector, str, object) -> None

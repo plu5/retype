@@ -43,7 +43,7 @@ class Icons:
 
 
 def populateIconSets(app_path, user_path):
-    # (str, str) -> None
+    # type: (str, str) -> None
     Icons.icon_sets = {}
     paths = [app_path, user_path] if app_path != user_path else [app_path]
     for path in paths:

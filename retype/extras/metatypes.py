@@ -137,8 +137,8 @@ class SafeStenoSettings(_NestedSafeDictGroup):
     def __getitem__(self, key: str) -> object: ...
 
 
-class ViewsDict(dict):
-    @overload  # type: ignore[no-overload-impl]
+class ViewsDict(dict[object, object]):
+    @overload  # type: ignore[override,no-overload-impl]
     def __getitem__(self, key: Literal[View.shelf_view]) -> ShelfView: ...
     @overload
     def __getitem__(self, key: Literal[View.book_view]) -> BookView: ...

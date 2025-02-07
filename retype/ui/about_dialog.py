@@ -1,5 +1,5 @@
-from qt import (QDialog, Qt, QTabWidget, QWidget, QVBoxLayout, QHBoxLayout,
-                QLabel, QTextBrowser)
+from qt import QDialog, Qt, QTabWidget, QWidget, QVBoxLayout, QLabel
+
 from typing import TYPE_CHECKING
 
 from retype.resource_handler import getIcon
@@ -112,6 +112,7 @@ class AboutPage(QWidget):
 def format_page_details(details_dict):
     # type: (Mapping[str, str | Mapping[str, str]]) -> str
     def plus_newline(s, amount=1):
+        # type: (str, int) -> str
         for i in range(0, amount):
             s += '<br/>'
         return s

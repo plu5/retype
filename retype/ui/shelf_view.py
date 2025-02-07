@@ -69,13 +69,16 @@ class ShelfView(QWidget):
         self._populate()
 
     def keyPressEvent(self, e):
+        # type: (ShelfView, QKeyEvent) -> None
         self._controller.console.transferFocus(e)
         QWidget.keyPressEvent(self, e)
 
     def eventFilter(self, watched, event):
+        # type: (ShelfView, QObject, QEvent) -> bool
         if watched == self.shelves.container and\
            event.type() == QEvent.Type.Paint:
             o = (0, 0)
+            assert isinstance(watched, QWidget)
             (w, h) = (watched.size().width(), watched.size().height())
             top_shelf_y = self.shelf_height + 5
             deepness = 10
@@ -107,7 +110,8 @@ class ShelfView(QWidget):
             draw(w - 13, 0, outline)
 
             def shelf():
-                pixmap = QPixmap(int(w), int(h))
+                # type: () -> QPixmap
+                pixmap = QPixmap(w, h)
                 pixmap.fill(QColor('transparent'))
                 qp = QPainter(pixmap)
                 draw = qp.drawPixmap
@@ -267,4 +271,5 @@ if TYPE_CHECKING:
     from retype.ui import MainWin  # noqa: F401
     from retype.controllers import MainController  # noqa: F401
     from retype.controllers.library import BookWrapper  # noqa: F401
-    from qt import QPaintEvent, QMouseEvent, pyqtBoundSignal  # noqa: F401
+    from qt import (  # noqa: F401
+        QKeyEvent, QPaintEvent, QMouseEvent, pyqtBoundSignal, QObject)

@@ -7,14 +7,14 @@ from typing import TYPE_CHECKING
 
 # RubyPinch https://www.reddit.com/r/Python/comments/477tqv/-/d0c1dz5/
 def merge_dicts(*dicts):
-    # type: (Mapping) -> Any
+    # type: (Mapping[Any, Any]) -> Any
     """Merge nested dicts as copy"""
     return deepcopy(reduce(
         lambda a, b: {**a, **b}, dicts))  # type: ignore[misc]
 
 
 def update(source, overrides):
-    # type: (dict, Mapping) -> dict
+    # type: (dict[Any, Any], Mapping[Any, Any]) -> dict[Any, Any]
     # by charlax, https://stackoverflow.com/a/30655448
     """
     Update a nested dictionary or similar mapping.
@@ -32,8 +32,8 @@ def update(source, overrides):
 
 class SafeDict:
     def __init__(self,  # type: SafeDict
-                 base_dict,  # type: Mapping
-                 fallback_dict=None,  # type: Mapping | None
+                 base_dict,  # type: Mapping[Any, Any]
+                 fallback_dict=None,  # type: Mapping[Any, Any] | None
                  nested_raw_dict_keys=None  # type: Sequence[object] | None
                  ):
         # type: (...) -> None
@@ -68,7 +68,7 @@ class SafeDict:
         return self.__getitem__(key, default)
 
     def update(self, overrides):
-        # type: (SafeDict, Mapping) -> None
+        # type: (SafeDict, Mapping[Any, Any]) -> None
         self.raw = update(self.raw, overrides)  # type: ignore[misc]
 
     def deepcopy(self):
@@ -77,19 +77,19 @@ class SafeDict:
         return SafeDict(raw_copy, self.fallback, self.nested_raw_dict_keys)
 
     def values(self):
-        # type: () -> ValuesView
+        # type: () -> ValuesView[Any]
         return self.raw.values()
 
     def items(self):
-        # type: () -> ItemsView
+        # type: () -> ItemsView[Any, Any]
         return self.raw.items()
 
 
 class _NestedSafeDictGroup:
     def __init__(self,  # type: _NestedSafeDictGroup
                  name,  # type: object
-                 group,  # type: dict
-                 fallback_dict=None  # type: Mapping | None
+                 group,  # type: dict[Any, Any]
+                 fallback_dict=None  # type: Mapping[Any, Any] | None
                  ):
         # type: (...) -> None
         self.name = name
@@ -113,15 +113,15 @@ class _NestedSafeDictGroup:
         return self.__getitem__(key, default)
 
     def update(self, overrides):
-        # type: (_NestedSafeDictGroup, Mapping) -> None
+        # type: (_NestedSafeDictGroup, Mapping[Any, Any]) -> None
         self.raw = update(self.raw, overrides)  # type: ignore[misc]
 
     def values(self):
-        # type: (_NestedSafeDictGroup) -> ValuesView
+        # type: (_NestedSafeDictGroup) -> ValuesView[Any]
         return self.raw.values()
 
     def items(self):
-        # type: (_NestedSafeDictGroup) -> ItemsView
+        # type: (_NestedSafeDictGroup) -> ItemsView[Any, Any]
         return self.raw.items()
 
 
