@@ -213,7 +213,7 @@ jobs:
         run: venv/Scripts/python setup.py b -k hacky
 
       - name: F. Upload the build artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: retype-${{ needs.data.outputs.version }}-${{ steps.os.outputs.name }}
           path: ${{ steps.os.outputs.artifact }}
@@ -225,7 +225,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: 1. Download binaries
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           path: ./dist
 
