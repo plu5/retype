@@ -2,7 +2,7 @@ import logging
 from qt import (QWidget, QVBoxLayout, QTextBrowser, QTextDocument, QUrl,
                 QTextCursor, QTextCharFormat, QPainter, QPixmap,
                 QToolBar, QFont, QKeySequence, Qt, QApplication, pyqtSignal,
-                QSplitter, QSize)
+                QSplitter, QSize, QGuiApplication)
 
 from typing import TYPE_CHECKING
 
@@ -709,7 +709,7 @@ class BookView(QWidget):
 
 if TYPE_CHECKING:
     from qt import (  # noqa: F401
-        QPaintEvent, QKeyEvent, QWheelEvent, QIcon, QAction, QGuiApplication)
+        QPaintEvent, QKeyEvent, QWheelEvent, QIcon, QAction)
     from retype.ui import MainWin  # noqa: F401
     from retype.controllers import MainController  # noqa: F401
     from typing import Union, Callable, Dict, TypedDict, Never  # noqa: F401
