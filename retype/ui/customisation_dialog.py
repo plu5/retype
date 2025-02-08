@@ -250,7 +250,7 @@ class CustomisationDialog(QDialog):
         lyt.addRow("Prompt:", self.selectors['prompt'])
 
         # console font
-        self.selectors['console_font'] = ConsoleFontSelector(
+        self.selectors['console_font'] = FontSelector(
             self.config_edited['console_font'])
         self.selectors['console_font'].changed.connect(
             lambda f: self.update_("console_font", f))
@@ -260,8 +260,7 @@ class CustomisationDialog(QDialog):
         if iswindows:
             lyt.addRow(hline())
             hide_sysconsole_checkbox = CheckBox(
-                "Hide System Console window on UI load\n(Windows-only)")
-            hide_sysconsole_checkbox.setChecked(
+                "Hide System Console window on UI load\n(Windows-only)",
                 self.config_edited.get('hide_sysconsole', True))
             hide_sysconsole_checkbox.changed.connect(
                 lambda t: self.update_("hide_sysconsole", t))
@@ -286,9 +285,9 @@ class CustomisationDialog(QDialog):
 
         lyt.addRow(hline())
         auto_newline_checkbox = CheckBox(
-            "Newline characters advance automatically\n\
-(if off, requires pressing Enter at the end of a line)")
-        auto_newline_checkbox.setChecked(self.config_edited['auto_newline'])
+            "Newline characters advance automatically\n"
+            "(if off, requires pressing Enter at the end of a line)",
+            self.config_edited['auto_newline'])
         auto_newline_checkbox.changed.connect(
             lambda t: self.update_("auto_newline", t))
         self.selectors['auto_newline'] = auto_newline_checkbox
@@ -339,7 +338,7 @@ class CustomisationDialog(QDialog):
         return w
 
     def update_(self, name, new_value):
-        # type: (CustomisationDialog, str, object) -> None
+        # type: (CustomisationDialog, str, object) -> None#
         self.config_edited[name] = new_value  # type: ignore[literal-required]
         logger.debug("config_edited updated to: {}".format(
             self.config_edited))
@@ -463,10 +462,11 @@ class CustomisationDialog(QDialog):
 class CheckBox(QCheckBox):
     changed = pyqtSignal(bool)
 
-    def __init__(self, desc, parent=None):
-        # type: (CheckBox, str, QWidget | None) -> None
+    def __init__(self, desc, value=False, default_value=False, parent=None):
+        # type: (CheckBox, str, bool, bool, QWidget | None) -> None
         QCheckBox.__init__(self, desc, parent)
-        self.default_value = False
+        self.setChecked(value)
+        self.default_value = default_value
         self.stateChanged.connect(lambda t: self.changed.emit(bool(t)))
 
     def value(self):
@@ -758,18 +758,18 @@ class PromptEdit(QLineEdit):
         self.setText(value)
 
 
-class ConsoleFontSelector(QFontComboBox):
+class FontSelector(QFontComboBox):
     changed = pyqtSignal(str)
 
     def __init__(self, font, parent=None):
-        # type: (ConsoleFontSelector, str, QWidget | None) -> None
+        # type: (FontSelector, str, QWidget | None) -> None
         QFontComboBox.__init__(self, parent)
         self.set_(font)
         self.currentFontChanged.connect(
             lambda f: self.changed.emit(f.family()))  # type: ignore[misc]
 
     def set_(self, value):
-        # type: (ConsoleFontSelector, object) -> None
+        # type: (FontSelector, object) -> None
         if not isinstance(value, str):
             raise SelectorValueTypeMismatch(
                 f'expects str, got: {type(value)}')
@@ -880,8 +880,7 @@ class SDictEntryEditor(QWidget):
 
         lyt = QFormLayout(self)
         self.substr_e = QLineEdit(substr)
-        self.keep_e = CheckBox('')
-        self.keep_e.setChecked(keep)
+        self.keep_e = CheckBox('', keep)
         lyt.addRow("Substring:", self.substr_e)
         lyt.addRow("Keep:", self.keep_e)
 
@@ -1549,21 +1548,6 @@ class WindowGeometrySelector(QWidget):
             selector.set_(value[key])
 
 
-class FontComboBox(QFontComboBox):
-    changed = pyqtSignal(int)
-
-    def __init__(self, parent=None):
-        # type: (FontComboBox, QWidget | None) -> None
-        QFontComboBox.__init__(self, parent)
-        self.currentFontChanged.connect(lambda t: self.changed.emit(t))
-
-    def set_(self, value):
-        # type: (FontComboBox, object) -> None
-        if not isinstance(value, str):
-            raise SelectorValueTypeMismatch(f'expects str, got: {type(value)}')
-        self.setCurrentFont(QFont(value))
-
-
 class BookViewSettingsWidget(QWidget):
     changed = pyqtSignal(dict)
 
@@ -1578,7 +1562,9 @@ class BookViewSettingsWidget(QWidget):
         self.selectors = {
         }  # type: dict[str, Selector]
 
-        save_font_size_checkbox = CheckBox("Save font size on quit")
+        save_font_size_checkbox = CheckBox(
+            "Save font size on quit",
+            self.settings['save_font_size_on_quit'])
         save_font_size_checkbox.changed.connect(self.setSaveFontSizeOnQuit)
         self.selectors['save_font_size_on_quit'] = save_font_size_checkbox
 
@@ -1587,7 +1573,7 @@ class BookViewSettingsWidget(QWidget):
             lambda val: self.updateSetting('font_size', val))
         self.selectors['font_size'] = self.font_size_selector
 
-        self.font_selector = FontComboBox()
+        self.font_selector = FontSelector(self.settings['font'])
         self.font_selector.changed.connect(
             lambda f: self.updateSetting('font', f))
         self.selectors['font'] = self.font_selector
@@ -1597,8 +1583,6 @@ class BookViewSettingsWidget(QWidget):
         lyt.addRow(hline())
         lyt.addRow("Default font size:", self.font_size_selector)
         lyt.addRow("Font family:", self.font_selector)
-
-        self.set_(bookview_settings)
 
     def updateSetting(self, name, val):
         # type: (BookViewSettingsWidget, str, object) -> None
