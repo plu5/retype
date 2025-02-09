@@ -120,14 +120,14 @@ class TypespeedGame(QWidget):
         self.started = self.paused = False
         self.over = False
         self.hundredth_seconds = self.prev_hundredth_seconds = 0
-        self.rate = 1
+        self.rate = 1.0
         self.wordswritten = 0
         self.misses = 0
         self.presses = 0
         self.score = 0
         self.rank = ranks[0]
         self.typorank = typoranks[0]
-        self.cps = 0
+        self.cps = 0.00
         self.wpm = 0
         self._clearSlots()
 
@@ -239,9 +239,9 @@ Font adjustment: In order to stay consistent with typespeed, we need to have 22
             self.prev_hundredth_seconds = self.hundredth_seconds
             self._moveWords()
             self._adjustRateAndMaybeAddWord()
-            self.cps = int((self.score + self.wordswritten) * 100.0 /
-                           self.hundredth_seconds)
-            self.wpm = self.cps * 12
+            self.cps = ((self.score + self.wordswritten) * 100.0 /
+                        self.hundredth_seconds)
+            self.wpm = int(self.cps * 12)
             self.update()
         if self.misses >= Rules.misses:
             self._gameOver()
@@ -326,7 +326,7 @@ If words with too few chars are on screen, throw in another word."""
         if (length < self.score / 4 + 1 or wc < Rules.minwords):
             self._addNewWord()
 
-        self.rate = int(self.score / Rules.step + Rules.minspeed)
+        self.rate = self.score / Rules.step + Rules.minspeed
         if Rules.maxspeed and self.rate > Rules.maxspeed:
             self.rate = Rules.maxspeed
 
@@ -361,7 +361,7 @@ If words with too few chars are on screen, throw in another word."""
             self.presses += 1
 
     def _getTyporank(self, ratio):
-        # type: (TypespeedGame, int) -> str
+        # type: (TypespeedGame, float) -> str
         typorank = 0
         r = {2: 2, 3: 4, 4: 6, 5: 8, 6: 11, 7: 15, 8: 20, 9: 30, 10: 50}
 
@@ -382,10 +382,10 @@ If words with too few chars are on screen, throw in another word."""
     def _gameOver(self):
         # type: (TypespeedGame) -> None
         self.timer.stop()
-        self.typo_ratio = 0
+        self.typo_ratio = 0.0
         if self.presses:
-            self.typo_ratio = int(1 - (self.score + self.wordswritten) /
-                                  (self.presses + self.wordswritten)) * 100
+            self.typo_ratio = (1 - (self.score + self.wordswritten) /
+                               (self.presses + self.wordswritten)) * 100
             self.typorank = self._getTyporank(self.typo_ratio)
         else:
             self.typorank = typoranks[0]
