@@ -315,6 +315,7 @@ class StenoView(BookView):
         self.return_entry = '0'
         self.visual_kbd = VisualStenoKeyboard(self.kdict, self._console, self)
         self.stats_dock.deleteLater()
+        self.autosave.deleteLater()
         self.splitter.addWidget(self.visual_kbd)
         self.stage = None  # type: Stage | None
         self.timer = QTimer(self)
