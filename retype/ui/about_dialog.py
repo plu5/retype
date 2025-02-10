@@ -65,10 +65,10 @@ class AboutDialog(QDialog):
         books_in_progress = 0
         books_completed = 0
         for book in self.books.values():
-            if book.progress is not None:
+            if book.progress == 100:
+                books_completed += 1
+            elif book.progress > 0:
                 books_in_progress += 1
-                if book.progress == 100:
-                    books_completed += 1
 
         you = {'# of books': str(len(self.books)),
                '# of books in progress': str(books_in_progress),
