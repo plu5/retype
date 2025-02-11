@@ -149,8 +149,7 @@ class BookView(QWidget):
         self._controller = main_controller
         self._library = self._controller.library
         self._console = self._controller.console
-        self.autosave = Autosave(self._console)
-        self.autosave.save.connect(self.maybeSave)
+        self.autosave = None  # type: Autosave | None
 
         bookview_settings = bookview_settings or {}
         self.display = BookDisplay(
@@ -464,6 +463,10 @@ class BookView(QWidget):
         if not self.stats_dock.connected:
             self.stats_dock.connectConsole(self._controller.console)
 
+        if self.autosave is None:
+            self.autosave = Autosave(self._console)
+            self.autosave.save.connect(self.maybeSave)
+
         complete = book.progress == 100
 
         if self.chapter_pos is None:
@@ -619,6 +622,7 @@ class BookView(QWidget):
                     'chapter_pos': self.chapter_pos,
                     'progress': self.progress}  # type: SaveData
             self._library.save(self.book, data)  # type: ignore[arg-type]
+            self.book.dirty = False
 
     def switchToShelves(self):
         # type: (BookView) -> None
