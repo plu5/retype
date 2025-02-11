@@ -622,6 +622,7 @@ class BookView(QWidget):
                     'chapter_pos': self.chapter_pos,
                     'progress': self.progress}  # type: SaveData
             self._library.save(self.book, data)  # type: ignore[arg-type]
+            self.book.dirty = False
 
     def switchToShelves(self):
         # type: (BookView) -> None
