@@ -533,7 +533,6 @@ class TypespeedView(BookView):
         self.skip_action.setDisabled(True)
         self.return_entry = '0'
         self.stats_dock.deleteLater()
-        self.autosave.deleteLater()
 
         # modeline adjustments
         self.modeline.pos_sep.setText(" ")
