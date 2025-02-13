@@ -1,9 +1,8 @@
 import logging
 
-levels_map = logging.getLevelNamesMapping()
-# {'CRITICAL': 50, 'FATAL': 50, 'ERROR': 40, 'WARN': 30, 'WARNING': 30,
-#  'INFO': 20, 'DEBUG': 10, 'NOTSET': 0}
-level_names = list(levels_map.keys())
+# NOTE(plu5): It is flakey to use the internal map, but getLevelNamesMapping
+# was not added until 3.11, and we need to support further back.
+level_names = logging._nameToLevel.keys()
 # NOTE(plu5): They don't want you to use getLevelName with a
 # string. I'm not sure hardcoding the strings is any better, but I
 # figure they are kind of part of the interface.
