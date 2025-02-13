@@ -1,4 +1,4 @@
-from math import floor
+from math import floor, ceil
 from time import time
 from qt import QWidget, QPainter, Qt, QSize, QFontMetricsF
 
@@ -135,13 +135,13 @@ class StatsDock(QWidget):
         # Text
         font = Font.GENERAL.toQFont()
         fm = QFontMetricsF(font)
-        font_h = int(fm.height())
+        font_h = ceil(fm.height())
         pb_txt = "PB: {}".format(self.wpm_pb)
         cur_txt = "Current: {} WPM".format(self.wpm)
         draw(2, 2,
-             textPixmap(pb_txt, int(fm.horizontalAdvance(pb_txt)), font_h,
+             textPixmap(pb_txt, ceil(fm.horizontalAdvance(pb_txt)), font_h,
                         font, self.text_c.fg()))
-        cur_w = int(fm.horizontalAdvance(cur_txt))
+        cur_w = ceil(fm.horizontalAdvance(cur_txt))
         draw(w - cur_w - 2, 2,
              textPixmap(cur_txt, cur_w, font_h, font, self.text_c.fg()))
 
