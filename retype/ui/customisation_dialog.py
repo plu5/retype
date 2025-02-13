@@ -30,6 +30,7 @@ logger = logging.getLogger(__name__)
 
 DEFAULTS = default_config
 THEME_MODIFICATIONS_FILENAME = '__current__.qss'
+NPXSPINBOX_MINIMUM_VALUE = -10001
 
 
 def hline():
@@ -47,33 +48,36 @@ class SelectorValueTypeMismatch(TypeError):
 class SpinBox(QSpinBox):
     changed = pyqtSignal(int)
 
-    def __init__(self, parent=None):
-        # type: (SpinBox, QWidget | None) -> None
+    def __init__(self, noneable=False, parent=None):
+        # type: (SpinBox, bool, QWidget | None) -> None
         QSpinBox.__init__(self, parent)
         self.valueChanged.connect(lambda t: self.changed.emit(t))
+        self.noneable = noneable
+        if noneable:
+            self.setSpecialValueText('Auto')
 
     def set_(self, value):
         # type: (SpinBox, object) -> None
         # Taking a wide type in order to be able to call it dynamically from
         # data structure of selectors with set_ method
-        if not isinstance(value, int):
+        if not (isinstance(value, int) or (self.noneable and value is None)):
             raise SelectorValueTypeMismatch(f'expects int, got: {type(value)}')
-        self.setValue(value)
+        self.setValue(value if value is not None else self.minimum())
 
 
-def pxspinbox(value=0, suffix=" px"):
-    # type: (int, str) -> SpinBox
-    sb = SpinBox()
+def pxspinbox(value=0, suffix=" px", noneable=False):
+    # type: (int, str, bool) -> SpinBox
+    sb = SpinBox(noneable=noneable)
     sb.setSuffix(suffix)
     sb.setMaximum(10000)
     sb.setValue(value)
     return sb
 
 
-def npxspinbox(value):
-    # type: (int) -> SpinBox
-    sb = pxspinbox()
-    sb.setMinimum(-10000)
+def npxspinbox(value, noneable=False):
+    # type: (int, bool) -> SpinBox
+    sb = pxspinbox(noneable=noneable)
+    sb.setMinimum(NPXSPINBOX_MINIMUM_VALUE)
     sb.setValue(value)
     return sb
 
@@ -1477,8 +1481,10 @@ class WindowGeometrySelector(QWidget):
         lyt.addRow(hline())
 
         # when save on quit is checked, the following is greyed out
-        self.selectors['x'] = npxspinbox(dims['x'] or 0)
-        self.selectors['y'] = npxspinbox(dims['y'] or 0)
+        self.selectors['x'] = npxspinbox(
+            dims['x'] or NPXSPINBOX_MINIMUM_VALUE, noneable=True)
+        self.selectors['y'] = npxspinbox(
+            dims['y'] or NPXSPINBOX_MINIMUM_VALUE, noneable=True)
         self.selectors['w'] = pxspinbox(dims['w'])
         self.selectors['h'] = pxspinbox(dims['h'])
         self.cur_btn = QPushButton("Set values according to current window")
