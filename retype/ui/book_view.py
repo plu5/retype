@@ -409,16 +409,12 @@ class BookView(QWidget):
             return
         pos = to_pos or self.cursor_pos
         self._cursor.setPosition(pos)
+        self.highlight(full=False)
 
-        # Update highlighting
-        self.display.full_highlight = False
+    def highlight(self, full=False):
+        # type: (BookView, bool) -> None
+        self.display.full_highlight = full
         self.display.update()
-
-    def fillHighlight(self):
-        # type: (BookView) -> None
-        if self.chapter_lens is None:
-            return
-        self.display.full_highlight = True
 
     def setSource(self, chapter):
         # type: (BookView, Chapter) -> None
@@ -496,7 +492,7 @@ class BookView(QWidget):
         elif pos == self.chapter_pos:
             self.setCursor()
         elif pos < self.chapter_pos:
-            self.fillHighlight()
+            self.highlight(full=True)
         self.updateModeline()
         self.display.updateFont()
         self.updateToolbarActions()
