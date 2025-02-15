@@ -62,8 +62,6 @@ class C(QObject):
 class Theme:
     selectors = {}  # type: dict[str, C]
     themes = {}  # type: dict[str, ThemeData]
-    # ^ Theme.themes[name] = {'path': p, 'values': values}
-    # TEMP: dict[str, dict[str, str | ValuesDict]]
 
     @staticmethod
     def get(selector_name):

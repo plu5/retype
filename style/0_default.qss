@@ -78,8 +78,7 @@ BookView.Highlighting.Mistake {
 }
 
 BookView.Highlighting.Highlight {
-  color: #000000;
-  background-color: #ffff00;
+  background-color: #40ffff00;
 }
 
 ShelfView.Top {

@@ -461,7 +461,6 @@ class StenoView(BookView):
     def updateHighlighting(self):
         # type: (StenoView) -> None
         self.updateCursorPosition()
-        self.updateHighlightCursor()
         self.updateModeline()
 
     def _handleMistakes(self, v, text, end_correctness_index):

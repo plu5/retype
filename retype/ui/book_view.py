@@ -25,8 +25,13 @@ class BookDisplay(QTextBrowser):
     keyPressed = pyqtSignal(object)
     fontChanged = pyqtSignal()
 
-    def __init__(self, font_family, font_size=default_font_size, parent=None):
-        # type: (BookDisplay, str, int, QWidget | None) -> None
+    def __init__(self,  # type: BookDisplay
+                 c_highlight,  # type: C
+                 font_family,  # type: str
+                 font_size=default_font_size,  # type: int
+                 parent=None  # type: QWidget | None
+                 ):
+        # type: (...) -> None
         super().__init__(parent)
         self._cursor = QTextCursor(self.document())  # type: QTextCursor
         self.setOpenLinks(False)
@@ -37,8 +42,11 @@ class BookDisplay(QTextBrowser):
         self.updateFont()
 
         self.c_display, self.c_cursor = self._loadTheme()
+        self.c_highlight = c_highlight
         self.c_display.changed.connect(self.themeUpdate)
         self.themeUpdate()
+
+        self.full_highlight = False
 
     def _loadTheme(self):
         # type: (BookDisplay) -> tuple[C, ...]
@@ -88,8 +96,25 @@ class BookDisplay(QTextBrowser):
         # type: (BookDisplay, QPaintEvent) -> None
         QTextBrowser.paintEvent(self, e)
         qp = QPainter(self.viewport())
+
+        # Draw cursor
         qp.setPen(self.c_cursor.fg())
-        qp.drawRect(self.cursorRect(self._cursor))
+        crect = self.cursorRect(self._cursor)
+        qp.drawRect(crect)
+
+        # Draw highlight
+        qp.setPen(Qt.PenStyle.NoPen)
+        qp.setBrush(self.c_highlight.bg())
+        vrect = self.viewport().rect()
+        if not self.full_highlight:
+            under = vrect.height() - crect.y()
+            vrect.setHeight(vrect.height() - under)
+            w = crect.width()
+            crect.setLeft(vrect.x())
+            crect.setWidth(crect.width() - w)
+            qp.drawRect(crect)
+        qp.drawRect(vrect)
+
         qp.end()
 
     def keyPressEvent(self, e):
@@ -130,7 +155,7 @@ class BookDisplay(QTextBrowser):
         QTextBrowser.wheelEvent(self, e)
 
 
-@theme('BookView.Highlighting.Highlight', C(fg='black', bg='yellow'))
+@theme('BookView.Highlighting.Highlight', C(bg='#30ffff00'))
 @theme('BookView.Highlighting.Mistake', C(fg='white', bg='red'))
 class BookView(QWidget):
     def __init__(
@@ -151,8 +176,11 @@ class BookView(QWidget):
         self._console = self._controller.console
         self.autosave = None  # type: Autosave | None
 
+        self.c_highlight, self.c_mistake = self._loadTheme()
+
         bookview_settings = bookview_settings or {}
         self.display = BookDisplay(
+            self.c_highlight,
             bookview_settings.get('font', default_font_family),
             bookview_settings.get('font_size', default_font_size), self
         )  # type: BookDisplay
@@ -174,14 +202,9 @@ class BookView(QWidget):
         self.total_len = None  # type: int | None
         self.tobetyped_list = []  # type: list[str]
 
-        self.c = self._loadTheme()
-
-        self.highlight_sel = self.display.ExtraSelection()
-        self.highlight_format = QTextCharFormat()
         self.mistake_format = QTextCharFormat()  # type: QTextCharFormat
-        self.formats = (self.highlight_format, self.mistake_format)
 
-        self.c[0].changed.connect(self.themeUpdate)
+        self.c_mistake.changed.connect(self.themeUpdate)
         self.themeUpdate()
 
     def _loadTheme(self):
@@ -191,9 +214,8 @@ class BookView(QWidget):
 
     def themeUpdate(self):
         # type: (BookView) -> None
-        for f, c in zip(self.formats, self.c):
-            f.setForeground(c.fg())
-            f.setBackground(c.bg())
+        self.mistake_format.setForeground(self.c_mistake.fg())
+        self.mistake_format.setBackground(self.c_mistake.bg())
 
     def _initUI(self):
         # type: (BookView) -> None
@@ -372,14 +394,7 @@ class BookView(QWidget):
         self.updateCursorPosition()
         self.display.setCursor(self._cursor)
 
-        self.setHighlightCursor()
-
         self.setMistakeCursor()
-
-    def setHighlightCursor(self):
-        # type: (BookView) -> None
-        self.highlight_cursor = QTextCursor(self.display.document())
-        self.updateHighlightCursor()
 
     def setMistakeCursor(self):
         # type: (BookView) -> None
@@ -394,27 +409,12 @@ class BookView(QWidget):
             return
         pos = to_pos or self.cursor_pos
         self._cursor.setPosition(pos)
+        self.highlight(full=False)
 
-    def updateHighlightCursor(self, to_pos=None):
-        # type: (BookView, int | None) -> None
-        if self.cursor_pos is None:
-            return
-        pos = to_pos or self.cursor_pos
-        self.highlight_cursor.setPosition(pos, self._cursor.KeepAnchor)
-        self.highlight_sel.cursor = self.highlight_cursor
-        self.highlight_sel.format = self.highlight_format
-        self.display.setExtraSelections([self.highlight_sel])
-
-        # Also required to avoid ExtraSelections segfault when switching view,
-        # even if self.display.extraSelections() is an empty list
-        self.highlight_cursor.setPosition(0)
-
-    def fillHighlight(self):
-        # type: (BookView) -> None
-        if self.chapter_lens is None:
-            return
-        self.setHighlightCursor()
-        self.updateHighlightCursor(self.chapter_lens[self.viewed_chapter_pos])
+    def highlight(self, full=False):
+        # type: (BookView, bool) -> None
+        self.display.full_highlight = full
+        self.display.update()
 
     def setSource(self, chapter):
         # type: (BookView, Chapter) -> None
@@ -427,9 +427,6 @@ class BookView(QWidget):
             document.addResource(QTextDocument.ImageResource,
                                  QUrl(image['link']), pixmap)
 
-        # Extra selections must be cleared before calling setDocument to avoid
-        # a crash, see https://stackoverflow.com/a/73776461/18396947
-        self.display.setExtraSelections([])
         self.display.setDocument(document)
 
     def anchorClicked(self, link):
@@ -495,7 +492,7 @@ class BookView(QWidget):
         elif pos == self.chapter_pos:
             self.setCursor()
         elif pos < self.chapter_pos:
-            self.fillHighlight()
+            self.highlight(full=True)
         self.updateModeline()
         self.display.updateFont()
         self.updateToolbarActions()
