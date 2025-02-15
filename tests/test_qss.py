@@ -66,6 +66,11 @@ class TestQssGetCValue():
                         parseD('background-color: #qwer;'))
         assert res is None
 
+    def test_argb_cvalue(self):
+        res = getCValue('color',
+                        parseD('color: #80ffff00;'))
+        assert res == '#80ffff00'
+
 
 class TestSerialiseProp():
     def test_prop(self):

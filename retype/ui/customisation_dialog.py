@@ -8,7 +8,7 @@ from qt import (QWidget, QFormLayout, QVBoxLayout, QLabel, QLineEdit,
                 QAbstractListModel, Qt, QStyledItemDelegate, QStyle,
                 QApplication, QRectF, QTextDocument, QFileDialog, pyqtSignal,
                 QModelIndex, QItemSelectionModel, QMessageBox, QDialog, QSize,
-                QFont, QFontComboBox, QComboBox, QPainter, QBrush,
+                QFont, QFontComboBox, QComboBox, QPainter,
                 QColorDialog, QColor, QTreeView, QStandardItemModel,
                 QAbstractItemView, QItemDelegate, QStandardItem, QSizePolicy)
 
@@ -1698,12 +1698,14 @@ class _CEdit(QWidget):
     def paintEvent(self, event=None):
         # type: (_CEdit, QPaintEvent | None) -> None
         painter = QPainter(self)
-        painter.setBrush(QBrush(self.current_c))
+        painter.setBrush(self.current_c)
         painter.drawRect(self.rect())
 
     def mouseReleaseEvent(self, e):
         # type: (_CEdit, QMouseEvent) -> None
-        res = QColorDialog.getColor(self.current_c)
+        res = QColorDialog.getColor(
+            self.current_c,
+            options=QColorDialog.ColorDialogOption.ShowAlphaChannel)
         if res.isValid():
             self.set_(res)
 
@@ -1813,7 +1815,9 @@ class ThemeSelectorWidget(QWidget):
         # type: (ThemeSelectorWidget) -> dict[str, str]
         values = {}
         for prop_name, cedit in self.cedits.items():
-            values[prop_name] = cedit.current_c.name()
+            fmt = (QColor.NameFormat.HexArgb if cedit.current_c.alpha() < 255
+                   else QColor.NameFormat.HexRgb)
+            values[prop_name] = cedit.current_c.name(fmt)
         return values
 
 

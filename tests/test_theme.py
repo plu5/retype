@@ -50,3 +50,9 @@ class TestThemeValuesFromQss:
              'test': {'t': None, 'color': None}}
         res = valuesFromQss(d, qss)
         assert res == {'test': {'t': 'red'}}
+
+    def test_argb_cvalue(self):
+        qss = "test{t:#80ffff00;}"
+        d = {'test': {'t': None}}
+        res = valuesFromQss(d, qss)
+        assert res == {'test': {'t': '#80ffff00'}}
