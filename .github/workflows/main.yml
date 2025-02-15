@@ -33,8 +33,14 @@ on:
         type: boolean
         required: false
         default: true
-  push:
-    paths: ['retype/__init__.py'] # VERSION_FILE
+# DANGER: Inevitably leads to accidental releases. Also I think
+# this triggers a release even on other branches so needs to be
+# fixed anyway if you want it on push in future. It's too
+# dangerous though and I messed up too many times and led to
+# previous releases being written over due to same tag, so I am
+# disabling this.
+#   push:
+#     paths: ['retype/__init__.py'] # VERSION_FILE
 
 env:
   VERSION_FILE: 'retype/__init__.py'
