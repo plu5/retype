@@ -394,14 +394,7 @@ class BookView(QWidget):
         self.updateCursorPosition()
         self.display.setCursor(self._cursor)
 
-        self.setHighlightCursor()
-
         self.setMistakeCursor()
-
-    def setHighlightCursor(self):
-        # type: (BookView) -> None
-        self.highlight_cursor = QTextCursor(self.display.document())
-        self.updateHighlightCursor()
 
     def setMistakeCursor(self):
         # type: (BookView) -> None
@@ -417,12 +410,7 @@ class BookView(QWidget):
         pos = to_pos or self.cursor_pos
         self._cursor.setPosition(pos)
 
-    def updateHighlightCursor(self, to_pos=None):
-        # type: (BookView, int | None) -> None
-        if self.cursor_pos is None:
-            return
-        pos = to_pos or self.cursor_pos
-        self.highlight_cursor.setPosition(pos, self._cursor.KeepAnchor)
+        # Update highlighting
         self.display.full_highlight = False
         self.display.update()
 
