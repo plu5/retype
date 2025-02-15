@@ -61,7 +61,8 @@ class LibraryController(object):
 
     def setBook(self, book_id, book_view, switchView):
         # type: (LibraryController, int, BookView, pyqtBoundSignal) -> None
-        book_view.maybeSave()
+        if book_view.book:
+            book_view.maybeSave()
 
         if self.books and book_id in self.books:
             book = self.books[book_id]
