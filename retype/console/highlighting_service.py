@@ -182,7 +182,6 @@ error: {}'.format(v.line_pos, len(v.tobetyped_list), e))
         # type: (HighlightingService) -> None
         v = self.book_view
         v.updateCursorPosition()
-        v.updateHighlightCursor()
 
         if self.wrong:
             v.mistake_cursor.mergeCharFormat(v.mistake_format)
