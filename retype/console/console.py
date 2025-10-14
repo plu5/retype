@@ -34,7 +34,7 @@ class Console(LineEdit):
         }  # type: dict[Console.Ev, list[Callable[[QKeyEvent], None]]]
 
         self._font = self.font()
-        self._font_family = self.font_family = font_family
+        self._font_family = font_family  # type: str | None
         self._prompt = prompt
 
         self.command_service = None  # type: CommandService | None
