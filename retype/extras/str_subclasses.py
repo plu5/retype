@@ -110,7 +110,7 @@ class AnyStr(UserString):
         new = AnyStr(*self.possibilities)  # type: AnyStr | str
         for i in directions:
             if i == 1:
-                sl = slice(1, len(self))
+                sl = slice(1, len(self))  # type: ignore[misc]
                 k = 0
             elif i == -1:
                 sl = slice(0, -1)
@@ -120,7 +120,7 @@ class AnyStr(UserString):
 not {}".format(i))
             for char in chars:
                 while new and new[k] == char:
-                    new = new[sl]
+                    new = new[sl]  # type: ignore[misc]
         return new
 
     def lstrip(self, chars=" "):  # type: ignore[override]
@@ -281,7 +281,7 @@ class ManifoldStr(UserString):
                     if k < i:
                         substring, k = (self.manifold[k], k)
                         break
-                if substring is None:
+                if substring is None or k is None:
                     raise KeyError
                 return substring[i - k]
         elif isinstance(i, slice):  # type: ignore[misc]
@@ -323,7 +323,7 @@ class ManifoldStr(UserString):
         new = deepcopy(self)  # type: UserString | str
         for i in directions:
             if i == 1:
-                sl = slice(1, len(self))
+                sl = slice(1, len(self))  # type: ignore[misc]
                 k = 0
             elif i == -1:
                 sl = slice(0, -1)
@@ -333,7 +333,7 @@ class ManifoldStr(UserString):
 not {}".format(i))
             for char in chars:
                 while new and new[k] == char:
-                    new = new[sl]
+                    new = new[sl]  # type: ignore[misc]
         return new
 
     def lstrip(self, chars=" "):  # type: ignore[override]

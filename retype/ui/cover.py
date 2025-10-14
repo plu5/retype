@@ -156,7 +156,7 @@ class Cover(QWidget):
         if self.pregenerated:
             self.pixmap = PregeneratedCover(*info).pixmap()
         self.hover_image = HoverCover(*info).pixmap()
-        self.complete_indicator = CompleteIndicator(*info[0:2]).pixmap()
+        self.complete_indicator = CompleteIndicator(info[0], info[1]).pixmap()
 
     def sizeHint(self):
         # type: (Cover) -> QSize
