@@ -194,6 +194,7 @@ class BookView(QWidget):
         self.mistake_cursor = QTextCursor(
             self.display.document())  # type: QTextCursor
         self.chapter_pos = None  # type: int | None
+        self.viewed_chapter_pos = 0
         self.line_pos = None  # type: int | None
         self.cursor_pos = None  # type: int | None
         self.persistent_pos = None  # type: int | None
@@ -375,7 +376,7 @@ class BookView(QWidget):
         self.setCursor()
 
         self.tobetyped = self.book.chapters[self.chapter_pos]['plain'] if\
-            self.book else ''
+            self.book and len(self.book.chapters) else ''
 
         self._prepTobetypedList()
 
@@ -480,7 +481,14 @@ class BookView(QWidget):
             logger.error(f'setChapter: Unexpected None. book: {self.book}, '
                          f'chapter_pos: {self.chapter_pos}')
             return
-        self.setSource(self.book.chapters[pos])
+
+        if len(self.book.chapters) > pos:
+            self.setSource(self.book.chapters[pos])
+        else:
+            logger.error(f'setChapter: pos {pos} exceeds '
+                         f'{len(self.book.chapters)} chapters')
+            return
+
         self.viewed_chapter_pos = pos
         if move_cursor:
             self.chapter_pos = pos
@@ -687,14 +695,9 @@ class BookView(QWidget):
 
     def onLastChapter(self):
         # type: (BookView) -> bool
-        if self.book is None:
-            logger.error('onLastChapter: self.book is None')
+        if self.book is None or not len(self.book.chapters):
             return True
-        n = len(self.book.chapters)
-        if n <= 0:
-            logger.warning(f'onLastChapter: <=0 chapters? ({n})')
-            return True
-        return self.chapter_pos == n-1
+        return self.chapter_pos == len(self.book.chapters)-1
 
     def markComplete(self):
         # type: (BookView) -> None

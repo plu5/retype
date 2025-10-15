@@ -61,7 +61,11 @@ class ShelfView(QWidget):
         for book in self._library.books.values():
             loadBook = self._controller.loadBookRequested
             item = ShelfItem(book, loadBook)
-            self.shelves.addWidget(item)
+            if item.book.valid:
+                self.shelves.addWidget(item)
+            else:
+                logger.warning("_populate: skipping invalid book "
+                               f"{item.book.idn}:{item.book.path}")
 
     def repopulate(self):
         # type: (ShelfView) -> None

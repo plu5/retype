@@ -26,7 +26,7 @@ class PregeneratedCover:
         (w, h) = (self.w, self.h)
         pixmap = QPixmap(w, h)
 
-        char = self.title[-1]
+        char = self.title[-1] if len(self.title) else 'z'
         ind = ord(char) - 96
         i = ind % len(colours)
         pixmap.fill(colours[i])
