@@ -8,7 +8,7 @@ from retype.games.typespeed import TypespeedView as TypespeedV
 from retype.games.steno import StenoView
 from retype.controllers.main_controller import View
 from retype.extras.dict import _NestedSafeDictGroup
-from qt import QWidget, pyqtSignal
+from qt import QWidget, pyqtBoundSignal
 
 NestedDict = Dict[object, Union[object, 'NestedDict']]
 NestedMapping = Mapping[object, Union[object, 'NestedMapping']]
@@ -164,6 +164,6 @@ class Book(Protocol):
 
 
 class Selector(Protocol, QWidget):  # type: ignore[misc]
-    changed: pyqtSignal
+    changed: pyqtBoundSignal
 
     def set_(self, value: object) -> None: ...

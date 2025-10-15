@@ -99,10 +99,11 @@ class CustomisationDialog(QDialog):
         # type: (...) -> None
         QDialog.__init__(self, parent, Qt.WindowType.WindowCloseButtonHint)
         # The base config (no uncommitted modifications)
-        self.config = merge_dicts(DEFAULTS, config)  # type: Config
+        self.config: Config = merge_dicts(DEFAULTS, config)
         # The config with uncommitted modifications (any modifications will be
         #  applied to this one)
-        self.config_edited = deepcopy(self.config)
+        self.config_edited: Config = deepcopy(
+            self.config)  # type: ignore[misc]
 
         self.saveConfig = saveConfig
         self.prevView = prevView
@@ -927,7 +928,8 @@ class SDictDelegate(Delegate):
             logger.error(f'createEditor: EditRole data at index {index} is not'
                          f' a len 2 tuple. Received {data} ({type(data)}).')
             data = ('', False)
-        return SDictEntryEditor(*data, parent)
+        # NOTE(plu5, 2025-10-14): alas, mypy broke * in the past year
+        return SDictEntryEditor(data[0], data[1], parent)
 
     def setModelData(self,
                      editor,  # type: QWidget
@@ -1155,7 +1157,7 @@ class RDictDelegate(Delegate):
             logger.error(f'createEditor: EditRole data at index {index} is not'
                          f' a len 2 tuple. Received {data} ({type(data)}).')
             data = ('', [''])
-        return RDictEntryEditor(*data, parent)
+        return RDictEntryEditor(data[0], data[1], parent)
 
     def setModelData(self,
                      editor,  # type: QWidget
@@ -1362,7 +1364,7 @@ class KDictDelegate(Delegate):
             logger.error(f'createEditor: EditRole data at index {index} is not'
                          f' a len 2 tuple. Received {data} ({type(data)}).')
             data = ('', [''])
-        return KDictEntryEditor(*data, parent)
+        return KDictEntryEditor(data[0], data[1], parent)
 
     def setModelData(self,
                      editor,  # type: QWidget
