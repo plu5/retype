@@ -176,11 +176,12 @@ class LibraryItem:
 class BookWrapper(object):
     def __init__(self, library_item, save_data=None):
         # type: (BookWrapper, LibraryItem, SaveData | None) -> None
+        self.valid = False
         self._library_item = library_item
         self.path = library_item.path
         self.idn = library_item.idn
         self.checksum = library_item.checksum
-        self._book = epub.read_epub(self.path, options={'ignore_ncx': True})
+        self._book = self._readEpub()
         self.title = self._book.title
         self._chapters = []  # type: list[Chapter]
         self._images = []  # type: list[epub.EpubImage]
@@ -192,6 +193,17 @@ class BookWrapper(object):
         self.dirty = False
         self.progress = save_data['progress'] if save_data else 0.0
         self.progress_subscribers = []  # type: list[Callable[[float], None]]
+
+    def _readEpub(self):
+        # type: (BookWrapper) -> epub.EpubBook
+        ret = None
+        try:
+            ret = epub.read_epub(self.path, options={'ignore_ncx': True})
+            self.valid = True
+        except (LookupError, OSError) as e:
+            logger.error(f"Error reading epub {self.idn}:{self.path}:"
+                         f"\n{e}", exc_info=True)
+        return ret or epub.EpubBook()
 
     def _parseChaptersContent(self, chapters):
         # type: (BookWrapper, list[epub.EpubHtml]) -> list[Chapter]
@@ -325,7 +337,7 @@ class BookWrapper(object):
 
         # Workaround to catch some edge cases where the cover is not marked but
         #  is present on the first page
-        if not self._cover:
+        if not self._cover and len(self._unparsed_chapters):
             first_page = self.__parseChapterContent(self._unparsed_chapters[0])
             if len(first_page['images']) == 1 and \
                isspaceorempty(first_page['plain'], True):
