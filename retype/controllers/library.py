@@ -1,10 +1,11 @@
 import os
 import json
 import logging
+import traceback
 from lxml.html import fromstring, builder, tostring, xhtml_to_html
 from lxml.etree import _Element
 from ebooklib import epub
-from qt import QTextBrowser
+from qt import QTextBrowser, QMessageBox
 
 from typing import TYPE_CHECKING
 
@@ -201,8 +202,13 @@ class BookWrapper(object):
             ret = epub.read_epub(self.path, options={'ignore_ncx': True})
             self.valid = True
         except (LookupError, OSError) as e:
-            logger.error(f"Error reading epub {self.idn}:{self.path}:"
-                         f"\n{e}", exc_info=True)
+            s = (f'Unable to read epub {self.idn}:\n{self.path}.\n\n'
+                 'This is not fatal, but the book will not be loaded.')
+            logger.error(f"{s}\n{e}", exc_info=True)
+            msg = QMessageBox(QMessageBox.Icon.Warning, 'retype', s)
+            msg.setDetailedText(f'Path: {self.path}\n\n'
+                                f'{traceback.format_exc()}')
+            msg.exec()
         return ret or epub.EpubBook()
 
     def _parseChaptersContent(self, chapters):
