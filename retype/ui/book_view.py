@@ -614,14 +614,15 @@ class BookView(QWidget):
 
     def maybeSave(self):
         # type: (BookView) -> None
-        if self.persistent_pos is None or self.chapter_pos is None or \
-           self.progress is None:
-            logger.error('maybeSave: Unexpected None in positioning '
-                         f'variables. persistent_pos: {self.persistent_pos}, '
-                         f'chapter_pos: {self.chapter_pos}, progress: '
-                         f'{self.progress}')
-            return
         if self.book and self.book.dirty:
+            if self.persistent_pos is None or self.chapter_pos is None or \
+               self.progress is None:
+                logger.error('maybeSave: Unexpected None in positioning '
+                             f'variables. persistent_pos: '
+                             '{self.persistent_pos}, '
+                             f'chapter_pos: {self.chapter_pos}, progress: '
+                             f'{self.progress}')
+                return
             logger.debug(f"Saving progress in '{self.book.title}'")
             data = {'persistent_pos': self.persistent_pos,
                     'chapter_pos': self.chapter_pos,
