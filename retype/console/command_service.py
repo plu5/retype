@@ -36,6 +36,13 @@ commands_info = {
         'args': None,
         # 'func': self.advanceLine
     },
+    'skipChar':
+    {
+        'desc': 'Skip current character forward',
+        'aliases': ['char', 'skipchar', 'c'],
+        'args': None,
+        # 'func': self.skipChar
+    },
     'setChapter':
     {
         'desc': 'Set chapter to the chapter of the given numerical POS.\
@@ -221,6 +228,11 @@ class CommandService(object):
         # type: (CommandService) -> None
         if self._console.highlighting_service is not None:
             self._console.highlighting_service.advanceLine()
+
+    def skipChar(self):
+        # type: (CommandService) -> None
+        if self._console.highlighting_service is not None:
+            self._console.highlighting_service.skipChar()
 
     def gotoCursorPosition(self, move=None):
         # type: (CommandService, str | None) -> None

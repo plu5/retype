@@ -261,6 +261,25 @@ class CustomisationDialog(QDialog):
             lambda f: self.update_("console_font", f))
         lyt.addRow("Console font:", self.selectors['console_font'])
 
+        # skip char key
+        lyt.addRow(hline())
+        skip_char_enabled_checkbox = CheckBox(
+            "Enable skip character key binding",
+            self.config_edited['skip_char_enabled'])
+        skip_char_enabled_checkbox.changed.connect(
+            lambda t: self.update_("skip_char_enabled", t))
+        self.selectors['skip_char_enabled'] = skip_char_enabled_checkbox
+        lyt.addRow(skip_char_enabled_checkbox)
+        self.selectors['skip_char_key'] = KeyCaptureEdit(
+            self.config_edited['skip_char_key'])
+        self.selectors['skip_char_key'].changed.connect(
+            lambda k: self.update_("skip_char_key", k))
+        self.selectors['skip_char_key'].setEnabled(
+            self.config_edited['skip_char_enabled'])
+        skip_char_enabled_checkbox.changed.connect(
+            self.selectors['skip_char_key'].setEnabled)
+        lyt.addRow("Skip character key:", self.selectors['skip_char_key'])
+
         # Windows-only: system console
         if iswindows:
             lyt.addRow(hline())
@@ -757,6 +776,33 @@ class PromptEdit(QLineEdit):
 
     def set_(self, value):
         # type: (PromptEdit, object) -> None
+        if not isinstance(value, str):
+            raise SelectorValueTypeMismatch(
+                f'expects str, got: {type(value)}')
+        self.setText(value)
+
+
+class KeyCaptureEdit(QLineEdit):
+    changed = pyqtSignal(str)
+
+    def __init__(self, key_name, parent=None):
+        # type: (KeyCaptureEdit, str, QWidget | None) -> None
+        QLineEdit.__init__(self, parent)
+        self.setReadOnly(True)
+        self.setPlaceholderText("Click and press a key...")
+        self.set_(key_name)
+
+    def keyPressEvent(self, e):
+        # type: (KeyCaptureEdit, QKeyEvent) -> None
+        name = Qt.Key(e.key()).name.decode() if isinstance(
+            Qt.Key(e.key()).name, bytes) else Qt.Key(e.key()).name
+        # Strip "Key_" prefix if present
+        name = name.replace("Key_", "") if name.startswith("Key_") else name
+        self.setText(name)
+        self.changed.emit(name)
+
+    def set_(self, value):
+        # type: (KeyCaptureEdit, object) -> None
         if not isinstance(value, str):
             raise SelectorValueTypeMismatch(
                 f'expects str, got: {type(value)}')
