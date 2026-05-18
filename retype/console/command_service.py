@@ -121,6 +121,7 @@ class CommandService(object):
         e = text[len(self.prompt):].lower()
         el = e.split(' ')  #
         if text.startswith(self.prompt) and el[0] in self.commands:
+            self._console.clear()  # clear first (#48)
             cmd = self.commands[el[0]]
             if not hasattr(cmd, '__call__'):
                 logger.error(f'Uncallable cmd: {cmd}')
@@ -144,7 +145,6 @@ class CommandService(object):
                 self.command_history.append(text)
 
             self.command_history_pos = None
-            self._console.clear()
 
     def commandHistoryUp(self):
         # type: (CommandService) -> None
