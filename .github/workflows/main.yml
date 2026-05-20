@@ -175,7 +175,7 @@ jobs:
         if: matrix.os == 'macos-14' && steps.python_venv_cache.outputs.cache-hit != 'true'
         run: |
           if [ -d "venv" ]; then rm -rf venv; fi
-          python3 -m venv venv
+          python3.7 -m venv venv
           PYINSTALLER_COMPILE_BOOTLOADER=1 venv/bin/python3 -m pip install pyinstaller setuptools
           venv/bin/python3 -m pip install PyQt5==5.14.2 lxml==4.6.3 # Compatible down to macOS 10.13
           # ^ Explanation:
