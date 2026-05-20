@@ -16,6 +16,10 @@ on:
         type: string
         required: false
         description: Tag annotation
+      preamble:
+        type: string
+        required: false
+        description: Markdown to prepend to changelog
       prerelease:
         type: boolean
         required: false
@@ -262,3 +266,5 @@ jobs:
           tag_annotation: ${{ needs.data.outputs.annotation }}
           prerelease: ${{ needs.data.outputs.prerelease }}
           files: ./dist/*
+          excluded_types: chore docs ci style
+          preamble: ${{ inputs.preamble }}
