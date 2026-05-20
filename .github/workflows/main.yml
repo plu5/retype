@@ -23,7 +23,7 @@ on:
       prerelease:
         type: boolean
         required: false
-        default: true
+        default: false
         description: If releasing, whether release should be marked prerelease
       build_linux:
         type: boolean
