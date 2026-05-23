@@ -1,4 +1,5 @@
 import logging
+import traceback
 from qt import (QWidget, QVBoxLayout, QTextBrowser, QTextDocument, QUrl,
                 QTextCursor, QTextCharFormat, QPainter, QPixmap,
                 QToolBar, QFont, QKeySequence, Qt, QApplication, pyqtSignal,
@@ -12,6 +13,7 @@ from retype.services import Autosave
 from retype.stats import StatsDock
 from retype.resource_handler import getIcon
 from retype.services.theme import theme, C, Theme
+from retype.services.keymap import keymap, K, Keymap
 from retype.constants import default_font_family, default_font_size
 
 logger = logging.getLogger(__name__)
@@ -155,6 +157,13 @@ class BookDisplay(QTextBrowser):
         QTextBrowser.wheelEvent(self, e)
 
 
+@keymap('BookView.gotoCursorPosition', K())
+@keymap('BookView.switchToShelves', K())
+@keymap('BookView.previousChapter', K())
+@keymap('BookView.nextChapter', K())
+@keymap('BookView.skipLine', K())
+@keymap('BookView.zoomIn', K([QKeySequence.StandardKey.ZoomIn]))
+@keymap('BookView.zoomOut', K([QKeySequence.StandardKey.ZoomOut]))
 @theme('BookView.Highlighting.Highlight', C(bg='#30ffff00'))
 @theme('BookView.Highlighting.Mistake', C(fg='white', bg='red'))
 class BookView(QWidget):
@@ -218,6 +227,23 @@ class BookView(QWidget):
         self.mistake_format.setForeground(self.c_mistake.fg())
         self.mistake_format.setBackground(self.c_mistake.bg())
 
+    def keymapUpdate(self):
+        # type: (BookView) -> None
+        if not hasattr(self, 'actions'):
+            logger.warning("keymapUpdate called with no actions set")
+            return
+        for name, d in self.actions.items():
+            n = name.split(':')
+            selector_name = n[0]
+            argstr = n[1] if len(n) > 1 else ''
+            try:
+                s = Keymap.s(selector_name).s(argstr)
+                d['shortcuts'] = s
+                d['action'].setShortcuts(s)
+            except KeyError:
+                logger.error(f"Updating k '{name}' failed with KeyError. "
+                             f"{traceback.format_exc()}")
+
     def _initUI(self):
         # type: (BookView) -> None
         self.display.anchorClicked.connect(self.anchorClicked)
@@ -252,13 +278,13 @@ class BookView(QWidget):
         self.toolbar = QToolBar(self)
         self.toolbar.setIconSize(QSize(16, 16))
 
-        actions = {
-            'back':
+        self.actions = {
+            'BookView.switchToShelves':
             {
                 'name': 'Back to shelves',
-                'func': self.switchToShelves
+                'func': self.switchToShelves,
             },
-            'pos':
+            'BookView.gotoCursorPosition':
             {
                 'name': 'Cursor position',
                 'func': self.gotoCursorPosition,
@@ -266,7 +292,7 @@ class BookView(QWidget):
  cursor to your current position',
                 'icon': 'cursor'
             },
-            'pchap':
+            'BookView.previousChapter':
             {
                 'name': 'Previous chapter',
                 'func': self.previousChapterAction,
@@ -274,7 +300,7 @@ class BookView(QWidget):
  cursor with you as well',
                 'icon': 'arrow-left'
             },
-            'nchap':
+            'BookView.nextChapter':
             {
                 'name': 'Next chapter',
                 'func': self.nextChapterAction,
@@ -282,25 +308,23 @@ class BookView(QWidget):
  with you as well',
                 'icon': 'arrow-right'
             },
-            'skip':
+            'BookView.skipLine':
             {
                 'name': 'Skip line',
                 'func': self.advanceLine,
                 'tooltip': 'Move cursor to next line',
                 'icon': 'skip'
             },
-            'zoomin':
+            'BookView.zoomIn':
             {
                 'name': 'Increase font size',
                 'func': self.display.zoomIn,
-                'shortcut': QKeySequence(QKeySequence.StandardKey.ZoomIn),
                 'icon': 't-up'
             },
-            'zoomout':
+            'BookView.zoomOut':
             {
                 'name': 'Decrease font size',
                 'func': self.display.zoomOut,
-                'shortcut': QKeySequence(QKeySequence.StandardKey.ZoomOut),
                 'icon': 't-down'
             }
         }  # type: dict[str, ActionInfo]
@@ -308,7 +332,7 @@ class BookView(QWidget):
         def addAction(name,  # type: str
                       func,  # type: Callable[[], None]
                       tooltip=None,  # type: str | None
-                      shortcut=None,  # type: Shortcut | None
+                      shortcuts=None,  # type: list[Shortcut] | None
                       icon=None,  # type: str | None
                       action=None  # type: QAction | None  # unused
                       ):
@@ -316,21 +340,26 @@ class BookView(QWidget):
             a = self.toolbar.addAction(name, func)
             if tooltip:
                 a.setToolTip(tooltip)
-            if shortcut:
-                a.setShortcut(shortcut)
+            if shortcuts:
+                a.setShortcuts(shortcuts)
             if icon:
                 a.setIcon(getIcon(icon))
             return a
 
-        for k, v in actions.items():
-            action = addAction(**v)
-            actions[k]['action'] = action
+        for name, info in self.actions.items():
+            n = name.split(':')
+            selector_name = n[0]
+            argstr = n[1] if len(n) > 1 else ''
+            info['shortcuts'] = Keymap.s(selector_name).s(argstr)
+            action = addAction(**info)
+            info['action'] = action
 
-        self.pchap_action = actions['pchap']['action']
-        self.nchap_action = actions['nchap']['action']
-        self.skip_action = actions['skip']['action']
+        self.pchap_action = self.actions['BookView.previousChapter']['action']
+        self.nchap_action = self.actions['BookView.nextChapter']['action']
+        self.skip_action = self.actions['BookView.skipLine']['action']
 
-        self.toolbar.insertSeparator(actions['pos']['action'])
+        self.toolbar.insertSeparator(
+            self.actions['BookView.gotoCursorPosition']['action'])
 
     def _initModeline(self):
         # type: (BookView) -> None
@@ -724,5 +753,5 @@ if TYPE_CHECKING:
     ActionInfo = TypedDict(
         'ActionInfo',
         {'name': str, 'func': Callable[[], None], 'tooltip': str,
-         'shortcut': QKeySequence, 'icon': str, 'action': QAction},
+         'shortcuts': list[str], 'icon': str, 'action': QAction},
         total=False)
