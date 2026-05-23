@@ -28,6 +28,7 @@ class MenuController(QObject):
         self.controller = main_controller
         self._menu = menu
         self._initMenuBar()
+        Keymap.notifier.changed.connect(self.keymapUpdate)
 
     def _initMenuBar(self):
         # type: (MenuController) -> None
@@ -123,9 +124,10 @@ class MenuController(QObject):
                    shortcuts=None,  # type: list[str] | None
                    icon=None  # type: str | None
                    ):
-        # type: (...) -> None
+        # type: (...) -> QAction
         action = self._makeAction(name, func, shortcuts, icon)
         menu.addAction(action)
+        return action
 
     def keymapUpdate(self):
         # type: (MenuController) -> None
@@ -139,9 +141,14 @@ class MenuController(QObject):
             try:
                 s = Keymap.s(selector_name).s(argstr)
                 d['shortcuts'] = s
-                d['action'].setShortcuts(s)
-            except KeyError:
-                logger.error(f"Updating k '{name}' failed with KeyError. "
+                # Action could be None for OS-specific actions
+                action = d.get('action')
+                if action:
+                    action.setShortcuts(s)
+                else:
+                    logger.debug(f"Skip updating non-existing action {name}")
+            except KeyError, AttributeError:
+                logger.error(f"Updating k '{name}' failed. "
                              f"{traceback.format_exc()}")
 
 
