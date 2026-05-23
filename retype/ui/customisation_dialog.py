@@ -18,10 +18,12 @@ from retype.extras.dict import merge_dicts, update
 from retype.constants import default_config, iswindows, default_steno_kdict
 from retype.services.theme import (Theme, populateThemes, valuesFromQss, theme,
                                    C)
+from retype.services.keymap import Keymap
 from retype.extras.qss import serialiseValuesDict
 from retype.resource_handler import getStylePath
 from retype.extras.widgets import (ScrollTabWidget, AdjustedStackedWidget,
-                                   WrappedLabel, MinWidget)
+                                   WrappedLabel, MinWidget,
+                                   EscapableKeySequenceEdit)
 from retype.extras.camel import spacecamel
 from retype.services.icon_set import Icons
 from retype.games.steno import VisualStenoKeyboard
@@ -130,6 +132,7 @@ class CustomisationDialog(QDialog):
         catw.add("Filesystem", "Paths", self._pathSettings())
         catw.add("User interface", "Icons", self._iconsSettings())
         catw.add("User interface", "Theme", self._themeSettings())
+        catw.add("User interface", "Keymap", self._keymapSettings())
         catw.add("User interface", "Console", self._consoleSettings())
         catw.add("User interface", "Book View", self._bookviewSettings())
         catw.add("User interface", "Window geometry", self._windowSettings())
@@ -239,6 +242,14 @@ class CustomisationDialog(QDialog):
             lambda: self.theme.exportCurrent(self.getUserDir()))
 
         return pth
+
+    def _keymapSettings(self):
+        # type: (CustomisationDialog) -> QWidget
+        pkm = QWidget()
+        lyt = QFormLayout(pkm)
+        lyt.setContentsMargins(0, 0, 0, 0)
+        lyt.addRow(KeymapWidget())
+        return pkm
 
     def _consoleSettings(self):
         # type: (CustomisationDialog) -> QWidget
@@ -2021,6 +2032,96 @@ class ThemeWidget(QWidget):
         return self.minimumSizeHint()
 
 
+class KeymapSelectorWidget(QWidget):
+    changed = pyqtSignal()
+
+    def __init__(self, k, parent=None):
+        # type: (KeymapSelectorWidget, K, QWidget | None) -> None
+        QWidget.__init__(self, parent)
+        self.lyt = QFormLayout(self)
+        self.lyt.addRow(QLabel(f'<b>{k.name}</b>'))
+        for argstr, shortcuts in k.entries():
+            if argstr == '':
+                editor = EscapableKeySequenceEdit()
+                if len(shortcuts):
+                    editor.setKeySequence(shortcuts[0])
+                    shortcuts = shortcuts[1:]
+                eargstr = QLineEdit()
+                eargstr.setPlaceholderText("No arguments")
+                eargstr.setEnabled(False)
+                self.lyt.addRow(eargstr, editor)
+                self.addbtn = QPushButton("+ Add")
+                self.addbtn.clicked.connect(self.addEntry)
+                self.lyt.addRow("Additional shortcuts:", self.addbtn)
+            for s in shortcuts:
+                self.addEntry(s, argstr)
+
+    def addEntry(self, s="", argstr=""):
+        # type: (KeymapSelectorWidget, str, str) -> None
+        editor = EscapableKeySequenceEdit()
+        if s:
+            editor.setKeySequence(s)
+        w = QWidget()
+        wlyt = QHBoxLayout(w)
+        wlyt.setContentsMargins(0, 0, 0, 0)
+        wlyt.addWidget(editor)
+        rembtn = QPushButton("- Remove")
+        rembtn.clicked.connect(lambda: self.lyt.removeRow(w))
+        wlyt.addWidget(rembtn)
+        eargstr = QLineEdit(argstr)
+        eargstr.setPlaceholderText("Optional arguments")
+        self.lyt.addRow(eargstr, w)
+
+
+class KeymapCategoryWidget(QWidget):
+    def __init__(self, parent=None):
+        # type: (KeymapCategoryWidget, QWidget | None) -> None
+        QWidget.__init__(self, parent)
+        self.lyt = QFormLayout(self)
+
+    def addSelectorWidget(self, widget):
+        # type: (KeymapCategoryWidget, KeymapSelectorWidget) -> None
+        self.lyt.addRow(widget)
+
+
+class KeymapWidget(QWidget):
+    def __init__(self, parent=None):
+        # type: (KeymapWidget, QWidget | None) -> None
+        QWidget.__init__(self, parent)
+        self.cat_widgets = {}  # type: dict[str, KeymapCategoryWidget]
+        self.lyt = QVBoxLayout(self)
+        self.lyt.setContentsMargins(0, 0, 0, 0)
+        self.tabw = ScrollTabWidget()
+        self.lyt.addWidget(self.tabw)
+        self._populateWidgets()
+
+    def _populateWidgets(self):
+        # type: (KeymapWidget) -> None
+        for n, k in Keymap.selectors.items():
+            selector_widget = KeymapSelectorWidget(k)
+            cat_name = self.friendlyCatName(n)
+            cat = self.cat_widgets.get(cat_name)
+            if (cat):
+                cat.addSelectorWidget(selector_widget)
+            else:
+                cat_widget = KeymapCategoryWidget()
+                cat_widget.addSelectorWidget(selector_widget)
+                self.cat_widgets[cat_name] = cat_widget
+                self.tabw.addTab(cat_widget, cat_name)
+
+    def friendlyCatName(self, name):
+        # type: (KeymapWidget, str) -> str
+        return spacecamel(name.split('.')[0])
+
+    def minimumSizeHint(self):
+        # type: (KeymapWidget) -> QSize
+        return QSize(100, 100)
+
+    def sizeHint(self):
+        # type: (KeymapWidget) -> QSize
+        return self.minimumSizeHint()
+
+
 class CategoriesDelegate(QItemDelegate):
     def __init__(self, parent=None):
         # type: (CategoriesDelegate, QWidget | None) -> None
@@ -2036,6 +2137,8 @@ class CategoriesDelegate(QItemDelegate):
         # type: (...) -> None
         newoption = option
         if not option.state & QStyle.StateFlag.State_Enabled:  # Sections
+            # TODO(plu5): fix this for dark themes.
+            # It needs to be lighter in that case.
             painter.fillRect(rect, option.palette.window().color().darker(106))
             painter.setPen(option.palette.window().color().darker(130))
             if rect.top():
