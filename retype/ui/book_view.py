@@ -217,6 +217,8 @@ class BookView(QWidget):
         self.c_mistake.changed.connect(self.themeUpdate)
         self.themeUpdate()
 
+        Keymap.notifier.changed.connect(self.keymapUpdate)
+
     def _loadTheme(self):
         # type: (BookView) -> tuple[C, ...]
         return (Theme.get('BookView.Highlighting.Highlight'),

@@ -1,5 +1,6 @@
 import os
 import logging
+import traceback
 from copy import deepcopy
 from base64 import b64encode
 from qt import (QWidget, QFormLayout, QVBoxLayout, QLabel, QLineEdit,
@@ -248,7 +249,8 @@ class CustomisationDialog(QDialog):
         pkm = QWidget()
         lyt = QFormLayout(pkm)
         lyt.setContentsMargins(0, 0, 0, 0)
-        lyt.addRow(KeymapWidget())
+        self.keymap = KeymapWidget()
+        lyt.addRow(self.keymap)
         return pkm
 
     def _consoleSettings(self):
@@ -415,6 +417,9 @@ class CustomisationDialog(QDialog):
 
         # Save theme
         self.theme.saveCurrent(getStylePath(self.getUserDir()))
+
+        # Save keymap
+        self.keymap.saveCurrent()
 
         self.revert_btn.setEnabled(False)
 
@@ -2072,6 +2077,38 @@ class KeymapSelectorWidget(QWidget):
         eargstr.setPlaceholderText("Optional arguments")
         self.lyt.addRow(eargstr, w)
 
+    def get(self):
+        # type: (KeymapSelectorWidget) -> dict[str, list[str]]
+        values = {}
+        try:
+            # 2nd row, after the selector name label
+            firsteditor = self.lyt.itemAt(
+                1, QFormLayout.ItemRole.FieldRole).widget()
+            values[''] = [firsteditor.keySequence().toString()]
+        except AttributeError:
+            logger.error("Getting KeymapSelectorWidget first editor failed."
+                         f"{traceback.format_exc()}")
+            return values
+        # Additional shortcuts starting from 4th row
+        for i in range(3, self.lyt.rowCount()):
+            try:
+                eargstr = self.lyt.itemAt(
+                    i, QFormLayout.ItemRole.LabelRole).widget()
+                w = self.lyt.itemAt(
+                    i, QFormLayout.ItemRole.FieldRole).widget()
+                editor = w.layout().itemAt(0).widget()
+                s = editor.keySequence().toString()
+            except AttributeError:
+                logger.error("Getting KeymapSelectorWidget editors failed."
+                             f"i:{i} type:{type(editor)}\n"
+                             f"{traceback.format_exc()}")
+                continue
+            if values.get(eargstr.text()):
+                values[eargstr.text()].append(s)
+            else:
+                values[eargstr.text()] = [s]
+        return values
+
 
 class KeymapCategoryWidget(QWidget):
     def __init__(self, parent=None):
@@ -2089,6 +2126,7 @@ class KeymapWidget(QWidget):
         # type: (KeymapWidget, QWidget | None) -> None
         QWidget.__init__(self, parent)
         self.cat_widgets = {}  # type: dict[str, KeymapCategoryWidget]
+        self.selector_widgets = {}  # type: dict[str, KeymapSelectorWidget]
         self.lyt = QVBoxLayout(self)
         self.lyt.setContentsMargins(0, 0, 0, 0)
         self.tabw = ScrollTabWidget()
@@ -2097,9 +2135,10 @@ class KeymapWidget(QWidget):
 
     def _populateWidgets(self):
         # type: (KeymapWidget) -> None
-        for n, k in Keymap.selectors.items():
+        for name, k in Keymap.selectors.items():
             selector_widget = KeymapSelectorWidget(k)
-            cat_name = self.friendlyCatName(n)
+            self.selector_widgets[name] = selector_widget
+            cat_name = self.friendlyCatName(name)
             cat = self.cat_widgets.get(cat_name)
             if (cat):
                 cat.addSelectorWidget(selector_widget)
@@ -2112,6 +2151,13 @@ class KeymapWidget(QWidget):
     def friendlyCatName(self, name):
         # type: (KeymapWidget, str) -> str
         return spacecamel(name.split('.')[0])
+
+    def saveCurrent(self):
+        # type: (KeymapWidget) -> None
+        values = {}
+        for name, widget in self.selector_widgets.items():
+            values[name] = widget.get()
+        Keymap.set_(values)
 
     def minimumSizeHint(self):
         # type: (KeymapWidget) -> QSize
