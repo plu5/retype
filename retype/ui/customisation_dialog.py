@@ -2186,7 +2186,8 @@ class KeymapSelectorWidget(QWidget):
         values = {}
         for argstr, s, _, _ in self.widgets():
             if values.get(argstr):
-                values[argstr].append(s)
+                if s:
+                    values[argstr].append(s)
             else:
                 values[argstr] = [s]
         return values
