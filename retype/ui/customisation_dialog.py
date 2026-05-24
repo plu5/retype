@@ -1,4 +1,5 @@
 import os
+import json
 import logging
 import traceback
 from copy import deepcopy
@@ -19,7 +20,7 @@ from retype.extras.dict import merge_dicts, update
 from retype.constants import default_config, iswindows, default_steno_kdict
 from retype.services.theme import (Theme, populateThemes, valuesFromQss, theme,
                                    C)
-from retype.services.keymap import Keymap
+from retype.services.keymap import Keymap, populateKeymaps
 from retype.extras.qss import serialiseValuesDict
 from retype.resource_handler import getStylePath
 from retype.extras.widgets import (ScrollTabWidget, AdjustedStackedWidget,
@@ -248,9 +249,38 @@ class CustomisationDialog(QDialog):
         # type: (CustomisationDialog) -> QWidget
         pkm = QWidget()
         lyt = QFormLayout(pkm)
-        lyt.setContentsMargins(0, 0, 0, 0)
+
+        preset_lyt = QHBoxLayout()
+        keymaps = QComboBox()
+        preset_lyt.addWidget(keymaps, 1)
+        apply_btn = QPushButton("Apply")
+        apply_btn.setToolTip("Apply selected preset")
+        preset_lyt.addWidget(apply_btn)
+        export_btn = QPushButton("Export")
+        export_btn.setToolTip("Export saved modifications as new preset")
+        preset_lyt.addWidget(export_btn)
+        lyt.addRow(QLabel("Preset:"), preset_lyt)
+        lyt.addRow(descl("To import a preset, place the json keymap file in\
+ the 'style' subfolder in either the user dir or application folder, and\
+ retart retype."))
+        lyt.addRow(descl("In the shortcut edits, Backspace or Delete to clear,\
+ Esc to unfocus."))
+
+        user_dir = self.getUserDir()
+        populateKeymaps(getStylePath(), getStylePath(user_dir))
+        for km in Keymap.keymaps:
+            keymaps.addItem(km)
+        keymaps.model().sort(0)
+        keymaps.setCurrentIndex(0)
+
         self.keymap = KeymapWidget()
         lyt.addRow(self.keymap)
+
+        apply_btn.clicked.connect(
+            lambda: self.keymap.applyKeymap(keymaps.currentText()))
+        export_btn.clicked.connect(
+            lambda: self.keymap.exportCurrent(self.getUserDir()))
+
         return pkm
 
     def _consoleSettings(self):
@@ -1939,6 +1969,7 @@ class ThemeWidget(QWidget):
         else:
             logger.warning('applyTheme: Unable to find values for theme '
                            f'{name}')
+            return
         for name, widget in self.selector_widgets.items():
             v = values.get(name, {})
             widget.set_(v)
@@ -2077,18 +2108,16 @@ class KeymapSelectorWidget(QWidget):
         eargstr.setPlaceholderText("Optional arguments")
         self.lyt.addRow(eargstr, w)
 
-    def get(self):
-        # type: (KeymapSelectorWidget) -> dict[str, list[str]]
-        values = {}
+    def widgets(self):
+        # type: (KeymapSelectorWidget) -> Iterator
         try:
             # 2nd row, after the selector name label
             firsteditor = self.lyt.itemAt(
                 1, QFormLayout.ItemRole.FieldRole).widget()
-            values[''] = [firsteditor.keySequence().toString()]
+            yield '', firsteditor.keySequence().toString(), None, firsteditor
         except AttributeError:
             logger.error("Getting KeymapSelectorWidget first editor failed."
                          f"{traceback.format_exc()}")
-            return values
         # Additional shortcuts starting from 4th row
         for i in range(3, self.lyt.rowCount()):
             try:
@@ -2098,16 +2127,43 @@ class KeymapSelectorWidget(QWidget):
                     i, QFormLayout.ItemRole.FieldRole).widget()
                 editor = w.layout().itemAt(0).widget()
                 s = editor.keySequence().toString()
+                yield eargstr.text(), s, eargstr, editor
             except AttributeError:
-                logger.error("Getting KeymapSelectorWidget editors failed."
+                logger.error("Getting KeymapSelectorWidget editors failed.\n"
                              f"i:{i} type:{type(editor)}\n"
                              f"{traceback.format_exc()}")
-                continue
-            if values.get(eargstr.text()):
-                values[eargstr.text()].append(s)
+
+    def get(self):
+        # type: (KeymapSelectorWidget) -> dict[str, list[str]]
+        values = {}
+        for argstr, s, _, _ in self.widgets():
+            if values.get(argstr):
+                values[argstr].append(s)
             else:
-                values[eargstr.text()] = [s]
+                values[argstr] = [s]
         return values
+
+    def set_(self, values):
+        # type: (KeymapSelectorWidget, dict[str, list[str]]) -> None
+        i = 0
+        remove_rows_of = []
+        for _, _, eargstr, editor in self.widgets():
+            if i == 0:
+                s = values.get('')
+                if len(s):
+                    editor.setKeySequence(s[0])
+                else:
+                    editor.clear()
+            else:
+                remove_rows_of.append(eargstr)
+            i += 1
+        for w in remove_rows_of:
+            self.lyt.removeRow(w)
+        for argstr, s in values.items():
+            if argstr == '' and len(s):
+                s = s[1:]
+            for shortcut in s:
+                self.addEntry(shortcut, argstr)
 
 
 class KeymapCategoryWidget(QWidget):
@@ -2152,12 +2208,59 @@ class KeymapWidget(QWidget):
         # type: (KeymapWidget, str) -> str
         return spacecamel(name.split('.')[0])
 
-    def saveCurrent(self):
-        # type: (KeymapWidget) -> None
+    def get(self):
+        # type: (KeymapWidget) -> dict[str, dict[str, list[str]]]
         values = {}
         for name, widget in self.selector_widgets.items():
             values[name] = widget.get()
-        Keymap.set_(values)
+        return values
+
+    def applyKeymap(self, name):
+        # type: (KeymapWidget, str) -> None
+        values = {}  # type: dict[str, dict[str, list[str]]]
+        km = Keymap.keymaps.get(name)
+        if km:
+            values = km.get('values', {})
+        else:
+            logger.warning('applyKeymap: Unable to find values for keymap '
+                           f'{name}')
+            return
+        for name, widget in self.selector_widgets.items():
+            v = values.get(name, {})
+            widget.set_(v)
+
+    def _save(self, file_path, json):
+        # type: (KeymapWidget, str, str) -> None
+        try:
+            os.makedirs(os.path.dirname(file_path), exist_ok=True)
+            with open(file_path, 'w', encoding='utf-8') as f:
+                logger.debug(f'Saving keymap: {file_path}')
+                f.write(json)
+        except OSError as e:
+            logger.error(f'Failed to save keymap to file {file_path}')
+            logger.error(f'{type(e)}: {e}')
+
+    def saveCurrent(self):
+        # type: (KeymapWidget) -> None
+        Keymap.set_(self.get())
+
+    def exportCurrent(self, user_dir):
+        # type: (KeymapWidget, str) -> None
+        # Get values dict
+        values = self.get()
+        # Serialise
+        res = json.dumps(values, indent=2)
+        # Save dialog
+        path = getStylePath(user_dir)
+        if not os.path.exists(path):
+            path = getStylePath()
+        file_path = QFileDialog.getSaveFileName(
+            self, 'Export as new keymap preset', path, 'Keymap preset (*.json)'
+        )[0]
+        if len(file_path) == 0:
+            return
+        # Write to file in path
+        self._save(file_path, res)
 
     def minimumSizeHint(self):
         # type: (KeymapWidget) -> QSize
