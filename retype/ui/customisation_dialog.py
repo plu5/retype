@@ -20,7 +20,7 @@ from retype.extras.dict import merge_dicts, update
 from retype.constants import default_config, iswindows, default_steno_kdict
 from retype.services.theme import (Theme, populateThemes, valuesFromQss, theme,
                                    C)
-from retype.services.keymap import Keymap, populateKeymaps
+from retype.services.keymap import Keymap, populateKeymaps, getKeymapValues
 from retype.extras.qss import serialiseValuesDict
 from retype.resource_handler import getStylePath
 from retype.extras.widgets import (ScrollTabWidget, AdjustedStackedWidget,
@@ -34,6 +34,7 @@ logger = logging.getLogger(__name__)
 
 DEFAULTS = default_config
 THEME_MODIFICATIONS_FILENAME = '__current__.qss'
+KEYMAP_MODIFICATIONS_FILENAME = '__current_keymap__.json'
 NPXSPINBOX_MINIMUM_VALUE = -10001
 
 
@@ -268,12 +269,14 @@ class CustomisationDialog(QDialog):
 
         user_dir = self.getUserDir()
         populateKeymaps(getStylePath(), getStylePath(user_dir))
+        prefix_to_exclude = KEYMAP_MODIFICATIONS_FILENAME.rsplit('.', 1)[0]
         for km in Keymap.keymaps:
-            keymaps.addItem(km)
+            if not km.startswith(prefix_to_exclude):
+                keymaps.addItem(km)
         keymaps.model().sort(0)
         keymaps.setCurrentIndex(0)
 
-        self.keymap = KeymapWidget()
+        self.keymap = KeymapWidget(user_dir)
         lyt.addRow(self.keymap)
 
         apply_btn.clicked.connect(
@@ -449,7 +452,7 @@ class CustomisationDialog(QDialog):
         self.theme.saveCurrent(getStylePath(self.getUserDir()))
 
         # Save keymap
-        self.keymap.saveCurrent()
+        self.keymap.saveCurrent(getStylePath(self.getUserDir()))
 
         self.revert_btn.setEnabled(False)
 
@@ -2071,12 +2074,16 @@ class ThemeWidget(QWidget):
 class KeymapSelectorWidget(QWidget):
     changed = pyqtSignal()
 
-    def __init__(self, k, parent=None):
-        # type: (KeymapSelectorWidget, K, QWidget | None) -> None
+    def __init__(self,  # type: KeymapSelectorWidget
+                 selector_name,  # type: str
+                 entries_map,  # type: dict[str, list[str]]
+                 parent=None  # type: QWidget | None
+                 ):
+        # type: (...) -> None
         QWidget.__init__(self, parent)
         self.lyt = QFormLayout(self)
-        self.lyt.addRow(QLabel(f'<b>{k.name}</b>'))
-        for argstr, shortcuts in k.entries():
+        self.lyt.addRow(QLabel(f'<b>{selector_name}</b>'))
+        for argstr, shortcuts in entries_map.items():
             if argstr == '':
                 editor = EscapableKeySequenceEdit()
                 if len(shortcuts):
@@ -2178,9 +2185,11 @@ class KeymapCategoryWidget(QWidget):
 
 
 class KeymapWidget(QWidget):
-    def __init__(self, parent=None):
-        # type: (KeymapWidget, QWidget | None) -> None
+    def __init__(self, user_dir, parent=None):
+        # type: (KeymapWidget, str, QWidget | None) -> None
         QWidget.__init__(self, parent)
+        self.default_values = Keymap.getValuesDict()
+        self.values = self._loadValues(getStylePath(user_dir))
         self.cat_widgets = {}  # type: dict[str, KeymapCategoryWidget]
         self.selector_widgets = {}  # type: dict[str, KeymapSelectorWidget]
         self.lyt = QVBoxLayout(self)
@@ -2189,10 +2198,24 @@ class KeymapWidget(QWidget):
         self.lyt.addWidget(self.tabw)
         self._populateWidgets()
 
+    def _loadValues(self, path):
+        # type: (KeymapWidget, str) -> dict[str, dict[str, list[str]]]
+        values = {}  # dict[str, dict[str, list[str]]]
+        file_path = os.path.join(path, KEYMAP_MODIFICATIONS_FILENAME)
+        if os.path.exists(file_path):
+            values = getKeymapValues(KEYMAP_MODIFICATIONS_FILENAME, file_path)
+            # Update shortcuts in application
+            Keymap.set_(values)
+        else:
+            logger.debug(f'Current keymap {file_path} not found. This is\
+ normal on first launch or if it has not been saved yet. Falling back to\
+ default values.')
+        return values or self.default_values
+
     def _populateWidgets(self):
         # type: (KeymapWidget) -> None
-        for name, k in Keymap.selectors.items():
-            selector_widget = KeymapSelectorWidget(k)
+        for name, entries_map in self.values.items():
+            selector_widget = KeymapSelectorWidget(name, entries_map)
             self.selector_widgets[name] = selector_widget
             cat_name = self.friendlyCatName(name)
             cat = self.cat_widgets.get(cat_name)
@@ -2240,9 +2263,17 @@ class KeymapWidget(QWidget):
             logger.error(f'Failed to save keymap to file {file_path}')
             logger.error(f'{type(e)}: {e}')
 
-    def saveCurrent(self):
+    def saveCurrent(self, path):
         # type: (KeymapWidget) -> None
-        Keymap.set_(self.get())
+        # Get values dict
+        values = self.get()
+        # Serialise
+        res = json.dumps(values, indent=2)
+        # Write to file in path
+        file_path = os.path.join(path, KEYMAP_MODIFICATIONS_FILENAME)
+        self._save(file_path, res)
+        # Update keymap in application
+        Keymap.set_(values)
 
     def exportCurrent(self, user_dir):
         # type: (KeymapWidget, str) -> None
