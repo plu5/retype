@@ -2231,6 +2231,12 @@ class KeymapSelectorWidget(QWidget):
         self.set_(self.entries_map)
         self.handleChange()
 
+    def commitCurrent(self):
+        # type: (KeymapSelectorWidget) -> None
+        self.entries_map = self.get()
+        self.committed = True
+        self.revertbtn.hide()
+
 
 class KeymapCategoryWidget(QWidget):
     def __init__(self, parent=None):
@@ -2251,14 +2257,13 @@ class KeymapWidget(QWidget):
         QWidget.__init__(self, parent)
         self.committed = True
         self.default_values = Keymap.getValuesDict()
-        self.values = self._loadValues(getStylePath(user_dir))
         self.cat_widgets = {}  # type: dict[str, KeymapCategoryWidget]
         self.selector_widgets = {}  # type: dict[str, KeymapSelectorWidget]
         self.lyt = QVBoxLayout(self)
         self.lyt.setContentsMargins(0, 0, 0, 0)
         self.tabw = ScrollTabWidget()
         self.lyt.addWidget(self.tabw)
-        self._populateWidgets()
+        self._populateWidgets(self._loadValues(getStylePath(user_dir)))
 
     def _loadValues(self, path):
         # type: (KeymapWidget, str) -> dict[str, dict[str, list[str]]]
@@ -2274,9 +2279,9 @@ class KeymapWidget(QWidget):
  default values.')
         return values or self.default_values
 
-    def _populateWidgets(self):
-        # type: (KeymapWidget) -> None
-        for name, entries_map in self.values.items():
+    def _populateWidgets(self, values):
+        # type: (KeymapWidget, dict[str, dict[str, list[str]]]) -> None
+        for name, entries_map in values.items():
             selector_widget = KeymapSelectorWidget(name, entries_map)
             selector_widget.changed.connect(self._selectorWidgetChanged)
             self.selector_widgets[name] = selector_widget
@@ -2337,6 +2342,10 @@ class KeymapWidget(QWidget):
         self._save(file_path, res)
         # Update keymap in application
         Keymap.set_(values)
+        # Commit changes
+        for name, widget in self.selector_widgets.items():
+            widget.commitCurrent()
+        self.committed = True
 
     def exportCurrent(self, user_dir):
         # type: (KeymapWidget, str) -> None
