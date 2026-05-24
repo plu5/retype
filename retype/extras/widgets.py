@@ -176,9 +176,13 @@ class EscapableKeySequenceEdit(QKeySequenceEdit):
 
     def keyPressEvent(self, e):
         # type: (EscapableKeySequenceEdit, QKeyEvent) -> None
-        if e.key() == Qt.Key_Escape:
-            self.clearFocus()
-            return
+        if not e.modifiers():
+            if e.key() == Qt.Key_Escape:
+                self.clearFocus()
+                return
+            elif e.key() in [Qt.Key_Backspace, Qt.Key_Delete]:
+                self.clear()
+                return
         QKeySequenceEdit.keyPressEvent(self, e)
 
 
