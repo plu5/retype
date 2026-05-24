@@ -417,14 +417,20 @@ class CustomisationDialog(QDialog):
 
     def keymapUpdate(self):
         # type: (CustomisationDialog) -> None
-        revert = False
+        revert = restore = False
 
         if self.keymap.committed is False:
             revert = True
         else:
             revert = self.config_edited != self.config
 
+        if self.keymap.isDefault() is False:
+            restore = True
+        else:
+            restore = self.config_edited != DEFAULTS
+
         self.revert_btn.setEnabled(revert)
+        self.restore_btn.setEnabled(restore)
 
     def accept(self):
         # type: (CustomisationDialog) -> None
@@ -479,6 +485,7 @@ class CustomisationDialog(QDialog):
         self.setSelectors(self.config_edited)
 
         self.theme.restoreDefaults()
+        self.keymap.restoreDefaults()
 
         self.restore_btn.setEnabled(False)
 
@@ -2373,6 +2380,21 @@ class KeymapWidget(QWidget):
         for s in self.selector_widgets.values():
             if s.committed is False:
                 s.revert()
+
+    def isDefault(self):
+        # type (KeymapWidget) -> bool
+        return self.get() == self.default_values
+
+    def restoreDefaults(self):
+        # type: (KeymapWidget) -> None
+        values = self.default_values
+        for name, widget in self.selector_widgets.items():
+            v = values.get(name, None)
+            if v is None:
+                logger.warning('KeymapWidget.restoreDefaults: Default values '
+                               f'missing for selector {name}')
+                continue
+            widget.set_(v)
 
 
 class CategoriesDelegate(QItemDelegate):
