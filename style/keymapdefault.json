@@ -1,0 +1,88 @@
+{
+  "Menu.reportIssue": {
+    "": [
+      ""
+    ]
+  },
+  "Menu.documentation": {
+    "": [
+      ""
+    ]
+  },
+  "Menu.about": {
+    "": [
+      ""
+    ]
+  },
+  "Menu.showSteno": {
+    "": [
+      ""
+    ]
+  },
+  "Menu.showTypespeed": {
+    "": [
+      ""
+    ]
+  },
+  "Menu.toggleConsoleWindow": {
+    "": [
+      ""
+    ]
+  },
+  "Menu.showCustomisationDialog": {
+    "": [
+      "Ctrl+O"
+    ]
+  },
+  "Menu.setViewByEnum": {
+    "": [
+      ""
+    ],
+    "1": [
+      "Ctrl+1"
+    ],
+    "2": [
+      "Ctrl+2"
+    ]
+  },
+  "Menu.quit": {
+    "": [
+      "Alt+F4"
+    ]
+  },
+  "BookView.zoomOut": {
+    "": [
+      "Ctrl+-"
+    ]
+  },
+  "BookView.zoomIn": {
+    "": [
+      "Ctrl++"
+    ]
+  },
+  "BookView.skipLine": {
+    "": [
+      ""
+    ]
+  },
+  "BookView.nextChapter": {
+    "": [
+      ""
+    ]
+  },
+  "BookView.previousChapter": {
+    "": [
+      ""
+    ]
+  },
+  "BookView.switchToShelves": {
+    "": [
+      ""
+    ]
+  },
+  "BookView.gotoCursorPosition": {
+    "": [
+      ""
+    ]
+  }
+}
