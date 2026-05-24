@@ -147,7 +147,7 @@ class MenuController(QObject):
                     action.setShortcuts(s)
                 else:
                     logger.debug(f"Skip updating non-existing action {name}")
-            except KeyError, AttributeError:
+            except (KeyError, AttributeError):
                 logger.error(f"Updating k '{name}' failed. "
                              f"{traceback.format_exc()}")
 
