@@ -277,6 +277,7 @@ class CustomisationDialog(QDialog):
         keymaps.setCurrentIndex(0)
 
         self.keymap = KeymapWidget(user_dir)
+        self.keymap.changed.connect(self.keymapUpdate)
         lyt.addRow(self.keymap)
 
         apply_btn.clicked.connect(
@@ -414,6 +415,17 @@ class CustomisationDialog(QDialog):
         self.revert_btn.setEnabled(revert)
         self.restore_btn.setEnabled(restore)
 
+    def keymapUpdate(self):
+        # type: (CustomisationDialog) -> None
+        revert = False
+
+        if self.keymap.committed is False:
+            revert = True
+        else:
+            revert = self.config_edited != self.config
+
+        self.revert_btn.setEnabled(revert)
+
     def accept(self):
         # type: (CustomisationDialog) -> None
         # User dir validation
@@ -476,6 +488,7 @@ class CustomisationDialog(QDialog):
         self.setSelectors(self.config_edited)
 
         self.theme.revert()
+        self.keymap.revert()
 
         self.revert_btn.setEnabled(False)
 
@@ -2081,14 +2094,25 @@ class KeymapSelectorWidget(QWidget):
                  ):
         # type: (...) -> None
         QWidget.__init__(self, parent)
+        self.entries_map = entries_map
+        self.initialised = False
+        self.committed = True
         self.lyt = QFormLayout(self)
-        self.lyt.addRow(QLabel(f'<b>{selector_name}</b>'))
+        self.lyt.setContentsMargins(0, 0, 0, 0)
+        self.revertbtn = QToolButton()
+        self.revertbtn.setArrowType(Qt.ArrowType.LeftArrow)
+        self.revertbtn.setFixedSize(16, 13)
+        self.revertbtn.setToolTip("Revert")
+        self.revertbtn.hide()
+        self.revertbtn.clicked.connect(self.revert)
+        self.lyt.addRow(QLabel(f'<b>{selector_name}</b>'), self.revertbtn)
         for argstr, shortcuts in entries_map.items():
             if argstr == '':
                 editor = EscapableKeySequenceEdit()
                 if len(shortcuts):
                     editor.setKeySequence(shortcuts[0])
                     shortcuts = shortcuts[1:]
+                editor.keySequenceChanged.connect(self.handleChange)
                 eargstr = QLineEdit()
                 eargstr.setPlaceholderText("No arguments")
                 eargstr.setEnabled(False)
@@ -2099,21 +2123,31 @@ class KeymapSelectorWidget(QWidget):
             for s in shortcuts:
                 self.addEntry(s, argstr)
 
+        self.initialised = True
+
     def addEntry(self, s="", argstr=""):
         # type: (KeymapSelectorWidget, str, str) -> None
         editor = EscapableKeySequenceEdit()
         if s:
             editor.setKeySequence(s)
+        editor.keySequenceChanged.connect(self.handleChange)
         w = QWidget()
         wlyt = QHBoxLayout(w)
         wlyt.setContentsMargins(0, 0, 0, 0)
         wlyt.addWidget(editor)
         rembtn = QPushButton("- Remove")
-        rembtn.clicked.connect(lambda: self.lyt.removeRow(w))
+        rembtn.clicked.connect(lambda: self.removeEntry(w))
         wlyt.addWidget(rembtn)
         eargstr = QLineEdit(argstr)
         eargstr.setPlaceholderText("Optional arguments")
+        eargstr.textChanged.connect(self.handleChange)
         self.lyt.addRow(eargstr, w)
+
+    def removeEntry(self, widget):
+        # type: (KeymapSelectorWidget, QWidget) -> None
+        """widget: no matter which widget on that row"""
+        self.lyt.removeRow(widget)
+        self.handleChange()
 
     def widgets(self):
         # type: (KeymapSelectorWidget) -> Iterator
@@ -2172,6 +2206,23 @@ class KeymapSelectorWidget(QWidget):
             for shortcut in s:
                 self.addEntry(shortcut, argstr)
 
+    def handleChange(self):
+        # type: (KeymapSelectorWidget) -> None
+        if not self.initialised:
+            return
+        if self.get() == self.entries_map:
+            self.committed = True
+            self.revertbtn.hide()
+        else:
+            self.committed = False
+            self.revertbtn.show()
+        self.changed.emit()
+
+    def revert(self):
+        # type: (KeymapSelectorWidget) -> None
+        self.set_(self.entries_map)
+        self.handleChange()
+
 
 class KeymapCategoryWidget(QWidget):
     def __init__(self, parent=None):
@@ -2185,9 +2236,12 @@ class KeymapCategoryWidget(QWidget):
 
 
 class KeymapWidget(QWidget):
+    changed = pyqtSignal()
+
     def __init__(self, user_dir, parent=None):
         # type: (KeymapWidget, str, QWidget | None) -> None
         QWidget.__init__(self, parent)
+        self.committed = True
         self.default_values = Keymap.getValuesDict()
         self.values = self._loadValues(getStylePath(user_dir))
         self.cat_widgets = {}  # type: dict[str, KeymapCategoryWidget]
@@ -2216,6 +2270,7 @@ class KeymapWidget(QWidget):
         # type: (KeymapWidget) -> None
         for name, entries_map in self.values.items():
             selector_widget = KeymapSelectorWidget(name, entries_map)
+            selector_widget.changed.connect(self._selectorWidgetChanged)
             self.selector_widgets[name] = selector_widget
             cat_name = self.friendlyCatName(name)
             cat = self.cat_widgets.get(cat_name)
@@ -2300,6 +2355,24 @@ class KeymapWidget(QWidget):
     def sizeHint(self):
         # type: (KeymapWidget) -> QSize
         return self.minimumSizeHint()
+
+    def _selectorWidgetChanged(self):
+        # type: (KeymapWidget) -> None
+        all_committed = True
+        for s in self.selector_widgets.values():
+            if s.committed is False:
+                self.committed = False
+                all_committed = False
+                break
+        if all_committed is True:
+            self.committed = True
+        self.changed.emit()
+
+    def revert(self):
+        # type: (KeymapWidget) -> None
+        for s in self.selector_widgets.values():
+            if s.committed is False:
+                s.revert()
 
 
 class CategoriesDelegate(QItemDelegate):
