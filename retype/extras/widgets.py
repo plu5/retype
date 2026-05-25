@@ -1,6 +1,6 @@
 from qt import (QTabWidget, QStyle, QStyleOptionTabWidgetFrame, QStackedWidget,
                 QWidget, QScrollArea, QLabel, QSize, QHBoxLayout,
-                QTextDocument, QTextBrowser)
+                QTextDocument, QTextBrowser, QKeySequenceEdit, Qt)
 
 from typing import TYPE_CHECKING
 
@@ -169,5 +169,22 @@ class ReadOnlyTextWidget(QWidget):
         lyt.setContentsMargins(0, 0, 0, 0)
 
 
+class EscapableKeySequenceEdit(QKeySequenceEdit):
+    def __init__(self, parent=None):
+        # type: (EscapableKeySequenceEdit, QWidget | None) -> None
+        QKeySequenceEdit.__init__(self, parent)
+
+    def keyPressEvent(self, e):
+        # type: (EscapableKeySequenceEdit, QKeyEvent) -> None
+        if not e.modifiers():
+            if e.key() == Qt.Key_Escape:
+                self.clearFocus()
+                return
+            elif e.key() in [Qt.Key_Backspace, Qt.Key_Delete]:
+                self.clear()
+                return
+        QKeySequenceEdit.keyPressEvent(self, e)
+
+
 if TYPE_CHECKING:
-    from qt import QResizeEvent, QIcon  # noqa: F401
+    from qt import QResizeEvent, QKeyEvent, QIcon  # noqa: F401

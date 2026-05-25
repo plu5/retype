@@ -1,3 +1,5 @@
+import logging
+import traceback
 from qt import QAction, QObject
 
 from typing import TYPE_CHECKING
@@ -5,8 +7,20 @@ from typing import TYPE_CHECKING
 from retype.constants import (
     RETYPE_ISSUE_TRACKER_URL, RETYPE_DOCUMENTATION_URL, iswindows)
 from retype.resource_handler import getIcon
+from retype.services.keymap import keymap, K, Keymap
+
+logger = logging.getLogger(__name__)
 
 
+@keymap('Menu.quit', K(['Alt+F4']))
+@keymap('Menu.setViewByEnum', K([], {'1': ['Ctrl+1'], '2': ['Ctrl+2']}))
+@keymap('Menu.showCustomisationDialog', K(['Ctrl+O']))
+@keymap('Menu.toggleConsoleWindow', K())
+@keymap('Menu.showTypespeed', K())
+@keymap('Menu.showSteno', K())
+@keymap('Menu.about', K())
+@keymap('Menu.documentation', K())
+@keymap('Menu.reportIssue', K())
 class MenuController(QObject):
     def __init__(self, main_controller, menu):
         # type: (MenuController, MainController, QMenuBar) -> None
@@ -14,24 +28,89 @@ class MenuController(QObject):
         self.controller = main_controller
         self._menu = menu
         self._initMenuBar()
+        Keymap.notifier.changed.connect(self.keymapUpdate)
 
     def _initMenuBar(self):
         # type: (MenuController) -> None
-        self._fileMenu()
-        self._viewMenu()
-        self._gamesMenu()
-        self._optionsMenu()
-        self._helpMenu()
+        fileMenu = self._menu.addMenu('&File')
+        viewMenu = self._menu.addMenu('&View')
+        gamesMenu = self._menu.addMenu('&Games')
+        optionsMenu = self._menu.addMenu('&Options')
+        helpMenu = self._menu.addMenu('&Help')
+
+        self.actions = {
+            'Menu.quit': {
+                'menu': fileMenu, 'name': '&Quit',
+                'func': self.controller.quit, 'icon': 'door',
+            },
+            'Menu.setViewByEnum:1': {
+                'menu': viewMenu, 'name': '&Shelf View',
+                'func': lambda: self.controller.setViewByEnum(1),
+                'icon': 'shelf_view',
+            },
+            'Menu.setViewByEnum:2': {
+                'menu': viewMenu, 'name': '&Book View',
+                'func': lambda: self.controller.setViewByEnum(2),
+                'icon': 'open_book',
+            },
+            'Menu.toggleConsoleWindow': {
+                'menu': viewMenu, 'name': 'Toggle System &Console',
+                'func': lambda: self.controller.toggleConsoleWindow(),
+                'icon': 'console', 'condition': iswindows,
+                'before': viewMenu.addSeparator,
+            },
+            'Menu.showTypespeed': {
+                'menu': gamesMenu, 'name': '&Typespeed',
+                'func': self.controller.showTypespeed, 'icon': 'typespeed',
+            },
+            'Menu.showSteno': {
+                'menu': gamesMenu, 'name': '&Learn Stenography',
+                'func': self.controller.showSteno, 'icon': 'steno',
+            },
+            'Menu.showCustomisationDialog': {
+                'menu': optionsMenu, 'name': '&Customise retype',
+                'func': self.controller.showCustomisationDialog,
+                'icon': 'customise',
+            },
+            'Menu.about': {
+                'menu': helpMenu, 'name': "&About",
+                'func': self.controller.showAboutDialog, 'icon': 'about',
+            },
+            'Menu.documentation': {
+                'menu': helpMenu, 'name': "&Documentation (opens in browser)",
+                'func': lambda: self.controller.openUrl(
+                    RETYPE_DOCUMENTATION_URL),
+                'icon': 'documentation',
+            },
+            'Menu.reportIssue': {
+                'menu': helpMenu, 'name': '&Report issue (opens in browser)',
+                'func': lambda: self.controller.openUrl(
+                    RETYPE_ISSUE_TRACKER_URL),
+                'icon': 'issue',
+            },
+        }  # type: dict[str, ActionInfo]
+
+        for name, info in self.actions.items():
+            n = name.split(':')
+            selector_name = n[0]
+            argstr = n[1] if len(n) > 1 else ''
+            info['shortcuts'] = Keymap.s(selector_name).s(argstr)
+            if info.pop('condition', True):
+                before = info.pop('before', None)
+                if before:
+                    before()
+                action = self._addAction(**info)
+                info['action'] = action
 
     def _makeAction(self,  # type: MenuController
                     name,  # type: str
-                    connect_to,  # type: Callable[[], None]
+                    func,  # type: Callable[[], None]
                     shortcuts=None,  # type: list[str] | None
                     icon_name=None  # type: str | None
                     ):
         # type: (...) -> QAction
         action = QAction(name, self)
-        action.triggered.connect(connect_to)
+        action.triggered.connect(func)
         if shortcuts:
             action.setShortcuts(shortcuts)
         if icon_name:
@@ -40,68 +119,46 @@ class MenuController(QObject):
 
     def _addAction(self,  # type: MenuController
                    menu,  # type: QMenu
-                   action_name,  # type: str
-                   connect_to,  # type: Callable[[], None]
+                   name,  # type: str
+                   func,  # type: Callable[[], None]
                    shortcuts=None,  # type: list[str] | None
-                   icon_name=None  # type: str | None
+                   icon=None  # type: str | None
                    ):
-        # type: (...) -> None
-        action = self._makeAction(action_name, connect_to, shortcuts,
-                                  icon_name)
+        # type: (...) -> QAction
+        action = self._makeAction(name, func, shortcuts, icon)
         menu.addAction(action)
+        return action
 
-    def _fileMenu(self):
+    def keymapUpdate(self):
         # type: (MenuController) -> None
-        fileMenu = self._menu.addMenu('&File')
-        self._addAction(fileMenu, '&Quit', self.controller.quit,
-                        ['Alt+F4'], 'door')
-
-    def _viewMenu(self):
-        # type: (MenuController) -> None
-        viewMenu = self._menu.addMenu('&View')
-        self._addAction(viewMenu, '&Shelf View',
-                        lambda: self.controller.setViewByEnum(1), ['Ctrl+1'],
-                        'shelf_view')
-        self._addAction(viewMenu, '&Book View',
-                        lambda: self.controller.setViewByEnum(2), ['Ctrl+2'],
-                        'open_book')
-
-        if iswindows:
-            viewMenu.addSeparator()
-            self._addAction(viewMenu, 'Toggle System &Console',
-                            lambda: self.controller.toggleConsoleWindow(),
-                            icon_name='console')
-
-    def _gamesMenu(self):
-        # type: (MenuController) -> None
-        gamesMenu = self._menu.addMenu('&Games')
-        self._addAction(gamesMenu, '&Typespeed', self.controller.showTypespeed,
-                        icon_name='typespeed')
-        self._addAction(gamesMenu, '&Learn Stenography',
-                        self.controller.showSteno, icon_name='steno')
-
-    def _optionsMenu(self):
-        # type: (MenuController) -> None
-        optionsMenu = self._menu.addMenu('&Options')
-        self._addAction(optionsMenu, '&Customise retype',
-                        self.controller.showCustomisationDialog, ['Ctrl+O'],
-                        'customise')
-
-    def _helpMenu(self):
-        # type: (MenuController) -> None
-        helpMenu = self._menu.addMenu('&Help')
-        self._addAction(helpMenu, "&About", self.controller.showAboutDialog,
-                        icon_name='about')
-        self._addAction(helpMenu, "&Documentation (opens in browser)", lambda:
-                        self.controller.openUrl(RETYPE_DOCUMENTATION_URL),
-                        icon_name='documentation')
-        self._addAction(helpMenu,
-                        '&Report issue (opens in browser)', lambda:
-                        self.controller.openUrl(RETYPE_ISSUE_TRACKER_URL),
-                        icon_name='issue')
+        if not hasattr(self, 'actions'):
+            logger.warning("keymapUpdate called with no actions set")
+            return
+        for name, d in self.actions.items():
+            n = name.split(':')
+            selector_name = n[0]
+            argstr = n[1] if len(n) > 1 else ''
+            try:
+                s = Keymap.s(selector_name).s(argstr)
+                d['shortcuts'] = s
+                # Action could be None for OS-specific actions
+                action = d.get('action')
+                if action:
+                    action.setShortcuts(s)
+                else:
+                    logger.debug(f"Skip updating non-existing action {name}")
+            except (KeyError, AttributeError):
+                logger.error(f"Updating k '{name}' failed. "
+                             f"{traceback.format_exc()}")
 
 
 if TYPE_CHECKING:
-    from qt import QMenu, QMenuBar  # noqa: F401
+    from qt import QMenu, QMenuBar, QKeySequence  # noqa: F401
     from retype.controllers import MainController  # noqa: F401
-    from typing import Callable  # noqa: F401
+    from typing import Callable, TypedDict  # noqa: F401
+    ActionInfo = TypedDict(
+        'ActionInfo',
+        {'menu': QMenu, 'name': str, 'func': Callable[[], None],
+         'tooltip': str, 'shortcuts': list[str], 'icon': str,
+         'action': QAction, 'condition': bool, 'before': Callable[[], None]},
+        total=False)
