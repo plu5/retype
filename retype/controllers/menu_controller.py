@@ -100,7 +100,7 @@ class MenuController(QObject):
                 if before:
                     before()
                 action = self._addAction(**info)
-            info['action'] = action
+                info['action'] = action
 
     def _makeAction(self,  # type: MenuController
                     name,  # type: str
