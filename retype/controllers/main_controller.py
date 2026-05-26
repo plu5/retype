@@ -192,6 +192,8 @@ class MainController(QObject):
                                   self.customisationDialogRequested,
                                   self.aboutDialogRequested,
                                   self.config['auto_newline'])
+        self.console.setSkipCharKey(self.config['skip_char_key'])
+        self.console.setSkipCharEnabled(self.config['skip_char_enabled'])
 
     def _verifyUserDir(self):
         # type: (MainController) -> None
@@ -238,6 +240,10 @@ class MainController(QObject):
         hs = self.console.highlighting_service
         if hs:
             hs.setAutoNewline(config['auto_newline'])
+
+        # Update skip_char_key
+        self.console.setSkipCharKey(config['skip_char_key'])
+        self.console.setSkipCharEnabled(config['skip_char_enabled'])
 
         # Update library’s user_dir
         self.library.user_dir = config['user_dir']

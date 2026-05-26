@@ -39,6 +39,8 @@ class Console(LineEdit):
 
         self.command_service = None  # type: CommandService | None
         self.highlighting_service = None  # type: HighlightingService | None
+        self.skip_char_key = "Tab"  # type: str
+        self.skip_char_enabled = False  # type: bool
 
         Theme.connect_changed('Console', self.themeUpdate)
         self.themeUpdate()
@@ -88,6 +90,14 @@ class Console(LineEdit):
         self.highlighting_service = HighlightingService(
             self, book_view, auto_newline)
 
+    def setSkipCharKey(self, key_name):
+        # type: (Console, str) -> None
+        self.skip_char_key = key_name
+
+    def setSkipCharEnabled(self, enabled):
+        # type: (Console, bool) -> None
+        self.skip_char_enabled = enabled
+
     def _handleReturnPressed(self):
         # type: (Console) -> None
         self.submitted.emit(self.text())
@@ -103,6 +113,11 @@ class Console(LineEdit):
                 self.command_service.commandHistoryUp()
             if e.key() == Qt.Key.Key_Down:
                 self.command_service.commandHistoryDown()
+            skip_key = getattr(Qt.Key, f'Key_{self.skip_char_key}', None)
+            if self.skip_char_enabled and skip_key is not None and \
+               e.key() == skip_key:
+                self.command_service.skipChar()
+                return
 
         super().keyPressEvent(e)
 

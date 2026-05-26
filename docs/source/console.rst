@@ -36,3 +36,10 @@ Command history
 ---------------
 
 Commands entered are preserved in the command history, which can be traversed with the up and down arrow keys.
+
+Skip character key
+------------------
+
+A key can be bound to skip the current character forward while typing, advancing the cursor by one position without typing the character. This is off by default and can be enabled in :ref:`skip-char-key` in the Customisation Dialog, where the key binding can also be changed.
+
+The same action is available as the ``skipchar`` console command (aliases: ``char``, ``c``) regardless of whether the key binding is enabled.
