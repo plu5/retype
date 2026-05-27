@@ -1,0 +1,345 @@
+The distributed software is licenced GNU GPLv3 or later.
+https://www.gnu.org/licenses/gpl-3.0.txt
+
+Any code authored solely by me (plu5) is placed in the public domain,
+or CC0 in countries where that is not possible.
+https://creativecommons.org/publicdomain/zero/1.0
+
+===============
+Included files:
+===============
+
+Files: bin/retype
+       bin/retype.pyw
+       retype/app.py
+       retype/resource_handler.py
+       retype/controllers/main_controller.py
+       retype/controllers/menu_controller.py
+Licence: GNU GPLv3 or later
+Comments: Adapted from QTodoTxt 0.1.0 2013 bitbucket.org/3david/qtodotxt
+          (Mirror: https://github.com/QTodoTxt/QTodoTxt/tree/82fb4bb)
+Contributors:
+1. David Elentok <3david@gmail.com>
+2. plu5 <plu5@users.noreply.github.com>
+
+Files: retype/games/typespeed.py
+       style/typespeed_words/words.csharp
+       style/typespeed_words/words.csharp_with_operators
+       style/typespeed_words/words.dos
+       style/typespeed_words/words.dut
+       style/typespeed_words/words.eng
+       style/typespeed_words/words.esp
+       style/typespeed_words/words.fin
+       style/typespeed_words/words.fra
+       style/typespeed_words/words.ger
+       style/typespeed_words/words.ita
+       style/typespeed_words/words.por
+       style/typespeed_words/words.prog
+       style/typespeed_words/words.tha
+       style/typespeed_words/words.unix
+Licence: GNU GPLv2 or later
+Comments: Adapted from typespeed 0.6.5 2008
+          https://typespeed.sourceforge.net
+          Word lists contributors, according to the file ChangeLog:
+          * Wouter de Vries: Created Dutch word list
+          * Raphael Studer: Created German word list
+          * Dr. Olaf Foellinger: Improved German word list
+          * Lapo Luchini: Created Italian word list
+          * Francois Wendling: Created French word list
+          * Theppitak Karoonboonyanan: Created Thai word list
+          * Nicolai Stoy: Created CSharp word lists
+          * David Jeannot: Fixed a typo in French word list
+          * Charles Clément: Fixed typos in French word list
+Contributors:
+1. Jani Ollikainen <bestis@iki.fi>
+2. Jaakko Manelius <jman@iki.fi>
+3. Tobias Stoeckmann <tobias@bugol.de>
+4. plu5 <plu5@users.noreply.github.com>
+
+Files: retype/games/steno.py
+Licence: Expat
+Comments: Adapted from https://github.com/JoshuaGrams/steno-jig
+          Learning the keyboard exercises
+Contributors:
+1. Joshua I. Grams <josh@qualdan.com>
+2. plu5 <plu5@users.noreply.github.com>
+
+Files: docs/_static/css/custom.css
+Licence: CC-BY-3.0
+Comments: Adapted from godot-docs 2022-03-17
+          https://github.com/godotengine/godot-docs/blob/c9d554b/_static/css/custom.css
+Contributors:
+1. Hugo Locurcio (Calinou) <hugo.locurcio@hugo.pro>
+2. Nicholas Hydock <nhydock@users.noreply.github.com>
+3. Rémi Verschelde (akien-mga) <rverschelde@gmail.com>
+4. pycbouh <pycbouh@users.noreply.github.com>
+5. Yuri Sizov (YuriSizov) <yuris@humnom.net>
+6. Andrii Doroshenko <xrayez@gmail.com>
+7. hpnrep6 <57055412+hpnrep6@users.noreply.github.com>
+8. Max Hilbrunner (mhilbrunner) <m.hilbrunner@gmail.com>
+9. merumelu <merumelu@protonmail.com>
+10. plu5 <plu5@users.noreply.github.com>
+
+Files: docs/_templates/autosummary/base.rst
+       docs/_templates/autosummary/module.rst
+       docs/source/conf.py
+       docs/source/Makefile
+       docs/source/make.bat
+Licence: BSD 2-Clause
+Comments: Adapted from Sphinx samples.
+Contributors:
+1. Sphinx documentation contributors
+2. plu5
+
+Files: library/Flatland.epub
+       library/The_Prince.epub
+       library/The_Strange_Case_of_Dr_Jekyll_and_Mr_Hyde.epub
+       library/The_Time_Machine.epub
+Licence: CC0 1.0 Universal Public Domain Dedication
+Comments: Adapted from Standard Ebooks for the sample library.
+          https://github.com/standardebooks
+Contributors:
+1. Standard Ebooks contributors
+2. plu5 <plu5@users.noreply.github.com>
+
+Files: library/The_Yellow_Wallpaper.epub
+Licence: The Project Gutenberg License
+Comments: Adapted from Project Gutenberg for the sample library.
+          The work itself is in the public domain.
+Contributors:
+1. Project Gutenberg contributors
+2. plu5 <plu5@users.noreply.github.com>
+
+Files: qt/__init__.py
+       qt/__main__.py
+       qt/loader.py
+       qt/modules.pyi
+       qt/modules_name_map.py
+       retype/stats/ui/customisation_dialog.py
+Licence: GNU GPLv3
+Comments: Adapted from calibre 5.13.0 and 3.48.0
+          https://github.com/kovidgoyal/calibre/tree/v5.13.0/src/qt
+          https://github.com/kovidgoyal/calibre/tree/v3.48.0
+Contributors:
+1. Kovid Goyal <kovid@kovidgoyal.net>
+2. plu5 <plu5@users.noreply.github.com>
+
+Files: retype/controllers/extras/dict.py
+Licence: CC-BY-SA-3.0†
+Comments: update adapted from charlax 2015
+          https://stackoverflow.com/a/30655448
+          Information on StackExchange licensing:
+          https://meta.stackexchange.com/q/344491
+          merge_dicts adapted from RubyPinch 2016
+          https://www.reddit.com/r/Python/comments/477tqv/-/d0c1dz5/
+          † It's unclear what the licence on the reddit contribution would be.
+          It's a single-line function:
+          deepcopy(reduce(lambda a,b: {**a,**b}, dicts))
+Contributors:
+1. charlax https://stackexchange.com/users/68427/charlax
+2. RubyPinch https://www.reddit.com/user/RubyPinch
+3. plu5 <plu5@users.noreply.github.com>
+
+Files: retype/controllers/extras/hashing.py
+Licence: CC-BY-SA-3.0
+Comments: generate_file_md5 adapted from user25148
+          https://stackoverflow.com/a/1131255
+          Information on StackExchange licensing:
+          https://meta.stackexchange.com/q/344491
+Contributors:
+1. user25148 (deleted/unregistered StackExchange user)
+2. plu5 <plu5@users.noreply.github.com>
+
+Files: retype/controllers/extras/widgets.py
+Licence: CC-BY-SA-4.0
+Comments: AdaptedTabWidget adapted from musicamante 2022
+          https://stackoverflow.com/a/72673580/18396947
+          WrappedLabel adapted from musicamante 2022
+          https://stackoverflow.com/a/70757504/18396947
+          Information on StackExchange licensing:
+          https://meta.stackexchange.com/q/344491
+Contributors:
+1. plu5 <plu5@users.noreply.github.com>
+2. musicamante https://stackexchange.com/users/2275183/musicamante
+
+Files: retype/stats/ui/line_edit.py
+Licence: Expat
+Comments: Adapted from ssokolow's OneLineSpellTextEdit
+         https://gist.github.com/ssokolow/abb20a30415fa4debce912c38060ca6a
+Contributors:
+1. John Schember
+2. Stephan Sokolow (ssokolow) <ssokolow@users.noreply.github.com>
+3. plu5 <plu5@users.noreply.github.com>
+
+Files: setup/plugins/libcomposeplatforminputcontextplugin.so
+       setup/plugins/libfcitxplatforminputcontextplugin.so
+Licence: GNU LGPLv3
+Comments: Plugins copied from Qt in order to support compose key and fcitx
+Contributors:
+1. The Qt Company Ltd.
+
+Files: setup/appdmg-background.png
+Comments: Adapted from a Wikimedia Commons image by CalleGM 2019
+          https://commons.wikimedia.org/wiki/File:Book_(Danmarks_Bogbindere_gennem_400_Aar)_bound_by_bookbinder_Sture_Werner.jpg
+Licence: CC-BY-SA-4.0
+Contributors:
+1. CalleGM
+2. plu5 <plu5@users.noreply.github.com>
+
+Files: setup/retype-target-bundle.spec
+       setup/retype-target-hacky.spec
+       setup/retype-target-onefile.spec
+       setup/retype-target.spec
+Licence: GNU GPLv2 or later
+Comments: Adapted from PyInstaller samples
+Contributors:
+1. PyInstaller documentation contributors
+2. plu5 <plu5@users.noreply.github.com>
+
+Files: .github/workflows/Dockerfile
+       .github/workflows/main.yml
+       pyinstaller-hack.sh
+       run-tests.yml
+       .gitignore
+       README.rst
+       COPYING
+       pytest.ini
+       requirements.txt
+       retype-target.py
+       setup.py
+       docs/img/bookview.png
+       docs/img/col.png
+       docs/img/docs_logo.png
+       docs/img/mainwin.png
+       docs/img/modeline.png
+       docs/img/retype.ico
+       docs/img/shelfview.png
+       docs/source/about-dialog.rst
+       docs/source/api.rst
+       docs/source/book-view.rst
+       docs/source/build-docs.rst
+       docs/source/build-instructions.rst
+       docs/source/console.rst
+       docs/source/customisation-dialog.rst
+       docs/source/dependencies.rst
+       docs/source/features.rst
+       docs/source/getting-started.rst
+       docs/source/index.rst
+       docs/source/main-window.rst
+       docs/source/running-from-sources.rst
+       docs/source/shelf-view.rst
+       docs/source/requirements.txt
+       retype/console/__init__.py
+       retype/console/command_service.py
+       retype/console/console.py
+       retype/console/highlighting_service.py
+       retype/controllers/__init__.py
+       retype/controllers/library.py
+       retype/controllers/safe_config.py
+       retype/controllers/extras/__init__.py
+       retype/controllers/extras/camel.py
+       retype/controllers/extras/log.py
+       retype/controllers/extras/metatypes.py
+       retype/controllers/extras/qss.py
+       retype/controllers/extras/space.py
+       retype/controllers/extras/split.py
+       retype/controllers/extras/str_subclasses.py
+       retype/layouts/__init__.py
+       retype/layouts/rowlayout.doctest
+       retype/layouts/rowlayout.py
+       retype/layouts/shelveslayout.doctest
+       retype/layouts/shelveslayout.py
+       retype/services/__init__.py
+       retype/services/autosave.py
+       retype/services/icon_set.py
+       retype/services/keymap.py
+       retype/services/theme.py
+       retype/stats/__init__.py
+       retype/stats/stats_dock.py
+       retype/stats/ui/__init__.py
+       retype/stats/ui/about_dialog.py
+       retype/stats/ui/book_view.py
+       retype/stats/ui/cover.py
+       retype/stats/ui/main_win.py
+       retype/stats/ui/modeline.py
+       retype/stats/ui/painting.py
+       retype/stats/ui/shelf_view.py
+       retype/__init__.py
+       retype/constants.py
+       retype/py.typed
+       setup/config/__init__.py
+       setup/config/binaries.py
+       setup/config/builddate.py
+       setup/config/data.py
+       setup/config/env.py
+       setup/config/imports.py
+       setup/config/util.py
+       setup/config/version.py
+       setup/__init__.py
+       setup/appdmg-config.json
+       setup/build.py
+       setup/subdir-hook.py
+       style/icons/0_default/about.png
+       style/icons/0_default/arrow-left.png
+       style/icons/0_default/arrow-right.png
+       style/icons/0_default/console.png
+       style/icons/0_default/cursor.png
+       style/icons/0_default/customise.png
+       style/icons/0_default/documentation.png
+       style/icons/0_default/door.png
+       style/icons/0_default/issue.png
+       style/icons/0_default/open_book.png
+       style/icons/0_default/retype.ico
+       style/icons/0_default/retype.png
+       style/icons/0_default/shelf_view.png
+       style/icons/0_default/skip.png
+       style/icons/0_default/steno.png
+       style/icons/0_default/t-down.png
+       style/icons/0_default/t-up.png
+       style/icons/0_default/typespeed.png
+       style/icons/legacy/about.png
+       style/icons/legacy/retype.png
+       style/icons/legacy/skip.png
+       style/icons/legacy/t-down.png
+       style/icons/legacy/t-up.png
+       style/icons/retype-dmg.icns
+       style/icons/retype.icns
+       style/icons/retype.ico
+       style/0_default.qss
+       style/dark.qss
+       style/keymapdefault.json
+       style/stripe.png
+       tests/__init__.py
+       tests/test_command_service.py
+       tests/test_customisation.py
+       tests/test_highlighting_service.py
+       tests/test_library.py
+       tests/test_qss.py
+       tests/test_setup.py
+       tests/test_split.py
+       tests/test_str_subclasses.py
+       tests/test_theme.py
+Licence: Public domain or CC0 1.0 Universal Public Domain Dedication
+Comments: Files where all contributors gave their explicit agreement
+          to place their contributions in the public domain,
+          or under a permissive CC0 licence where that is not possible.
+Contributors:
+1. plu5 <plu5@users.noreply.github.com>
+
+======================
+External dependencies:
+======================
+
+PyQt5
+Licence: GNU GPLv3
+
+Qt 5
+Licence: GNU LGPLv3
+
+ebooklib
+Licence: GNU AGPLv3
+https://github.com/aerkalov/ebooklib?tab=AGPL-3.0-1-ov-file
+
+tinycss2
+Licence: BSD 3-Clause
+https://github.com/Kozea/tinycss2
