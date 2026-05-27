@@ -136,7 +136,7 @@ Comments: update adapted from charlax 2015
           It's a single-line function:
           deepcopy(reduce(lambda a,b: {**a,**b}, dicts))
 Contributors:
-1. charlax https://stackoverflow.com/a/30655448
+1. charlax https://stackexchange.com/users/68427/charlax
 2. RubyPinch https://www.reddit.com/user/RubyPinch
 3. plu5 <plu5@users.noreply.github.com>
 
@@ -147,7 +147,7 @@ Comments: generate_file_md5 adapted from user25148
           Information on StackExchange licensing:
           https://meta.stackexchange.com/q/344491
 Contributors:
-1. user25148
+1. user25148 (deleted/unregistered StackExchange user)
 2. plu5 <plu5@users.noreply.github.com>
 
 Files: retype/controllers/extras/widgets.py
