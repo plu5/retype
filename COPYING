@@ -87,6 +87,9 @@ Files: docs/_templates/autosummary/base.rst
        docs/source/make.bat
 Licence: BSD 2-Clause
 Comments: Adapted from Sphinx samples.
+Contributors:
+1. Sphinx documentation contributors
+2. plu5
 
 Files: library/Flatland.epub
        library/The_Prince.epub
@@ -95,11 +98,17 @@ Files: library/Flatland.epub
 Licence: CC0 1.0 Universal Public Domain Dedication
 Comments: Adapted from Standard Ebooks for the sample library.
           https://github.com/standardebooks
+Contributors:
+1. Standard Ebooks contributors
+2. plu5 <plu5@users.noreply.github.com>
 
 Files: library/The_Yellow_Wallpaper.epub
 Licence: The Project Gutenberg License
 Comments: Adapted from Project Gutenberg for the sample library.
           The work itself is in the public domain.
+Contributors:
+1. Project Gutenberg contributors
+2. plu5 <plu5@users.noreply.github.com>
 
 Files: qt/__init__.py
        qt/__main__.py
@@ -111,6 +120,9 @@ Licence: GNU GPLv3
 Comments: Adapted from calibre 5.13.0 and 3.48.0
           https://github.com/kovidgoyal/calibre/tree/v5.13.0/src/qt
           https://github.com/kovidgoyal/calibre/tree/v3.48.0
+Contributors:
+1. Kovid Goyal <kovid@kovidgoyal.net>
+2. plu5 <plu5@users.noreply.github.com>
 
 Files: retype/controllers/extras/dict.py
 Licence: CC-BY-SA-3.0†
@@ -123,6 +135,10 @@ Comments: update adapted from charlax 2015
           † It's unclear what the licence on the reddit contribution would be.
           It's a single-line function:
           deepcopy(reduce(lambda a,b: {**a,**b}, dicts))
+Contributors:
+1. charlax https://stackoverflow.com/a/30655448
+2. RubyPinch https://www.reddit.com/user/RubyPinch
+3. plu5 <plu5@users.noreply.github.com>
 
 Files: retype/controllers/extras/hashing.py
 Licence: CC-BY-SA-3.0
@@ -159,11 +175,16 @@ Files: setup/plugins/libcomposeplatforminputcontextplugin.so
        setup/plugins/libfcitxplatforminputcontextplugin.so
 Licence: GNU LGPLv3
 Comments: Plugins copied from Qt in order to support compose key and fcitx
+Contributors:
+1. The Qt Company Ltd.
 
 Files: setup/appdmg-background.png
 Comments: Adapted from a Wikimedia Commons image by CalleGM 2019
           https://commons.wikimedia.org/wiki/File:Book_(Danmarks_Bogbindere_gennem_400_Aar)_bound_by_bookbinder_Sture_Werner.jpg
 Licence: CC-BY-SA-4.0
+Contributors:
+1. CalleGM
+2. plu5 <plu5@users.noreply.github.com>
 
 Files: setup/retype-target-bundle.spec
        setup/retype-target-hacky.spec
@@ -171,6 +192,9 @@ Files: setup/retype-target-bundle.spec
        setup/retype-target.spec
 Licence: GNU GPLv2 or later
 Comments: Adapted from PyInstaller samples
+Contributors:
+1. PyInstaller documentation contributors
+2. plu5 <plu5@users.noreply.github.com>
 
 Files: .github/workflows/Dockerfile
        .github/workflows/main.yml
