@@ -2106,13 +2106,17 @@ class KeymapSelectorWidget(QWidget):
         self.committed = True
         self.lyt = QFormLayout(self)
         self.lyt.setContentsMargins(0, 0, 0, 0)
+        namewidget = QWidget()
+        namewidget_l = QHBoxLayout(namewidget)
+        namewidget_l.addWidget(QLabel(f'<b>{selector_name}</b>'))
         self.revertbtn = QToolButton()
         self.revertbtn.setArrowType(Qt.ArrowType.LeftArrow)
         self.revertbtn.setFixedSize(16, 13)
         self.revertbtn.setToolTip("Revert")
         self.revertbtn.hide()
         self.revertbtn.clicked.connect(self.revert)
-        self.lyt.addRow(QLabel(f'<b>{selector_name}</b>'), self.revertbtn)
+        namewidget_l.addWidget(self.revertbtn)
+        self.lyt.addRow(namewidget)
         for argstr, shortcuts in entries_map.items():
             if argstr == '':
                 editor = EscapableKeySequenceEdit()
