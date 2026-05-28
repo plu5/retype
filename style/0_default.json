@@ -62,17 +62,23 @@
   },
   "BookView.skipLine": {
     "": [
-      ""
+      "Ctrl+Return"
     ]
   },
   "BookView.nextChapter": {
     "": [
-      ""
+      "PgDown"
+    ],
+    "m": [
+      "Ctrl+PgDown"
     ]
   },
   "BookView.previousChapter": {
     "": [
-      ""
+      "PgUp"
+    ],
+    "m": [
+      "Ctrl+PgUp"
     ]
   },
   "BookView.switchToShelves": {
@@ -82,7 +88,7 @@
   },
   "BookView.gotoCursorPosition": {
     "": [
-      ""
+      "Ctrl+."
     ]
   }
 }
