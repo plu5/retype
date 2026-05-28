@@ -1,5 +1,4 @@
 import logging
-import traceback
 from qt import (QWidget, QVBoxLayout, QTextBrowser, QTextDocument, QUrl,
                 QTextCursor, QTextCharFormat, QPainter, QPixmap,
                 QToolBar, QFont, QKeySequence, Qt, QApplication, pyqtSignal,
@@ -11,9 +10,8 @@ from retype.extras import splittext, isspaceorempty, ManifoldStr
 from retype.ui.modeline import Modeline
 from retype.services import Autosave
 from retype.stats import StatsDock
-from retype.resource_handler import getIcon
 from retype.services.theme import theme, C, Theme
-from retype.services.keymap import keymap, K, Keymap
+from retype.services.keymap import keymap, K, Keymap, genActions, keymapUpdate
 from retype.constants import default_font_family, default_font_size
 
 logger = logging.getLogger(__name__)
@@ -217,7 +215,8 @@ class BookView(QWidget):
         self.c_mistake.changed.connect(self.themeUpdate)
         self.themeUpdate()
 
-        Keymap.notifier.changed.connect(self.keymapUpdate)
+        Keymap.notifier.changed.connect(
+            lambda: keymapUpdate(self.actions, self))
 
     def _loadTheme(self):
         # type: (BookView) -> tuple[C, ...]
@@ -228,23 +227,6 @@ class BookView(QWidget):
         # type: (BookView) -> None
         self.mistake_format.setForeground(self.c_mistake.fg())
         self.mistake_format.setBackground(self.c_mistake.bg())
-
-    def keymapUpdate(self):
-        # type: (BookView) -> None
-        if not hasattr(self, 'actions'):
-            logger.warning("keymapUpdate called with no actions set")
-            return
-        for name, d in self.actions.items():
-            n = name.split(':')
-            selector_name = n[0]
-            argstr = n[1] if len(n) > 1 else ''
-            try:
-                s = Keymap.s(selector_name).s(argstr)
-                d['shortcuts'] = s
-                d['action'].setShortcuts(s)
-            except KeyError:
-                logger.error(f"Updating k '{name}' failed with KeyError. "
-                             f"{traceback.format_exc()}")
 
     def _initUI(self):
         # type: (BookView) -> None
@@ -292,7 +274,9 @@ class BookView(QWidget):
                 'func': self.gotoCursorPosition,
                 'tooltip': 'Go to the cursor position. Hold Ctrl to move\
  cursor to your current position',
-                'icon': 'cursor'
+                'icon': 'cursor',
+                'args_regex': '(m|move)',
+                'args_func': lambda m: self.gotoCursorPosition(move=True),
             },
             'BookView.previousChapter':
             {
@@ -300,7 +284,9 @@ class BookView(QWidget):
                 'func': self.previousChapterAction,
                 'tooltip': 'Go to the previous chapter. Hold Ctrl to move\
  cursor with you as well',
-                'icon': 'arrow-left'
+                'icon': 'arrow-left',
+                'args_regex': '(m|move)',
+                'args_func': lambda m: self.previousChapter(move_cursor=True),
             },
             'BookView.nextChapter':
             {
@@ -308,7 +294,9 @@ class BookView(QWidget):
                 'func': self.nextChapterAction,
                 'tooltip': 'Go to the next chapter. Hold Ctrl to move cursor\
  with you as well',
-                'icon': 'arrow-right'
+                'icon': 'arrow-right',
+                'args_regex': '(m|move)',
+                'args_func': lambda m: self.nextChapter(move_cursor=True),
             },
             'BookView.skipLine':
             {
@@ -329,32 +317,9 @@ class BookView(QWidget):
                 'func': self.display.zoomOut,
                 'icon': 't-down'
             }
-        }  # type: dict[str, ActionInfo]
+        }  # type: ActionsInfo
 
-        def addAction(name,  # type: str
-                      func,  # type: Callable[[], None]
-                      tooltip=None,  # type: str | None
-                      shortcuts=None,  # type: list[Shortcut] | None
-                      icon=None,  # type: str | None
-                      action=None  # type: QAction | None  # unused
-                      ):
-            # type: (...) -> QAction
-            a = self.toolbar.addAction(name, func)
-            if tooltip:
-                a.setToolTip(tooltip)
-            if shortcuts:
-                a.setShortcuts(shortcuts)
-            if icon:
-                a.setIcon(getIcon(icon))
-            return a
-
-        for name, info in self.actions.items():
-            n = name.split(':')
-            selector_name = n[0]
-            argstr = n[1] if len(n) > 1 else ''
-            info['shortcuts'] = Keymap.s(selector_name).s(argstr)
-            action = addAction(**info)
-            info['action'] = action
+        genActions(self.actions, self.toolbar)
 
         self.pchap_action = self.actions['BookView.previousChapter']['action']
         self.nchap_action = self.actions['BookView.nextChapter']['action']
@@ -750,10 +715,5 @@ if TYPE_CHECKING:
     from retype.controllers import MainController  # noqa: F401
     from typing import Union, Callable, Dict, TypedDict, Never  # noqa: F401
     from retype.extras.metatypes import (  # noqa: F401
-        SaveData, BookViewSettings, Chapter, SDict, RDict, Book)
+        SaveData, BookViewSettings, Chapter, SDict, RDict, Book, ActionsInfo)
     Shortcut = Union[QKeySequence, QKeySequence.StandardKey, str, int]
-    ActionInfo = TypedDict(
-        'ActionInfo',
-        {'name': str, 'func': Callable[[], None], 'tooltip': str,
-         'shortcuts': list[str], 'icon': str, 'action': QAction},
-        total=False)

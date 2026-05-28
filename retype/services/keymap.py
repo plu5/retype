@@ -1,10 +1,13 @@
 import os
+import re
 import json
 import logging
 import traceback
 from qt import QObject, pyqtSignal
 
 from typing import TYPE_CHECKING
+
+from retype.extras.actions import makeAction
 
 logger = logging.getLogger(__name__)
 
@@ -115,6 +118,69 @@ def populateKeymaps(app_path, user_path):
             break  # do not recurse
 
 
+def genActions(actions, widget=None):
+    # type: (ActionsInfo, QWidget | None) -> None
+    """Utility function to generate QActions from a ActionInfo dict"""
+    for name, info in actions.items():
+        n = name.split(':')
+        selector_name = n[0]
+        argstr = n[1] if len(n) > 1 else ''
+        info['shortcuts'] = Keymap.s(selector_name).s(argstr)
+        if info.get('condition', True):
+            before = info.pop('before', None)
+            if before:
+                before()
+            action = makeAction(**info, widget=widget)
+            info['action'] = action
+
+
+def keymapUpdate(actions, widget):
+    # type: (ActionsInfo, QWidget) -> None
+    """Utility function to update QActions shortcuts"""
+    logger.debug(f'keymapUpdate for {type(widget)}')
+    # 1. Remove any previously created custom actions
+    custom_actions = getattr(keymapUpdate, 'custom_actions', [])
+    for a in custom_actions:
+        a['widget'].removeAction(a['action'])
+    custom_actions = []
+    # Update bindings for actions in actions dictionary
+    for name, d in actions.items():
+        if not d.get('condition', True):
+            continue
+        n = name.split(':')
+        selector_name = n[0]
+        argstr = n[1] if len(n) > 1 else ''
+        try:
+            s = Keymap.s(selector_name).s(argstr)
+            d['shortcuts'] = s
+            action = d['action']
+            action.setShortcuts(s)
+        except (KeyError, AttributeError):
+            logger.error(f"Updating k '{name}' failed. "
+                         f"{traceback.format_exc()}")
+        # Create custom actions based on bindings that lack actions
+        for argstr, s in Keymap.s(selector_name).entries():
+            if not s or s == ['']:
+                continue
+            combined_name = selector_name
+            combined_name += f':{argstr}' if argstr else ''
+            if combined_name in actions:
+                continue
+            regex = d.get('args_regex')
+            func = d.get('args_func')
+            if not (regex and func) or not re.match(regex, argstr):
+                continue
+            action = makeAction(
+                combined_name, lambda _, f=func, a=argstr: f(a))
+            action.setShortcuts(s)
+            custom_actions.append({'action': action, 'widget': widget})
+            widget.addAction(action)
+            logger.debug(
+                f'keymapUpdate: Created custom action {combined_name}')
+    keymapUpdate.custom_actions = custom_actions
+    logger.debug(f'keymapUpdate.custom_actions = {custom_actions}')
+
+
 def keymap(selector, k):
     # type: (str, K) -> Callable[[type[T]], type[T]]
     def decorator(cls):
@@ -127,6 +193,7 @@ def keymap(selector, k):
 
 if TYPE_CHECKING:
     from typing import Callable, TypeVar, TypedDict  # noqa: F401
+    from retype.extras.metatypes import ActionsInfo  # noqa: F401
     T = TypeVar('T')
     ValuesDict = dict[str, dict[str, list[str]]]
     KeymapData = TypedDict(
