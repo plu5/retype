@@ -155,11 +155,11 @@ class BookDisplay(QTextBrowser):
         QTextBrowser.wheelEvent(self, e)
 
 
-@keymap('BookView.gotoCursorPosition', K())
+@keymap('BookView.gotoCursorPosition', K(['Ctrl+.']))
 @keymap('BookView.switchToShelves', K())
-@keymap('BookView.previousChapter', K())
-@keymap('BookView.nextChapter', K())
-@keymap('BookView.skipLine', K())
+@keymap('BookView.previousChapter', K(['PgUp'], {'m': ['Ctrl+PgUp']}))
+@keymap('BookView.nextChapter', K(['PgDown'], {'m': ['Ctrl+PgDown']}))
+@keymap('BookView.skipLine', K(['Ctrl+Return']))
 @keymap('BookView.zoomIn', K([QKeySequence.StandardKey.ZoomIn]))
 @keymap('BookView.zoomOut', K([QKeySequence.StandardKey.ZoomOut]))
 @theme('BookView.Highlighting.Highlight', C(bg='#30ffff00'))
