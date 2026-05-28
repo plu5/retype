@@ -5,26 +5,24 @@ from typing import TYPE_CHECKING
 from retype.resource_handler import getIcon
 
 
-def makeAction(name,  # type: str
-               func,  # type: Callable[[], None]
+def makeAction(name=None,  # type: str | None
+               func=None,  # type: Callable[[], None] | None
                tooltip=None,  # type: str | None
                shortcuts=None,  # type: list[str] | None
                icon=None,  # type: str | None
-               menu=None,  # type: QWidget
-               widget=None,  # type: QWidget
+               widget=None,  # type: QWidget | None
                **_
                ):
     # type: (...) -> QAction
     action = QAction(name)
-    action.triggered.connect(func)
+    if func:
+        action.triggered.connect(func)
     if tooltip:
         action.setToolTip(tooltip)
     if shortcuts:
         action.setShortcuts(shortcuts)
     if icon:
         action.setIcon(getIcon(icon))
-    if menu:
-        menu.addAction(action)
     if widget:
         widget.addAction(action)
     return action
