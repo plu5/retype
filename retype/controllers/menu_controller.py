@@ -1,15 +1,10 @@
-import logging
-import traceback
-from qt import QAction, QObject
+from qt import QObject
 
 from typing import TYPE_CHECKING
 
 from retype.constants import (
     RETYPE_ISSUE_TRACKER_URL, RETYPE_DOCUMENTATION_URL, iswindows)
-from retype.resource_handler import getIcon
-from retype.services.keymap import keymap, K, Keymap
-
-logger = logging.getLogger(__name__)
+from retype.services.keymap import keymap, K, Keymap, genActions, keymapUpdate
 
 
 @keymap('Menu.quit', K(['Alt+F4']))
@@ -28,7 +23,8 @@ class MenuController(QObject):
         self.controller = main_controller
         self._menu = menu
         self._initMenuBar()
-        Keymap.notifier.changed.connect(self.keymapUpdate)
+        Keymap.notifier.changed.connect(
+            lambda: keymapUpdate(self.actions, self._menu))
 
     def _initMenuBar(self):
         # type: (MenuController) -> None
@@ -47,6 +43,8 @@ class MenuController(QObject):
                 'menu': viewMenu, 'name': '&Shelf View',
                 'func': lambda: self.controller.setViewByEnum(1),
                 'icon': 'shelf_view',
+                'args_regex': r'[1-2]',
+                'args_func': lambda d: self.controller.setViewByEnum(int(d)),
             },
             'Menu.setViewByEnum:2': {
                 'menu': viewMenu, 'name': '&Book View',
@@ -88,77 +86,12 @@ class MenuController(QObject):
                     RETYPE_ISSUE_TRACKER_URL),
                 'icon': 'issue',
             },
-        }  # type: dict[str, ActionInfo]
+        }  # type: ActionsInfo
 
-        for name, info in self.actions.items():
-            n = name.split(':')
-            selector_name = n[0]
-            argstr = n[1] if len(n) > 1 else ''
-            info['shortcuts'] = Keymap.s(selector_name).s(argstr)
-            if info.pop('condition', True):
-                before = info.pop('before', None)
-                if before:
-                    before()
-                action = self._addAction(**info)
-                info['action'] = action
-
-    def _makeAction(self,  # type: MenuController
-                    name,  # type: str
-                    func,  # type: Callable[[], None]
-                    shortcuts=None,  # type: list[str] | None
-                    icon_name=None  # type: str | None
-                    ):
-        # type: (...) -> QAction
-        action = QAction(name, self)
-        action.triggered.connect(func)
-        if shortcuts:
-            action.setShortcuts(shortcuts)
-        if icon_name:
-            action.setIcon(getIcon(icon_name))
-        return action
-
-    def _addAction(self,  # type: MenuController
-                   menu,  # type: QMenu
-                   name,  # type: str
-                   func,  # type: Callable[[], None]
-                   shortcuts=None,  # type: list[str] | None
-                   icon=None  # type: str | None
-                   ):
-        # type: (...) -> QAction
-        action = self._makeAction(name, func, shortcuts, icon)
-        menu.addAction(action)
-        return action
-
-    def keymapUpdate(self):
-        # type: (MenuController) -> None
-        if not hasattr(self, 'actions'):
-            logger.warning("keymapUpdate called with no actions set")
-            return
-        for name, d in self.actions.items():
-            n = name.split(':')
-            selector_name = n[0]
-            argstr = n[1] if len(n) > 1 else ''
-            try:
-                s = Keymap.s(selector_name).s(argstr)
-                d['shortcuts'] = s
-                # Action could be None for OS-specific actions
-                action = d.get('action')
-                if action:
-                    action.setShortcuts(s)
-                else:
-                    logger.debug(f"Skip updating non-existing action {name}")
-            except (KeyError, AttributeError):
-                logger.error(f"Updating k '{name}' failed. "
-                             f"{traceback.format_exc()}")
+        genActions(self.actions)
 
 
 if TYPE_CHECKING:
-    from qt import QMenu, QMenuBar, QKeySequence  # noqa: F401
+    from qt import QMenu, QMenuBar  # noqa: F401
     from retype.controllers import MainController  # noqa: F401
-    from typing import Callable, TypedDict  # noqa: F401
-    ActionInfo = TypedDict(
-        'ActionInfo',
-        {'menu': QMenu, 'name': str, 'func': Callable[[], None],
-         'tooltip': str, 'shortcuts': list[str], 'icon': str,
-         'action': QAction, 'condition': bool, 'before': Callable[[], None]},
-        total=False)
+    from retype.extras.metatypes import ActionsInfo  # noqa: F401

@@ -8,7 +8,7 @@ from retype.games.typespeed import TypespeedView as TypespeedV
 from retype.games.steno import StenoView
 from retype.controllers.main_controller import View
 from retype.extras.dict import _NestedSafeDictGroup
-from qt import QWidget, pyqtBoundSignal
+from qt import QWidget, pyqtBoundSignal, QMenu, QAction
 
 NestedDict = Dict[object, Union[object, 'NestedDict']]
 NestedMapping = Mapping[object, Union[object, 'NestedMapping']]
@@ -20,6 +20,14 @@ CommandInfo = TypedDict(
      'func': Callable[[], None]},
     total=False)
 CommandsInfo = dict[str, CommandInfo]
+
+ActionInfo = TypedDict(
+    'ActionInfo',
+    {'menu': QMenu, 'name': str, 'func': Callable[[], None],
+     'tooltip': str, 'shortcuts': list[str], 'icon': str,
+     'action': QAction, 'condition': bool, 'before': Callable[[], None]},
+    total=False)
+ActionsInfo = dict[str, ActionInfo]
 
 SaveData = TypedDict(
     'SaveData',
