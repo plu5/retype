@@ -267,63 +267,79 @@ class BookView(QWidget):
             {
                 'name': 'Back to shelves',
                 'func': self.switchToShelves,
+                'widget': self.toolbar,
             },
             'BookView.gotoCursorPosition':
             {
                 'name': 'Cursor position',
                 'func': self.gotoCursorPosition,
+                'func_ui': self.gotoCursorPositionAction,
                 'tooltip': 'Go to the cursor position. Hold Ctrl to move\
  cursor to your current position',
                 'icon': 'cursor',
+                'widget': self.toolbar,
+                'widget_ui': self,
                 'args_regex': '(m|move)',
                 'args_func': lambda m: self.gotoCursorPosition(move=True),
             },
             'BookView.previousChapter':
             {
                 'name': 'Previous chapter',
-                'func': self.previousChapterAction,
+                'func': self.previousChapter,
+                'func_ui': self.previousChapterAction,
                 'tooltip': 'Go to the previous chapter. Hold Ctrl to move\
  cursor with you as well',
                 'icon': 'arrow-left',
                 'args_regex': '(m|move)',
                 'args_func': lambda m: self.previousChapter(move_cursor=True),
+                'widget': self,
+                'widget_ui': self.toolbar,
             },
             'BookView.nextChapter':
             {
                 'name': 'Next chapter',
-                'func': self.nextChapterAction,
+                'func': self.nextChapter,
+                'func_ui': self.nextChapterAction,
                 'tooltip': 'Go to the next chapter. Hold Ctrl to move cursor\
  with you as well',
                 'icon': 'arrow-right',
                 'args_regex': '(m|move)',
                 'args_func': lambda m: self.nextChapter(move_cursor=True),
+                'widget': self,
+                'widget_ui': self.toolbar,
             },
             'BookView.skipLine':
             {
                 'name': 'Skip line',
                 'func': self.advanceLine,
                 'tooltip': 'Move cursor to next line',
-                'icon': 'skip'
+                'icon': 'skip',
+                'widget': self.toolbar,
             },
             'BookView.zoomIn':
             {
                 'name': 'Increase font size',
                 'func': self.display.zoomIn,
-                'icon': 't-up'
+                'icon': 't-up',
+                'widget': self.toolbar,
             },
             'BookView.zoomOut':
             {
                 'name': 'Decrease font size',
                 'func': self.display.zoomOut,
-                'icon': 't-down'
+                'icon': 't-down',
+                'widget': self.toolbar,
             }
         }  # type: ActionsInfo
 
-        genActions(self.actions, self.toolbar)
+        genActions(self.actions)
 
-        self.pchap_action = self.actions['BookView.previousChapter']['action']
-        self.nchap_action = self.actions['BookView.nextChapter']['action']
-        self.skip_action = self.actions['BookView.skipLine']['action']
+        self.pchap_action = self.actions[
+            'BookView.previousChapter']['action_ui']
+        self.nchap_action = self.actions[
+            'BookView.nextChapter']['action_ui']
+        self.skip_action = self.actions[
+            'BookView.skipLine']['action']
 
         self.toolbar.insertSeparator(
             self.actions['BookView.gotoCursorPosition']['action'])
@@ -636,14 +652,21 @@ class BookView(QWidget):
         # type: (BookView, bool) -> None
         if self.chapter_pos is None:
             return
-        if move or (self._keyboardModifiers() == Qt.KeyboardModifiers(
-                Qt.KeyboardModifier.ControlModifier)):
+        if move:
             self.setChapter(self.viewed_chapter_pos, True)
             self.updateProgress()
         else:
             self.setChapter(self.chapter_pos)
             self.setCursor()
             self.display.centreAroundCursor()
+
+    def gotoCursorPositionAction(self):
+        # type: (BookView) -> None
+        if self._keyboardModifiers() == Qt.KeyboardModifiers(
+                Qt.KeyboardModifier.ControlModifier):
+            self.gotoCursorPosition(True)
+        else:
+            self.gotoCursorPosition(False)
 
     def updateToolbarActions(self):
         # type: (BookView) -> None

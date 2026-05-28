@@ -125,13 +125,21 @@ def genActions(actions, widget=None):
         n = name.split(':')
         selector_name = n[0]
         argstr = n[1] if len(n) > 1 else ''
-        info['shortcuts'] = Keymap.s(selector_name).s(argstr)
+        s = Keymap.s(selector_name).s(argstr)
         if info.get('condition', True):
             before = info.pop('before', None)
             if before:
                 before()
-            action = makeAction(**info, widget=widget)
+            widget = info.pop('widget', None) or widget
+            widget_ui = info.pop('widget_ui', None)
+            func = info.pop('func', None)
+            func_ui = info.pop('func_ui', None)
+            if widget_ui and func_ui:
+                action_ui = makeAction(**info, widget=widget_ui, func=func_ui)
+                info['action_ui'] = action_ui
+            action = makeAction(**info, widget=widget, func=func, shortcuts=s)
             info['action'] = action
+            info['shortcuts'] = s
 
 
 def keymapUpdate(actions, widget):

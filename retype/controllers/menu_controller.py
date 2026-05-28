@@ -36,52 +36,53 @@ class MenuController(QObject):
 
         self.actions = {
             'Menu.quit': {
-                'menu': fileMenu, 'name': '&Quit',
+                'widget': fileMenu, 'name': '&Quit',
                 'func': self.controller.quit, 'icon': 'door',
             },
             'Menu.setViewByEnum:1': {
-                'menu': viewMenu, 'name': '&Shelf View',
+                'widget': viewMenu, 'name': '&Shelf View',
                 'func': lambda: self.controller.setViewByEnum(1),
                 'icon': 'shelf_view',
                 'args_regex': r'[1-2]',
                 'args_func': lambda d: self.controller.setViewByEnum(int(d)),
             },
             'Menu.setViewByEnum:2': {
-                'menu': viewMenu, 'name': '&Book View',
+                'widget': viewMenu, 'name': '&Book View',
                 'func': lambda: self.controller.setViewByEnum(2),
                 'icon': 'open_book',
             },
             'Menu.toggleConsoleWindow': {
-                'menu': viewMenu, 'name': 'Toggle System &Console',
+                'widget': viewMenu, 'name': 'Toggle System &Console',
                 'func': lambda: self.controller.toggleConsoleWindow(),
                 'icon': 'console', 'condition': iswindows,
                 'before': viewMenu.addSeparator,
             },
             'Menu.showTypespeed': {
-                'menu': gamesMenu, 'name': '&Typespeed',
+                'widget': gamesMenu, 'name': '&Typespeed',
                 'func': self.controller.showTypespeed, 'icon': 'typespeed',
             },
             'Menu.showSteno': {
-                'menu': gamesMenu, 'name': '&Learn Stenography',
+                'widget': gamesMenu, 'name': '&Learn Stenography',
                 'func': self.controller.showSteno, 'icon': 'steno',
             },
             'Menu.showCustomisationDialog': {
-                'menu': optionsMenu, 'name': '&Customise retype',
+                'widget': optionsMenu, 'name': '&Customise retype',
                 'func': self.controller.showCustomisationDialog,
                 'icon': 'customise',
             },
             'Menu.about': {
-                'menu': helpMenu, 'name': "&About",
+                'widget': helpMenu, 'name': "&About",
                 'func': self.controller.showAboutDialog, 'icon': 'about',
             },
             'Menu.documentation': {
-                'menu': helpMenu, 'name': "&Documentation (opens in browser)",
+                'widget': helpMenu,
+                'name': "&Documentation (opens in browser)",
                 'func': lambda: self.controller.openUrl(
                     RETYPE_DOCUMENTATION_URL),
                 'icon': 'documentation',
             },
             'Menu.reportIssue': {
-                'menu': helpMenu, 'name': '&Report issue (opens in browser)',
+                'widget': helpMenu, 'name': '&Report issue (opens in browser)',
                 'func': lambda: self.controller.openUrl(
                     RETYPE_ISSUE_TRACKER_URL),
                 'icon': 'issue',
