@@ -236,14 +236,15 @@ Files: .github/workflows/Dockerfile
        retype/controllers/__init__.py
        retype/controllers/library.py
        retype/controllers/safe_config.py
-       retype/controllers/extras/__init__.py
-       retype/controllers/extras/camel.py
-       retype/controllers/extras/log.py
-       retype/controllers/extras/metatypes.py
-       retype/controllers/extras/qss.py
-       retype/controllers/extras/space.py
-       retype/controllers/extras/split.py
-       retype/controllers/extras/str_subclasses.py
+       retype/extras/__init__.py
+       retype/extras/actions.py
+       retype/extras/camel.py
+       retype/extras/log.py
+       retype/extras/metatypes.py
+       retype/extras/qss.py
+       retype/extras/space.py
+       retype/extras/split.py
+       retype/extras/str_subclasses.py
        retype/layouts/__init__.py
        retype/layouts/rowlayout.doctest
        retype/layouts/rowlayout.py
