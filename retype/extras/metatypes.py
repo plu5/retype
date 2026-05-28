@@ -23,7 +23,7 @@ CommandsInfo = dict[str, CommandInfo]
 
 ActionInfo = TypedDict(
     'ActionInfo',
-    {'menu': QWidget, 'widget': QWidget, 'widget_ui': QWidget, 'name': str,
+    {'widget': QWidget, 'widget_ui': QWidget, 'name': str,
      'func': Callable[[], None], 'func_ui': Callable[[], None],
      'tooltip': str, 'shortcuts': list[str], 'icon': str,
      'action': QAction, 'action_ui': QAction,
