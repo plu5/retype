@@ -308,7 +308,7 @@ Files: .github/workflows/Dockerfile
        style/icons/retype.ico
        style/0_default.qss
        style/dark.qss
-       style/keymapdefault.json
+       style/0_default.json
        style/stripe.png
        tests/__init__.py
        tests/test_command_service.py
