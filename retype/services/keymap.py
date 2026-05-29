@@ -50,6 +50,7 @@ class Keymap:
     selectors = {}  # type: dict[str, K]
     notifier = K()
     keymaps = {}  # type: dict[str, KeymapData]
+    custom_actions = []  # type: list[CustomAction]
 
     @staticmethod
     def s(selector_name):
@@ -146,12 +147,15 @@ def keymapUpdate(actions, widget):
     # type: (ActionsInfo, QWidget) -> None
     """Utility function to update QActions shortcuts"""
     logger.debug(f'keymapUpdate for {type(widget)}')
-    # 1. Remove any previously created custom actions
-    custom_actions = getattr(keymapUpdate, 'custom_actions', [])
-    for a in custom_actions:
-        a['widget'].removeAction(a['action'])
-    custom_actions = []
-    # Update bindings for actions in actions dictionary
+    # 1. Remove previously created custom actions for widget
+    i = len(Keymap.custom_actions) - 1
+    while i >= 0:
+        a = Keymap.custom_actions[i]
+        if a['widget'] is widget:
+            a['widget'].removeAction(a['action'])
+            del Keymap.custom_actions[i]
+        i -= 1
+    # 2. Update bindings for actions in actions dictionary
     for name, d in actions.items():
         if not d.get('condition', True):
             continue
@@ -181,12 +185,13 @@ def keymapUpdate(actions, widget):
             action = makeAction(
                 combined_name, lambda _, f=func, a=argstr: f(a))
             action.setShortcuts(s)
-            custom_actions.append({'action': action, 'widget': widget})
+            Keymap.custom_actions.append({'action': action, 'widget': widget})
             widget.addAction(action)
             logger.debug(
                 f'keymapUpdate: Created custom action {combined_name}')
-    keymapUpdate.custom_actions = custom_actions
-    logger.debug(f'keymapUpdate.custom_actions = {custom_actions}')
+    logger.debug(
+        'Keymap.custom_actions (len '
+        f'{len(Keymap.custom_actions)}) = {Keymap.custom_actions}')
 
 
 def keymap(selector, k):
@@ -201,9 +206,13 @@ def keymap(selector, k):
 
 if TYPE_CHECKING:
     from typing import Callable, TypeVar, TypedDict  # noqa: F401
+    from qt import QAction, QWidget  # noqa: F401
     from retype.extras.metatypes import ActionsInfo  # noqa: F401
     T = TypeVar('T')
     ValuesDict = dict[str, dict[str, list[str]]]
     KeymapData = TypedDict(
         'KeymapData',
         {'path': str, 'values': ValuesDict})
+    CustomAction = TypedDict(
+        'CustomAction',
+        {'action': QAction, 'widget': QWidget})
