@@ -16,6 +16,7 @@ from retype.services.keymap import keymap, K, Keymap, genActions, keymapUpdate
 @keymap('Menu.about', K())
 @keymap('Menu.documentation', K())
 @keymap('Menu.reportIssue', K())
+@keymap('Main.load', K())
 class MenuController(QObject):
     def __init__(self, main_controller, menu):
         # type: (MenuController, MainController, QMenuBar) -> None
@@ -86,6 +87,12 @@ class MenuController(QObject):
                 'func': lambda: self.controller.openUrl(
                     RETYPE_ISSUE_TRACKER_URL),
                 'icon': 'issue',
+            },
+            'Main.load': {
+                'widget': self._menu,
+                'func': self.controller.loadBook,
+                'args_regex': r'\d+',
+                'args_func': lambda s: self.controller.loadBook(int(s)),
             },
         }  # type: ActionsInfo
 
