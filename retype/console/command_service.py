@@ -204,18 +204,8 @@ class CommandService(object):
 
     def setChapter(self, pos=None, move=None):
         # type: (CommandService, str | None, str | None) -> None
-        if pos is None:
-            return
         if self.onBookView():
-            m = True if move in ['move', 'm'] else False
-            try:
-                p = int(pos)
-                self.book_view.setChapter(p, m)
-            except (TypeError, ValueError):
-                if pos in ['next', 'n']:
-                    self.book_view.nextChapter(m)
-                elif pos in ['previous', 'prev', 'p']:
-                    self.book_view.previousChapter(m)
+            self.book_view.setChapterAction(pos, move)
 
     def advanceLine(self):
         # type: (CommandService) -> None

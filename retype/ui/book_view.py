@@ -159,6 +159,7 @@ class BookDisplay(QTextBrowser):
 @keymap('BookView.switchToShelves', K())
 @keymap('BookView.previousChapter', K(['PgUp'], {'m': ['Ctrl+PgUp']}))
 @keymap('BookView.nextChapter', K(['PgDown'], {'m': ['Ctrl+PgDown']}))
+@keymap('BookView.setChapter', K())
 @keymap('BookView.skipLine', K(['Ctrl+Return']))
 @keymap('BookView.zoomIn', K([QKeySequence.StandardKey.ZoomIn]))
 @keymap('BookView.zoomOut', K([QKeySequence.StandardKey.ZoomOut]))
@@ -307,6 +308,13 @@ class BookView(QWidget):
                 'args_func': lambda m: self.nextChapter(move_cursor=True),
                 'widget': self,
                 'widget_ui': self.toolbar,
+            },
+            'BookView.setChapter':
+            {
+                'func': self.setChapterAction,
+                'args_regex': r'(-?\d+|next|n|previous|prev|p)( (m|move))?',
+                'args_func': lambda s: self.setChapterAction(*s.split()),
+                'widget': self,
             },
             'BookView.skipLine':
             {
@@ -516,6 +524,21 @@ class BookView(QWidget):
         self.updateModeline()
         self.display.updateFont()
         self.updateToolbarActions()
+
+    def setChapterAction(self, pos=None, move=None):
+        # type: (BookView, str | None | bool, str | None) -> None
+        # If no argstr, Qt passes a boolean in the first argument
+        if pos is None or type(pos) is bool:
+            return
+        m = True if move in ['move', 'm'] else False
+        try:
+            p = int(pos)
+            self.setChapter(p, m)
+        except (TypeError, ValueError):
+            if pos in ['next', 'n']:
+                self.nextChapter(m)
+            elif pos in ['previous', 'prev', 'p']:
+                self.previousChapter(m)
 
     def nextChapter(self, move_cursor=False):
         # type: (BookView, bool) -> None
