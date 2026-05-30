@@ -180,7 +180,7 @@ def keymapUpdate(actions, widget):
                 continue
             regex = d.get('args_regex')
             func = d.get('args_func')
-            if not (regex and func) or not re.match(regex, argstr):
+            if not (regex and func) or not re.fullmatch(regex, argstr):
                 continue
             action = makeAction(
                 combined_name, lambda _, f=func, a=argstr: f(a))
