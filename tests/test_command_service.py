@@ -58,8 +58,8 @@ class FakeBookView:
     def isVisible(self):
         return True
 
-    def setChapter(self, pos, move=False):
-        self._called = ('setChapter', pos, move)
+    def setChapterAction(self, pos=None, move=None):
+        self._called = ('setChapterAction', pos, move)
 
     def nextChapter(self, move=False):
         self._called = ('nextChapter', move)
@@ -112,18 +112,21 @@ class TestCommandService:
         assert service.command_history == [">switch book", ">switch main"]
 
     def test_setChapter(self):
+        """Fairly useless because it no longer has logic and just
+        calls BookView.setChapterAction.
+        """
         (console, book_view, _) = _setup()
 
         # No argument
         console.submitText(">chapter")
-        assert book_view.called is None
+        assert book_view.called == ('setChapterAction', None, None)
 
         # Bad argument
         console.submitText(">chapter blah")
-        assert book_view.called is None
+        assert book_view.called == ('setChapterAction', 'blah', None)
 
         console.submitText(">chapter 2")
-        assert book_view.called == ('setChapter', 2, False)
+        assert book_view.called == ('setChapterAction', '2', None)
 
         console.submitText(">chapter 34092834 m")
-        assert book_view.called == ('setChapter', 34092834, True)
+        assert book_view.called == ('setChapterAction', '34092834', 'm')
