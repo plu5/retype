@@ -311,6 +311,7 @@ Files: .github/workflows/Dockerfile
        style/0_default.json
        style/stripe.png
        tests/__init__.py
+       tests/test_book_view.py
        tests/test_command_service.py
        tests/test_customisation.py
        tests/test_highlighting_service.py
