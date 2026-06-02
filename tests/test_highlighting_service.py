@@ -21,11 +21,16 @@ class FakeConsole(QObject):
 
     def __init__(self):
         QObject.__init__(self)
+        self._text = ""
+
+    def text(self):
+        return self._text
 
     def clear(self):
         pass
 
     def setText(self, text):
+        self._text = text
         self.textChanged.emit(text)
 
 
@@ -239,3 +244,26 @@ class TestHighlightingService:
         assert service.wrong_start == 0
         assert cursor.position() == 0
         assert getFirstLine() == "ome testsome test text"
+
+    def test_fillChars(self):
+        (console, v, service, cursor) = _setup("some test text<br/>hi")
+
+        console.setText("")
+        service.fillChars(1)
+        assert cursor.position() == 1
+
+        # wrong text, position shouldn't change
+        console.setText("x")
+        service.fillChars(1)
+        assert cursor.position() == 0
+
+        # correct text with n too large
+        console.setText("some")
+        service.fillChars(2390423)
+        assert cursor.position() == 15
+
+        # negative n, position shouldn't change
+        # (still 15 bc we're at the start of the second line)
+        console.setText("")
+        service.fillChars(-2390423)
+        assert cursor.position() == 15

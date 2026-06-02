@@ -161,6 +161,7 @@ class BookDisplay(QTextBrowser):
 @keymap('BookView.nextChapter', K(['PgDown'], {'m': ['Ctrl+PgDown']}))
 @keymap('BookView.setChapter', K())
 @keymap('BookView.skipLine', K(['Ctrl+Return']))
+@keymap('BookView.fillChars', K())
 @keymap('BookView.zoomIn', K([QKeySequence.StandardKey.ZoomIn]))
 @keymap('BookView.zoomOut', K([QKeySequence.StandardKey.ZoomOut]))
 @theme('BookView.Highlighting.Highlight', C(bg='#30ffff00'))
@@ -323,6 +324,13 @@ class BookView(QWidget):
                 'tooltip': 'Move cursor to next line',
                 'icon': 'skip',
                 'widget': self.toolbar,
+            },
+            'BookView.fillChars':
+            {
+                'func': lambda s: self.fillCharsAction(1),
+                'args_regex': r'\d+',
+                'args_func': lambda s: self.fillCharsAction(s),
+                'widget': self,
             },
             'BookView.zoomIn':
             {
@@ -595,6 +603,17 @@ class BookView(QWidget):
             self.previousChapter(True)
         else:
             self.previousChapter(False)
+
+    def fillCharsAction(self, n="1"):
+        # type: (BookView, str) -> None
+        h = self._console.highlighting_service
+        if h:
+            try:
+                n = int(n)
+            except ValueError:
+                return
+            h.fillChars(n)
+            self._console.moveCursor(QTextCursor.MoveOperation.EndOfLine)
 
     def calcLinePos(self, cursor_pos):
         # type: (BookView, int) -> int

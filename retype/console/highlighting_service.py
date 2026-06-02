@@ -157,6 +157,18 @@ error: {}'.format(v.line_pos, len(v.tobetyped_list), e))
         v.display.centreAroundCursor()
         v.updateProgress()
 
+    def fillChars(self, n=1):
+        # type: (HighlightingService, int) -> None
+        v = self.book_view
+
+        if (not self.valid(v) or n < 1 or self.wrong
+                or not hasattr(v, 'current_line')):
+            logger.debug('fillChars: Ignoring')
+            return
+
+        end = min(len(self._console.text())+n, len(v.current_line))
+        self._console.setText(str(v.current_line[:end]))
+
     def setAutoNewline(self, auto_newline):
         # type: (HighlightingService, bool) -> None
         self.auto_newline = auto_newline
