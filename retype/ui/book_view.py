@@ -613,7 +613,6 @@ class BookView(QWidget):
             except ValueError:
                 return
             h.fillChars(n)
-            self._console.moveCursor(QTextCursor.MoveOperation.EndOfLine)
 
     def calcLinePos(self, cursor_pos):
         # type: (BookView, int) -> int
