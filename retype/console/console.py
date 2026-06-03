@@ -1,5 +1,5 @@
 from enum import Enum
-from qt import pyqtSignal, Qt, QSizePolicy
+from qt import pyqtSignal, Qt, QSizePolicy, QTextCursor
 
 from typing import TYPE_CHECKING
 
@@ -94,7 +94,12 @@ class Console(LineEdit):
 
     def clear(self):
         # type: (Console) -> None
-        self.setText('')
+        super().setText('')
+
+    def setText(self, text):
+        # type: (Console, str) -> None
+        super().setText(text)
+        self.moveCursor(QTextCursor.MoveOperation.EndOfLine)
 
     def keyPressEvent(self, e):
         # type: (Console, QKeyEvent) -> None
