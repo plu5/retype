@@ -146,6 +146,10 @@ class CommandService(object):
 
             self.command_history_pos = None
 
+    def setText(self, text):
+        # type: (CommandService, str) -> None
+        self._console.setText(text)
+
     def commandHistoryUp(self):
         # type: (CommandService) -> None
         if not self.command_history:
@@ -157,7 +161,7 @@ class CommandService(object):
             if len(self.command_history) <= abs(self.command_history_pos):
                 return
             self.command_history_pos -= 1
-        self._console.setText(self.command_history[self.command_history_pos])
+        self.setText(self.command_history[self.command_history_pos])
         logger.debug("command_history_pos: %s, command_history: %s" %
                      (self.command_history_pos, self.command_history))
 
@@ -166,12 +170,12 @@ class CommandService(object):
         if not self.command_history_pos:
             return
         if self.command_history_pos == -1:
-            self._console.setText(self._current_input)
+            self.setText(self._current_input)
             self.command_history_pos = None
             return
         else:
             self.command_history_pos += 1
-        self._console.setText(self.command_history[self.command_history_pos])
+        self.setText(self.command_history[self.command_history_pos])
         logger.debug("command_history_pos: %s, command_history: %s" %
                      (self.command_history_pos, self.command_history))
 
