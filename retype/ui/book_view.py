@@ -511,10 +511,10 @@ class BookView(QWidget):
             return
 
         # Normalise negative indices
-        pos = pos if pos > 0 else len(self.book.chapters) + pos
+        pos = pos if pos >= 0 else len(self.book.chapters) + pos
 
         # Check pos is in range
-        if 0 < pos < len(self.book.chapters):
+        if 0 <= pos < len(self.book.chapters):
             self.setSource(self.book.chapters[pos])
         else:
             logger.error(f'setChapter: pos {pos} is out of range '
