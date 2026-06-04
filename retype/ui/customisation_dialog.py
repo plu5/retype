@@ -973,7 +973,7 @@ class SDictEntryEditor(QWidget):
 
     def keep(self):
         # type: (SDictEntryEditor) -> SDictEntry
-        return {'keep': self.keep_e.isChecked()}
+        return self.keep_e.isChecked()
 
     def themeUpdate(self):
         # type: (SDictEntryEditor) -> None
