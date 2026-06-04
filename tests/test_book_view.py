@@ -100,3 +100,7 @@ class TestBookView:
             0 - len(book_view.book.chapters) - 23094823, move_cursor=True)
         # Should not have changed bc it's out of range
         assert book_view.chapter_pos == len(book_view.book.chapters) - 1
+
+        # 0
+        book_view.setChapter(0, move_cursor=True)
+        assert book_view.chapter_pos == 0
