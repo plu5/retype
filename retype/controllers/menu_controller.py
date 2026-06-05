@@ -38,7 +38,8 @@ class MenuController(QObject):
         self.actions = {
             'Menu.quit': {
                 'widget': fileMenu, 'name': '&Quit',
-                'func': self.controller.quit, 'icon': 'door',
+                'func': lambda: self.controller.quit(),
+                'icon': 'door',
             },
             'Menu.setViewByEnum:1': {
                 'widget': viewMenu, 'name': '&Shelf View',
@@ -60,20 +61,23 @@ class MenuController(QObject):
             },
             'Menu.showTypespeed': {
                 'widget': gamesMenu, 'name': '&Typespeed',
-                'func': self.controller.showTypespeed, 'icon': 'typespeed',
+                'func': lambda: self.controller.showTypespeed(),
+                'icon': 'typespeed',
             },
             'Menu.showSteno': {
                 'widget': gamesMenu, 'name': '&Learn Stenography',
-                'func': self.controller.showSteno, 'icon': 'steno',
+                'func': lambda: self.controller.showSteno(),
+                'icon': 'steno',
             },
             'Menu.showCustomisationDialog': {
                 'widget': optionsMenu, 'name': '&Customise retype',
-                'func': self.controller.showCustomisationDialog,
+                'func': lambda: self.controller.showCustomisationDialog(),
                 'icon': 'customise',
             },
             'Menu.about': {
                 'widget': helpMenu, 'name': "&About",
-                'func': self.controller.showAboutDialog, 'icon': 'about',
+                'func': lambda: self.controller.showAboutDialog(),
+                'icon': 'about',
             },
             'Menu.documentation': {
                 'widget': helpMenu,
@@ -90,7 +94,7 @@ class MenuController(QObject):
             },
             'Main.load': {
                 'widget': self._menu,
-                'func': self.controller.loadBook,
+                'func': lambda: self.controller.loadBook(),
                 'args_regex': r'\d+',
                 'args_func': lambda s: self.controller.loadBook(int(s)),
             },
