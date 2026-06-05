@@ -268,14 +268,14 @@ class BookView(QWidget):
             'BookView.switchToShelves':
             {
                 'name': 'Back to shelves',
-                'func': self.switchToShelves,
+                'func': lambda: self.switchToShelves(),
                 'widget': self.toolbar,
             },
             'BookView.gotoCursorPosition':
             {
                 'name': 'Cursor position',
-                'func': self.gotoCursorPosition,
-                'func_ui': self.gotoCursorPositionAction,
+                'func': lambda: self.gotoCursorPosition(),
+                'func_ui': lambda: self.gotoCursorPositionAction(),
                 'tooltip': 'Go to the cursor position. Hold Ctrl to move\
  cursor to your current position',
                 'icon': 'cursor',
@@ -287,8 +287,8 @@ class BookView(QWidget):
             'BookView.previousChapter':
             {
                 'name': 'Previous chapter',
-                'func': self.previousChapter,
-                'func_ui': self.previousChapterAction,
+                'func': lambda: self.previousChapter(),
+                'func_ui': lambda: self.previousChapterAction(),
                 'tooltip': 'Go to the previous chapter. Hold Ctrl to move\
  cursor with you as well',
                 'icon': 'arrow-left',
@@ -300,8 +300,8 @@ class BookView(QWidget):
             'BookView.nextChapter':
             {
                 'name': 'Next chapter',
-                'func': self.nextChapter,
-                'func_ui': self.nextChapterAction,
+                'func': lambda: self.nextChapter(),
+                'func_ui': lambda: self.nextChapterAction(),
                 'tooltip': 'Go to the next chapter. Hold Ctrl to move cursor\
  with you as well',
                 'icon': 'arrow-right',
@@ -312,7 +312,7 @@ class BookView(QWidget):
             },
             'BookView.setChapter':
             {
-                'func': self.setChapterAction,
+                'func': lambda: self.setChapterAction(),
                 'args_regex': r'(-?\d+|next|n|previous|prev|p)( (m|move))?',
                 'args_func': lambda s: self.setChapterAction(*s.split()),
                 'widget': self,
@@ -320,7 +320,7 @@ class BookView(QWidget):
             'BookView.skipLine':
             {
                 'name': 'Skip line',
-                'func': self.advanceLine,
+                'func': lambda: self.advanceLine(),
                 'tooltip': 'Move cursor to next line',
                 'icon': 'skip',
                 'widget': self.toolbar,
@@ -335,14 +335,14 @@ class BookView(QWidget):
             'BookView.zoomIn':
             {
                 'name': 'Increase font size',
-                'func': self.display.zoomIn,
+                'func': lambda: self.display.zoomIn(),
                 'icon': 't-up',
                 'widget': self.toolbar,
             },
             'BookView.zoomOut':
             {
                 'name': 'Decrease font size',
-                'func': self.display.zoomOut,
+                'func': lambda: self.display.zoomOut(),
                 'icon': 't-down',
                 'widget': self.toolbar,
             }
