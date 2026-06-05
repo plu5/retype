@@ -119,6 +119,14 @@ def populateKeymaps(app_path, user_path):
             break  # do not recurse
 
 
+def logReminderIfNonLambda(func):
+    # type: (Callable | None) -> None
+    if func and func.__name__ != "<lambda>":
+        logger.warning(f'{func.__name__} is not a lambda; remember that \
+Qt sends a boolean as first argument, which could cause bugs if this \
+function expects a different argument.')
+
+
 def genActions(actions, widget=None):
     # type: (ActionsInfo, QWidget | None) -> None
     """Utility function to generate QActions from a ActionInfo dict"""
@@ -134,7 +142,9 @@ def genActions(actions, widget=None):
             widget = info.pop('widget', None) or widget
             widget_ui = info.pop('widget_ui', None)
             func = info.pop('func', None)
+            logReminderIfNonLambda(func)
             func_ui = info.pop('func_ui', None)
+            logReminderIfNonLambda(func_ui)
             if widget_ui and func_ui:
                 action_ui = makeAction(**info, widget=widget_ui, func=func_ui)
                 info['action_ui'] = action_ui
