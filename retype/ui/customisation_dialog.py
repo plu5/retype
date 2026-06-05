@@ -2281,6 +2281,10 @@ class KeymapWidget(QWidget):
             logger.debug(f'Current keymap {file_path} not found. This is\
  normal on first launch or if it has not been saved yet. Falling back to\
  default values.')
+            # In that case force keymapUpdate, because widgets may
+            # have default bindings with argstrs that need actions
+            # created.
+            Keymap.notifier.changed.emit()
         # Filter out selectors that don't exist
         values = values or self.default_values
         return {s: values[s] for s in self.default_values.keys()}
