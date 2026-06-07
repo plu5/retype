@@ -523,6 +523,7 @@ class BookView(QWidget):
 
         self.viewed_chapter_pos = pos
         if move_cursor:
+            self._controller.console.clear()
             self.chapter_pos = pos
             self._initChapter(reset)
             if isspaceorempty(self.tobetyped):
@@ -698,6 +699,7 @@ class BookView(QWidget):
         if self.chapter_pos is None:
             return
         if move:
+            self._controller.console.clear()
             self.setChapter(self.viewed_chapter_pos, True)
             self.updateProgress()
         else:

@@ -57,7 +57,10 @@ class FakeWin(QObject):
 
 
 class FakeConsole:
-    def transferFocus():
+    def transferFocus(*_):
+        pass
+
+    def clear(*_):
         pass
 
 
