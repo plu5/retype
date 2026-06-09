@@ -35,6 +35,21 @@ class LibraryController(object):
         self._user_dir = value
         self.save_abs_path = os.path.join(value, 'save.json')
 
+    def checksum(self, path):
+        # type: (LibraryController, str) -> str | None
+        checksum = None
+        try:
+            checksum = generate_file_md5(path)
+        except OSError as e:
+            s = (f'Unable to read epub {self.idn}:\n{self.path}.\n\n'
+                 'This is not fatal, but the book will not be loaded.')
+            logger.error(f"{s}\n{e}", exc_info=True)
+            msg = QMessageBox(QMessageBox.Icon.Warning, 'retype', s)
+            msg.setDetailedText(f'Path: {path}\n\n'
+                                f'{traceback.format_exc()}')
+            msg.exec()
+        return checksum
+
     def indexLibrary(self, library_paths):
         # type: (LibraryController, list[str]) -> dict[int, LibraryItem]
         book_checksum_list = []
@@ -45,8 +60,8 @@ class LibraryController(object):
                 for f in files:
                     if f.lower().endswith(".epub"):
                         path = os.path.join(root, f)
-                        checksum = generate_file_md5(path)
-                        if checksum in book_checksum_list:
+                        checksum = self.checksum(path)
+                        if not checksum or checksum in book_checksum_list:
                             continue
                         book_checksum_list.append(checksum)
                         library_items[idn] = LibraryItem(idn, path, checksum)
@@ -125,7 +140,9 @@ class LibraryController(object):
                     #  replacing it with a checksum, or moving the file back.
                     checksum = key
                 else:
-                    checksum = generate_file_md5(key)
+                    checksum = self.checksum(key)
+                    if not checksum:  # Other OSError happened
+                        checksum = key
                     self.addFriendlyName(save[key], key)
             else:  # assume it’s a checksum
                 checksum = key
