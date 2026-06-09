@@ -80,12 +80,8 @@ class LibraryController(object):
         book_view.display.centreAroundCursor()
 
     def save(self, book, data):
-        # type: (LibraryController, BookWrapper, SaveData) -> None
+        # type: (LibraryController, BookWrapper, SaveData) -> bool
         book.save_data = data
-
-        if not os.path.exists(self._user_dir):
-            logger.error(f'Unable to find user_dir {self._user_dir}')
-            return
 
         self.addFriendlyName(data, book.path)
         key = book.checksum
@@ -95,8 +91,20 @@ class LibraryController(object):
         else:
             save = self.save_file_contents = {key: data}
 
-        with open(self.save_abs_path, 'w', encoding='utf-8') as f:
-            json.dump(save, f, indent=2)
+        try:
+            with open(self.save_abs_path, 'w', encoding='utf-8') as f:
+                json.dump(save, f, indent=2)
+        except OSError as e:
+            s = 'Unable to save progress to disk.'
+            if e is FileNotFoundError:
+                s += f' Unable to find user_dir {self._user_dir}.'
+            logger.error(f"{s}\n{e}", exc_info=True)
+            msg = QMessageBox(QMessageBox.Icon.Warning, 'retype', s)
+            msg.setDetailedText(f'Path: {self.save_abs_path}\n\n'
+                                f'{traceback.format_exc()}')
+            msg.exec()
+            return False
+        return True
 
     def migrateV1Save(self, save):
         # type: (LibraryController, Save) -> Save
@@ -138,8 +146,16 @@ class LibraryController(object):
         # type: (LibraryController) -> Save
         if os.path.exists(self.save_abs_path):
             logger.info(f'Read save: {self.save_abs_path}')
-            with open(self.save_abs_path, 'r') as f:
-                save = json.load(f)  # type: Save
+            try:
+                with open(self.save_abs_path, 'r') as f:
+                    save = json.load(f)  # type: Save
+            except OSError as e:
+                s = 'Unable to read save file.'
+                logger.error(f"{s}\n{e}", exc_info=True)
+                msg = QMessageBox(QMessageBox.Icon.Warning, 'retype', s)
+                msg.setDetailedText(f'Path: {self.save_abs_path}\n\n'
+                                    f'{traceback.format_exc()}')
+                msg.exec()
         else:
             logger.debug(
                 f'Save path {self.save_abs_path} not found.\n'

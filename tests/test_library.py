@@ -28,15 +28,13 @@ def _setup():
     return library, book, data, save
 
 
-@patch('os.path.exists')
 @patch('builtins.open')
 @patch('json.dump')
 class TestLibraryControllerSaveFunction:
     def test_save_file_exists_and_has_book_save_data_already(
-            self, m_jsondump, m_open, m_exists):
+            self, m_jsondump, m_open):
         (library, book, data, save) = _setup()
 
-        m_exists.return_value = True
         library.save_file_contents = {book.checksum: 'other-data'}
 
         library.save(book, data)
@@ -46,10 +44,8 @@ class TestLibraryControllerSaveFunction:
         assert book.save_data == data
 
     def test_save_file_exists_and_does_not_have_book_save_data_yet(
-            self, m_jsondump, m_open, m_exists):
+            self, m_jsondump, m_open):
         (library, book, data, _) = _setup()
-
-        m_exists.return_value = True
 
         library.save(book, data)
 
@@ -58,11 +54,10 @@ class TestLibraryControllerSaveFunction:
         assert book.save_data == data
 
     def test_save_file_two_books_in_save(
-            self, m_jsondump, m_open, m_exists):
+            self, m_jsondump, m_open):
         (library, book, data, _) = _setup()
         save = {'other': data, book.checksum: data}
 
-        m_exists.return_value = True
         library.save_file_contents = save
 
         library.save(book, data)
@@ -70,27 +65,14 @@ class TestLibraryControllerSaveFunction:
         m_jsondump.assert_called_once_with(save, ANY, indent=2)
         assert book.save_data == data
 
-    def test_save_file_does_not_exist_and_user_dir_does(
-            self, m_jsondump, m_open, m_exists):
+    def test_save_file_does_not_exist(
+            self, m_jsondump, m_open):
         (library, book, data, save) = _setup()
-
-        m_exists.side_effect = [True, False]
 
         library.save(book, data)
 
         m_jsondump.assert_called_once_with(
             {book.checksum: data}, ANY, indent=2)
-        assert book.save_data == data
-
-    def test_user_dir_does_not_exist(
-            self, m_jsondump, m_open, m_exists):
-        (library, book, data, save) = _setup()
-
-        m_exists.return_value = False
-
-        library.save(book, data)
-
-        m_jsondump.assert_not_called()
         assert book.save_data == data
 
 
