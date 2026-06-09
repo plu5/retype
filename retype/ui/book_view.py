@@ -698,8 +698,8 @@ class BookView(QWidget):
         # type: (BookView, bool) -> None
         if self.chapter_pos is None:
             return
+        self._controller.console.clear()
         if move:
-            self._controller.console.clear()
             self.setChapter(self.viewed_chapter_pos, True)
             self.updateProgress()
         else:
