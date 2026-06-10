@@ -6,7 +6,7 @@ on:
       version:
         type: string
         required: true
-        description: SemVer/name of release
+        description: SemVer/name of release (REMEMBER TO BUMP VERSION FILE)
       release:
         type: boolean
         required: false
