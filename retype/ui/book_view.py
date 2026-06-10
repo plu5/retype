@@ -689,7 +689,7 @@ class BookView(QWidget):
                 self.book.dirty = False
             else:               # Saving failed
                 logger.info("Can't save. Deactivating autosave.")
-                self.autosave.save.disconnect(self.maybeSave)
+                self.autosave.on = False
 
     def switchToShelves(self):
         # type: (BookView) -> None
