@@ -75,6 +75,8 @@ default_config = {
         "save_splitters_on_quit": True
     },
     "auto_newline": True,
+    "skip_char_key": "Tab",
+    "skip_char_enabled": False,
     "steno": {
         "kdict": default_steno_kdict
     }

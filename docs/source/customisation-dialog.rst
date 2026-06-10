@@ -34,6 +34,17 @@ Prompt
 
 The prompt is a string console commands must be prefixed by. Can be any length, including an empty string if you do not want to prefix them with anything.
 
+.. _skip-char-key:
+
+Skip character key
+^^^^^^^^^^^^^^^^^^
+
+When enabled, pressing the configured key while typing will skip the current character forward, advancing the cursor by one position without having to type the character. This is useful for getting past characters you cannot easily input.
+
+The feature is disabled by default. To enable it, check the :guilabel:`Enable skip character key binding` checkbox. Once enabled, the key field below it becomes active and can be set by clicking on it and pressing the desired key. The default key is :kbd:`Tab`.
+
+The skip character action can also be triggered at any time via the :ref:`console-commands` using the ``skipchar`` command (aliases: ``char``, ``c``).
+
 Hide System Console window on UI load (Windows-only)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 

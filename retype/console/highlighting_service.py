@@ -111,6 +111,18 @@ class HighlightingService(object):
         v.mistake_cursor.setPosition(end, v.mistake_cursor.KeepAnchor)
         v.mistake_cursor.removeSelectedText()
 
+    def skipChar(self):
+        # type: (HighlightingService) -> None
+        v = self.book_view
+        if not self.valid(v):
+            return
+        v.cursor_pos += 1
+        v.persistent_pos += 1
+        self.updateHighlighting()
+        self._console.clear()
+        v.display.centreAroundCursor()
+        v.updateProgress()
+
     def advanceLine(self):
         # type: (HighlightingService) -> None
         v = self.book_view
