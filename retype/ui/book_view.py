@@ -685,8 +685,11 @@ class BookView(QWidget):
             data = {'persistent_pos': self.persistent_pos,
                     'chapter_pos': self.chapter_pos,
                     'progress': self.progress}  # type: SaveData
-            self._library.save(self.book, data)  # type: ignore[arg-type]
-            self.book.dirty = False
+            if self._library.save(self.book, data):  # type: ignore[arg-type]
+                self.book.dirty = False
+            else:               # Saving failed
+                logger.info("Can't save. Deactivating autosave.")
+                self.autosave.on = False
 
     def switchToShelves(self):
         # type: (BookView) -> None

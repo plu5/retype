@@ -1,5 +1,6 @@
 import os
 import sys
+import logging
 from sys import version as PYTHON_VERSION_STR
 from sys import platform
 from ebooklib import VERSION as EBOOKLIB_VERSION
@@ -10,6 +11,7 @@ from typing import TYPE_CHECKING
 from retype.resource_handler import root_path, getLibraryPath, getIncludePath
 from retype import __version__
 
+logger = logging.getLogger(__name__)
 
 iswindows = platform.lower() in ['win32', 'win64']
 ismacos = 'darwin' in platform.lower()
@@ -128,8 +130,12 @@ def getBuilddate():
         return builddate
     path = os.path.join(getIncludePath(), 'builddate.txt')
     if os.path.exists(path):
-        with open(path, 'r') as f:
-            builddate = f.read()
+        try:
+            with open(path, 'r') as f:
+                builddate = f.read()
+        except OSError as e:
+            logger.error(f"Failed to get builddate from {path}\n{e}",
+                         exc_info=True)
     return builddate
 
 
