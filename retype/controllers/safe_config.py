@@ -1,7 +1,9 @@
 import os
 import json
 import logging
+import traceback
 from copy import deepcopy
+from qt import QMessageBox
 
 from typing import TYPE_CHECKING
 
@@ -31,7 +33,11 @@ class _SafeConfig:
     def load(self, path):
         # type: (_SafeConfig, str) -> Config
         config = self._load(path)
-        user_dir = config['user_dir'] if config else None
+        if config is None:      # Loading failed
+            # Nothing modifies it, but may as well explicitly avoid mutation
+            return deepcopy(default_config)
+
+        user_dir = config['user_dir']
         if user_dir and not self.isPathDefaultUserDir(user_dir):
             custom_path = os.path.join(user_dir, self.config_rel_path)
             logger.debug("Non-default user_dir: {}\n\
@@ -40,16 +46,23 @@ Attempting to load config from: {}".format(user_dir, custom_path))
             if not config:
                 config = deepcopy(default_config)
                 config['user_dir'] = user_dir
-                return config
-        return config or default_config
+        return config
 
     def _load(self, path):
         # type: (_SafeConfig, str) -> Config | None
         if os.path.exists(path):
             logger.info(f'Read config: {path}')
-            with open(path, 'r') as f:
-                config = json.load(f)  # type: Config
-                return config
+            try:
+                with open(path, 'r') as f:
+                    config = json.load(f)  # type: Config
+                    return config
+            except OSError as e:
+                s = 'Unable to read config file.'
+                logger.error(f"{s}\n{e}", exc_info=True)
+                msg = QMessageBox(QMessageBox.Icon.Warning, 'retype', s)
+                msg.setDetailedText(f'Path: {path}\n\n'
+                                    f'{traceback.format_exc()}')
+                msg.exec()
         else:
             logger.debug(
                 f'Config path {path} not found.\n'
@@ -64,23 +77,47 @@ Attempting to load config from: {}".format(user_dir, custom_path))
     def save(self):
         # type: (_SafeConfig) -> None
         user_dir = self.raw['user_dir']
-        if not os.path.exists(user_dir):
-            logger.error(f'Unable to find user_dir {user_dir}')
+        path = os.path.join(user_dir, self.config_rel_path)
+        if not self._save(path, self.raw):  # Saving failed
             return
 
-        path = os.path.join(user_dir, self.config_rel_path)
-        with open(path, 'w') as f:
-            json.dump(self.raw, f, indent=2)
         if not self.isPathDefaultUserDir(user_dir):
-            path = os.path.join(self.default_user_dir, self.config_rel_path)
-            if os.path.exists(path):
-                with open(path, 'r') as f:
-                    dconfig = json.load(f)  # type: Config
-                    dconfig['user_dir'] = user_dir
-                with open(path, 'w') as f:
-                    json.dump(dconfig, f, indent=2)
-            else:
-                logger.error(f'Unable to find dconfig {path}')
+            dconfig = self.loadDconfig()
+            if dconfig is not None:
+                dconfig['user_dir'] = user_dir
+                self._save(path, dconfig)
+
+    def _save(self, path, data):
+        # type: (_SafeConfig, str, Config) -> bool
+        try:
+            with open(path, 'w') as f:
+                logger.debug(f'Saving config: {path}')
+                json.dump(data, f, indent=2)
+        except OSError as e:
+            s = 'Unable to save config file.'
+            logger.error(f"{s}\n{e}", exc_info=True)
+            msg = QMessageBox(QMessageBox.Icon.Warning, 'retype', s)
+            msg.setDetailedText(f'Path: {path}\n\n'
+                                f'{traceback.format_exc()}')
+            msg.exec()
+            return False
+        return True
+
+    def loadDconfig(self):
+        # type: (_SafeConfig) -> Config | None
+        dconfig = None
+        path = os.path.join(self.default_user_dir, self.config_rel_path)
+        try:
+            with open(path, 'r') as f:
+                dconfig = json.load(f)  # type: Config
+        except OSError as e:
+            s = 'Unable to load dconfig file.'
+            logger.error(f"{s}\n{e}", exc_info=True)
+            msg = QMessageBox(QMessageBox.Icon.Warning, 'retype', s)
+            msg.setDetailedText(f'Path: {path}\n\n'
+                                f'{traceback.format_exc()}')
+            msg.exec()
+        return dconfig
 
     def __getitem__(self, key, default=None):
         # type: (_SafeConfig, str, object | None) -> object
