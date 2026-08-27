@@ -234,7 +234,7 @@ class BookWrapper(object):
         try:
             ret = epub.read_epub(self.path, options={'ignore_ncx': True})
             self.valid = True
-        except (LookupError, OSError) as e:
+        except (LookupError, OSError, epub.EpubException) as e:
             s = (f'Unable to read epub {self.idn}:\n{self.path}.\n\n'
                  'This is not fatal, but the book will not be loaded.')
             logger.error(f"{s}\n{e}", exc_info=True)
