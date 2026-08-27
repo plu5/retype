@@ -153,7 +153,7 @@ error: {}'.format(v.line_pos, len(v.tobetyped_list), e))
             return
 
         self.updateHighlighting()
-        self._console.clear()
+        self._console.clearWithoutNotify()
         v.display.centreAroundCursor()
         v.updateProgress()
 
