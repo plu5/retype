@@ -29,6 +29,9 @@ class FakeConsole(QObject):
     def clear(self):
         pass
 
+    def clearWithoutNotify(self):
+        pass
+
     def setText(self, text):
         self._text = text
         self.textChanged.emit(text)

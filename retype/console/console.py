@@ -1,5 +1,5 @@
 from enum import Enum
-from qt import pyqtSignal, Qt, QSizePolicy, QTextCursor
+from qt import pyqtSignal, Qt, QSizePolicy, QTextCursor, QSignalBlocker
 
 from typing import TYPE_CHECKING
 
@@ -95,6 +95,11 @@ class Console(LineEdit):
     def clear(self):
         # type: (Console) -> None
         super().setText('')
+
+    def clearWithoutNotify(self):
+        # type: (Console) -> None
+        with QSignalBlocker(self):
+            self.clear()
 
     def setText(self, text):
         # type: (Console, str) -> None
