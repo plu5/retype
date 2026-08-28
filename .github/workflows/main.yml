@@ -70,7 +70,7 @@ jobs:
           RELEASE=true; PRERELEASE=true
           if [ -n "${{ inputs.version }}" ]; then
             VERSION=${{ inputs.version }}; RELEASE=${{ inputs.release }}
-            echo "annotation=${{ inputs.annotation }}" >> $GITHUB_OUTPUT
+            echo -e "annotation<<EOF\n${{ inputs.annotation }}\nEOF" >> $GITHUB_OUTPUT
             PRERELEASE=${{ inputs.prerelease }}
           else
             echo "${{ github.event.head_commit.message }}" > commit_msg
