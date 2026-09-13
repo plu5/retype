@@ -271,7 +271,7 @@ class BookWrapper(object):
                 if not isinstance(svg, _Element):
                     continue
                 imgs = svg.xpath('//image')
-                if not isinstance(imgs, list):
+                if not imgs or not isinstance(imgs, list):
                     continue
                 imaged = imgs[0]
                 if not isinstance(imaged, _Element):
