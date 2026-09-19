@@ -652,6 +652,7 @@ class BookView(QWidget):
         # type: (BookView) -> None
         cs = self._controller.console.command_service
         if cs is not None:
+            self._controller.console.clear()
             cs.advanceLine()
 
     def setSdict(self, sdict):
