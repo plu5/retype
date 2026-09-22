@@ -61,7 +61,8 @@ default_config = {
         "\u2013": ["-"],
         "\u2014": ["-"],
         "\u00f2": ["o"],
-        "\u00b0": ["o"]
+        "\u00b0": ["o"],
+        "…": ["."],
     },
     "bookview": {
         "save_font_size_on_quit": True,
