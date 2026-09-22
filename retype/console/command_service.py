@@ -219,7 +219,7 @@ class CommandService(object):
     def gotoCursorPosition(self, move=None):
         # type: (CommandService, str | None) -> None
         if self.onBookView():
-            m = True if move == 'move' else False
+            m = True if move in ['move', 'm'] else False
             self.book_view.gotoCursorPosition(m)
 
     def help_(self):

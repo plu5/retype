@@ -279,8 +279,8 @@ class BookView(QWidget):
                 'tooltip': 'Go to the cursor position. Hold Ctrl to move\
  cursor to your current position',
                 'icon': 'cursor',
-                'widget': self.toolbar,
-                'widget_ui': self,
+                'widget': self,
+                'widget_ui': self.toolbar,
                 'args_regex': '(m|move)',
                 'args_func': lambda m: self.gotoCursorPosition(move=True),
             },
