@@ -707,8 +707,8 @@ class BookView(QWidget):
             self.setChapter(self.viewed_chapter_pos, True)
             self.updateProgress()
         else:
-            self.setChapter(self.chapter_pos)
-            self.setCursor()
+            if self.viewed_chapter_pos != self.chapter_pos:
+                self.setChapter(self.chapter_pos)
             self.display.centreAroundCursor()
 
     def gotoCursorPositionAction(self):
