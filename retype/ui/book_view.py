@@ -642,9 +642,8 @@ class BookView(QWidget):
             else:
                 self.current_line = self.tobetyped_list[pos]
 
-            if isspaceorempty(self.current_line):
-                logger.debug("Skipping empty line")
-                self.advanceLine()
+            # Trigger highlighting update in case line should be skipped (#89)
+            self._controller.console.clear()
         else:
             logger.error("Bad tobetyped_list; {}".format(self.tobetyped_list))
 
