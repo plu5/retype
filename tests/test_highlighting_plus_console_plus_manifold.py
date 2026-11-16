@@ -23,7 +23,7 @@ class FakeBookDisplay(QTextBrowser):
 
 
 class FakeBookView(QObject):
-    def __init__(self, rdict=default_config.get('rdict')):
+    def __init__(self, console, rdict=default_config.get('rdict')):
         QObject.__init__(self)
         self.display = FakeBookDisplay()
         self.rdict = rdict or {}
@@ -33,6 +33,7 @@ class FakeBookView(QObject):
         self.mistake_cursor = QTextCursor(self.display.document())
         self.highlight_cursor = QTextCursor(self.display.document())
         self.progress = 0
+        self.console = console
 
     def _initChapter(self, html):
         self.display.setHtml(html)
@@ -53,6 +54,7 @@ class FakeBookView(QObject):
         return True
 
     def advanceLine(self):
+        self.console.clear()
         self.h.advanceLine()
 
     def _setLine(self, pos):
@@ -97,7 +99,7 @@ class FakeBookView(QObject):
 
 def _setup(book_view_content=SAMPLE_CONTENT):
     console = Console('>')
-    book_view = FakeBookView()
+    book_view = FakeBookView(console)
     service = HighlightingService(console, book_view)
     book_view.h = service  # to be able to call advanceLine
     book_view._initChapter(book_view_content)
@@ -113,3 +115,20 @@ class TestHighlightingPlusConsolePlusManifold:
         assert v.chapter_pos == 0
         console.setText("hi")
         assert v.chapter_pos == 1, "chapter pos should advance"
+
+    def test_doesnt_skip_too_far(self):
+        # like test_skipEmptyLines in test_highlighting_service.py
+        SAMPLE = '''<html><body><br/>
+begins with an empty line
+<span>  </span><br/>
+followed by a line of just spaces<br/>
+and a few more lines of text</body></html>'''
+        (console, v, service, cursor) = _setup(SAMPLE)
+        console.setText("")
+        assert cursor.position() == 1
+
+        assert v.line_pos == 1
+        t = "begins with an empty line"
+        console.setText(t)
+        assert cursor.position() == 1 + (len(t) - 1) + 3
+        assert v.line_pos == 2
