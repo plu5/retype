@@ -639,8 +639,9 @@ class Delegate(QStyledItemDelegate):
 
     def sizeHint(self, option, index):
         # type: (Delegate, QStyleOptionViewItem, QModelIndex) -> QSize
-        size = self.toDoc(index).size().toSize()
-        size.setHeight(size.height() + self.spacing*2)
+        size = super().sizeHint(option, index)
+        size.setHeight(
+            self.toDoc(index).size().toSize().height() + self.spacing*2)
         return size
 
 
@@ -745,6 +746,21 @@ class LibraryPathsModel(QAbstractListModel):
         return True
 
 
+class ListView(QListView):
+    def __init__(self, parent=None):
+        # type: (ListView, QWidget | None) -> None
+        QListView.__init__(self, parent)
+        # Workaround for width problem for delegates with long text,
+        # cf devlog 31
+        self.setWordWrap(True)
+
+    def sizeHint(self):
+        # type: (ListView) -> QSize
+        size = QListView.sizeHint(self)
+        size.setHeight(10)
+        return size
+
+
 class LibraryPathsWidget(QWidget):
     changed = pyqtSignal(list)
 
@@ -754,7 +770,7 @@ class LibraryPathsWidget(QWidget):
 
         lyt = QFormLayout(self)
         lyt.setContentsMargins(0, 0, 0, 0)
-        self.view = QListView()
+        self.view = ListView()
         self.view.setItemDelegate(PathDelegate())
         self.setModel(library_paths)
         lyt.addRow(self.view)
@@ -848,18 +864,6 @@ class FontSelector(QFontComboBox):
             raise SelectorValueTypeMismatch(
                 f'expects str, got: {type(value)}')
         self.setCurrentFont(QFont(value))
-
-
-class ListView(QListView):
-    def __init__(self, parent=None):
-        # type: (ListView, QWidget | None) -> None
-        QListView.__init__(self, parent)
-
-    def sizeHint(self):
-        # type: (ListView) -> QSize
-        size = QListView.sizeHint(self)
-        size.setHeight(10)
-        return size
 
 
 class SDictModel(QAbstractListModel):
