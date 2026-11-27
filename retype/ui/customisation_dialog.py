@@ -577,6 +577,9 @@ class PathSelector(QWidget):
         self.browse_button.clicked.connect(self.browse)
         lyt.addWidget(self.browse_button)
 
+        # Opaque background (cf devlog 31)
+        self.setAutoFillBackground(True)
+
         self.setFocusProxy(self.path_edit)
 
     def browse(self):
